@@ -1,5 +1,19 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UseGuards
+} from '@nestjs/common';
 import type { Request } from 'express';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { requireActiveTenantMember, requireTenantId, requireUserId } from '../../tenant/tenant-guards';
@@ -119,5 +133,32 @@ export class QuestionsController {
     await this.prisma.withTenant(tenantId, (tx) => tx.question.delete({ where: { tenantId_id: { tenantId, id } } }));
 
     return { ok: true };
+  }
+
+  @Put(':id/content')
+  async upsertContent(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: { stemBlocks: Prisma.InputJsonValue }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (body?.stemBlocks == null) throw new BadRequestException('Missing stemBlocks');
+
+    const content = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionContent.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: { tenantId, questionId: id, stemBlocks: body.stemBlocks },
+        update: { stemBlocks: body.stemBlocks }
+      });
+    });
+
+    return { content };
   }
 }
