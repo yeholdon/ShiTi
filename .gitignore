@@ -14,3 +14,13 @@ skills/
 # Node/TS build artifacts (project should have its own ignores too)
 **/node_modules/
 **/dist/
+
+# Workspace meta files
+AGENTS.md
+SOUL.md
+USER.md
+TOOLS.md
+IDENTITY.md
+WORKFLOW_AUTO.md
+BOOTSTRAP.md
+HEARTBEAT.md
