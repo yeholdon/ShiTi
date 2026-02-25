@@ -244,4 +244,94 @@ export class QuestionsController {
 
     return { source };
   }
+
+  @Put(':id/answer-choice')
+  async upsertChoiceAnswer(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: { optionsBlocks: Prisma.InputJsonValue; correct: Prisma.InputJsonValue }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (body?.optionsBlocks == null) throw new BadRequestException('Missing optionsBlocks');
+    if (body?.correct == null) throw new BadRequestException('Missing correct');
+
+    const choiceAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionAnswerChoice.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: { tenantId, questionId: id, optionsBlocks: body.optionsBlocks, correct: body.correct },
+        update: { optionsBlocks: body.optionsBlocks, correct: body.correct }
+      });
+    });
+
+    return { choiceAnswer };
+  }
+
+  @Put(':id/answer-blank')
+  async upsertBlankAnswer(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: { blanks: Prisma.InputJsonValue }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (body?.blanks == null) throw new BadRequestException('Missing blanks');
+
+    const blankAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionAnswerBlank.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: { tenantId, questionId: id, blanks: body.blanks },
+        update: { blanks: body.blanks }
+      });
+    });
+
+    return { blankAnswer };
+  }
+
+  @Put(':id/answer-solution')
+  async upsertSolutionAnswer(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: { finalAnswerLatex?: string | null; scoringPoints: Prisma.InputJsonValue }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (body?.scoringPoints == null) throw new BadRequestException('Missing scoringPoints');
+
+    const solutionAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionAnswerSolution.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: {
+          tenantId,
+          questionId: id,
+          finalAnswerLatex: body.finalAnswerLatex ?? null,
+          scoringPoints: body.scoringPoints
+        },
+        update: {
+          finalAnswerLatex: body.finalAnswerLatex ?? null,
+          scoringPoints: body.scoringPoints
+        }
+      });
+    });
+
+    return { solutionAnswer };
+  }
 }

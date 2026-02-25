@@ -3,7 +3,7 @@ import request from 'supertest';
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 describe('Business flow (e2e)', () => {
-  it('register -> join tenant -> create -> upsert content -> get -> list', async () => {
+  it('register -> join tenant -> create -> upsert content -> upsert answer -> get -> list', async () => {
     const suffix = Date.now();
     const tenant = { code: `flow-tenant-${suffix}`, name: 'Flow Tenant' };
 
@@ -50,6 +50,19 @@ describe('Business flow (e2e)', () => {
 
     expect(upsertExplanation.status).toBe(200);
 
+    const optionsBlocks = [
+      { type: 'option', key: 'A', text: '1' },
+      { type: 'option', key: 'B', text: '2' }
+    ];
+
+    const upsertChoiceAnswer = await request(base)
+      .put(`/questions/${questionId}/answer-choice`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ optionsBlocks, correct: { keys: ['B'] } });
+
+    expect(upsertChoiceAnswer.status).toBe(200);
+
     const get = await request(base)
       .get(`/questions/${questionId}`)
       .set('X-Tenant-Code', tenant.code)
@@ -58,6 +71,8 @@ describe('Business flow (e2e)', () => {
     expect(get.status).toBe(200);
     expect(get.body.content?.stemBlocks).toEqual(stemBlocks);
     expect(get.body.explanation?.stepsBlocks).toEqual(stepsBlocks);
+    expect(get.body.choiceAnswer?.optionsBlocks).toEqual(optionsBlocks);
+    expect(get.body.choiceAnswer?.correct).toEqual({ keys: ['B'] });
 
     const upsertSource = await request(base)
       .put(`/questions/${questionId}/source`)
