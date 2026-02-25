@@ -40,6 +40,16 @@ describe('Business flow (e2e)', () => {
 
     expect(upsert.status).toBe(200);
 
+    const stepsBlocks = [{ type: 'step', text: 'Because...' }];
+
+    const upsertExplanation = await request(base)
+      .put(`/questions/${questionId}/explanation`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ stepsBlocks, overviewLatex: null, commentaryLatex: null });
+
+    expect(upsertExplanation.status).toBe(200);
+
     const get = await request(base)
       .get(`/questions/${questionId}`)
       .set('X-Tenant-Code', tenant.code)
@@ -47,6 +57,7 @@ describe('Business flow (e2e)', () => {
 
     expect(get.status).toBe(200);
     expect(get.body.content?.stemBlocks).toEqual(stemBlocks);
+    expect(get.body.explanation?.stepsBlocks).toEqual(stepsBlocks);
 
     const list = await request(base)
       .get('/questions')

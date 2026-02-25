@@ -161,4 +161,46 @@ export class QuestionsController {
 
     return { content };
   }
+
+  @Put(':id/explanation')
+  async upsertExplanation(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      overviewLatex?: string | null;
+      stepsBlocks: Prisma.InputJsonValue;
+      commentaryLatex?: string | null;
+    }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (body?.stepsBlocks == null) throw new BadRequestException('Missing stepsBlocks');
+
+    const explanation = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionExplanation.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: {
+          tenantId,
+          questionId: id,
+          overviewLatex: body.overviewLatex ?? null,
+          stepsBlocks: body.stepsBlocks,
+          commentaryLatex: body.commentaryLatex ?? null
+        },
+        update: {
+          overviewLatex: body.overviewLatex ?? null,
+          stepsBlocks: body.stepsBlocks,
+          commentaryLatex: body.commentaryLatex ?? null
+        }
+      });
+    });
+
+    return { explanation };
+  }
 }
