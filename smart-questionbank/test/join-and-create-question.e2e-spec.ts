@@ -59,6 +59,24 @@ describe('Business flow (e2e)', () => {
     expect(get.body.content?.stemBlocks).toEqual(stemBlocks);
     expect(get.body.explanation?.stepsBlocks).toEqual(stepsBlocks);
 
+    const upsertSource = await request(base)
+      .put(`/questions/${questionId}/source`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ year: 2026, month: 2, sourceText: '小红书模拟来源' });
+
+    expect(upsertSource.status).toBe(200);
+
+    const get2 = await request(base)
+      .get(`/questions/${questionId}`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(get2.status).toBe(200);
+    expect(get2.body.source?.year).toBe(2026);
+    expect(get2.body.source?.month).toBe(2);
+    expect(get2.body.source?.sourceText).toBe('小红书模拟来源');
+
     const list = await request(base)
       .get('/questions')
       .set('X-Tenant-Code', tenant.code)

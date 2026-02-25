@@ -203,4 +203,45 @@ export class QuestionsController {
 
     return { explanation };
   }
+
+  @Put(':id/source')
+  async upsertSource(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      year?: number | null;
+      month?: number | null;
+      sourceText?: string | null;
+    }
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+
+    const source = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      return tx.questionSource.upsert({
+        where: { tenantId_questionId: { tenantId, questionId: id } },
+        create: {
+          tenantId,
+          questionId: id,
+          year: body.year ?? null,
+          month: body.month ?? null,
+          sourceText: body.sourceText ?? null
+        },
+        update: {
+          year: body.year ?? null,
+          month: body.month ?? null,
+          sourceText: body.sourceText ?? null
+        }
+      });
+    });
+
+    return { source };
+  }
 }
