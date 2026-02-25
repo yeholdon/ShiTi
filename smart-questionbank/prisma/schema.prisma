@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantMemberRole {
+  member
+  admin
+  owner
+}
+
+enum TenantMemberStatus {
+  active
+  invited
+  disabled
+}
+
+enum QuestionType {
+  single_choice
+  fill_blank
+  solution
+}
+
+enum QuestionVisibility {
+  private
+  tenant_shared
+}
+
+enum DocumentKind {
+  paper
+  handout
+}
+
+enum DocumentItemType {
+  question
+  layout_element
+}
+
+enum ExportJobStatus {
+  pending
+  running
+  succeeded
+  failed
+}
+
+enum ExportKind {
+  document_pdf
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   TenantMember[]
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  username    String   @unique
+  passwordHash String
+  createdAt   DateTime @default(now())
+  lastLoginAt DateTime?
+
+  memberships TenantMember[]
+}
+
+model TenantMember {
+  tenantId  String @db.Uuid
+  id        String @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  role      TenantMemberRole @default(member)
+  status    TenantMemberStatus @default(active)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@id([tenantId, id])
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
+model Subject {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String?  @db.Uuid
+  name      String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, name])
+}
+
+model Textbook {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String?  @db.Uuid
+  name      String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, name])
+}
+
+model Chapter {
+  tenantId   String @db.Uuid
+  id         String @default(uuid()) @db.Uuid
+  textbookId String @db.Uuid
+  parentId   String? @db.Uuid
+  name       String
+  createdAt  DateTime @default(now())
+
+  @@id([tenantId, id])
+  @@index([textbookId])
+}
+
+model QuestionTag {
+  tenantId   String @db.Uuid
+  id         String @default(uuid()) @db.Uuid
+  name       String
+  createdAt  DateTime @default(now())
+
+  @@id([tenantId, id])
+  @@unique([tenantId, name])
+}
+
+model Question {
+  tenantId     String @db.Uuid
+  id           String @default(uuid()) @db.Uuid
+  type         QuestionType
+  difficulty   Int
+  defaultScore Decimal @db.Decimal(5, 2)
+  subjectId    String @db.Uuid
+  ownerUserId  String @db.Uuid
+  visibility   QuestionVisibility @default(private)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  content       QuestionContent?
+  explanation   QuestionExplanation?
+  source        QuestionSource?
+  choiceAnswer  QuestionAnswerChoice?
+  blankAnswer   QuestionAnswerBlank?
+  solutionAnswer QuestionAnswerSolution?
+
+  @@id([tenantId, id])
+  @@index([subjectId])
+  @@index([ownerUserId])
+}
+
+model QuestionContent {
+  tenantId    String @db.Uuid
+  questionId  String @db.Uuid
+  stemBlocks  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model QuestionExplanation {
+  tenantId        String @db.Uuid
+  questionId      String @db.Uuid
+  overviewLatex   String?
+  stepsBlocks     Json
+  commentaryLatex String?
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model QuestionSource {
+  tenantId    String @db.Uuid
+  questionId  String @db.Uuid
+  year        Int?
+  month       Int?
+  sourceText  String?
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model QuestionAnswerChoice {
+  tenantId       String @db.Uuid
+  questionId     String @db.Uuid
+  optionsBlocks  Json
+  correct        Json
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model QuestionAnswerBlank {
+  tenantId   String @db.Uuid
+  questionId String @db.Uuid
+  blanks     Json
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model QuestionAnswerSolution {
+  tenantId         String @db.Uuid
+  questionId       String @db.Uuid
+  finalAnswerLatex String?
+  scoringPoints    Json
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId])
+}
+
+model Document {
+  tenantId        String @db.Uuid
+  id              String @default(uuid()) @db.Uuid
+  kind            DocumentKind
+  name            String
+  createdByUserId String @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items DocumentItem[]
+
+  @@id([tenantId, id])
+  @@index([createdByUserId])
+}
+
+model LayoutElement {
+  tenantId   String @db.Uuid
+  id         String @default(uuid()) @db.Uuid
+  blocks     Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([tenantId, id])
+}
+
+model DocumentItem {
+  tenantId        String @db.Uuid
+  id              String @default(uuid()) @db.Uuid
+  documentId      String @db.Uuid
+  orderIndex      Int
+  itemType        DocumentItemType
+  questionId      String? @db.Uuid
+  layoutElementId String? @db.Uuid
+  scoreOverride   Decimal? @db.Decimal(5, 2)
+
+  document Document @relation(fields: [tenantId, documentId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, id])
+  @@index([documentId])
+}
+
+model Asset {
+  tenantId    String @db.Uuid
+  id          String @default(uuid()) @db.Uuid
+  kind        String
+  storageKey  String
+  mime        String
+  size        Int
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+
+  @@id([tenantId, id])
+  @@unique([tenantId, storageKey])
+}
+
+model ExportJob {
+  tenantId      String @db.Uuid
+  id            String @default(uuid()) @db.Uuid
+  kind          ExportKind
+  documentId    String @db.Uuid
+  status        ExportJobStatus @default(pending)
+  resultAssetId String? @db.Uuid
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@id([tenantId, id])
+  @@index([documentId])
+}

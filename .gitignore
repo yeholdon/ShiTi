@@ -1,0 +1,16 @@
+# OpenClaw local state
+.openclaw/
+memory/
+HEARTBEAT.md
+BOOTSTRAP.md
+screen_*.png
+screenshot_*.png
+*.log
+.DS_Store
+
+# Local skills (optional to track later)
+skills/
+
+# Node/TS build artifacts (project should have its own ignores too)
+**/node_modules/
+**/dist/
