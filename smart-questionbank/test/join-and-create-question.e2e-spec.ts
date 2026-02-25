@@ -63,6 +63,29 @@ describe('Business flow (e2e)', () => {
 
     expect(upsertChoiceAnswer.status).toBe(200);
 
+    const blanks = [{ key: 'b1', answers: ['42', '四十二'] }];
+
+    const upsertBlankAnswer = await request(base)
+      .put(`/questions/${questionId}/answer-blank`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ blanks });
+
+    expect(upsertBlankAnswer.status).toBe(200);
+
+    const scoringPoints = [
+      { key: 'p1', points: 2, description: '关键步骤正确' },
+      { key: 'p2', points: 3, description: '结论正确' }
+    ];
+
+    const upsertSolutionAnswer = await request(base)
+      .put(`/questions/${questionId}/answer-solution`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ finalAnswerLatex: 'x=42', scoringPoints });
+
+    expect(upsertSolutionAnswer.status).toBe(200);
+
     const get = await request(base)
       .get(`/questions/${questionId}`)
       .set('X-Tenant-Code', tenant.code)
@@ -73,6 +96,9 @@ describe('Business flow (e2e)', () => {
     expect(get.body.explanation?.stepsBlocks).toEqual(stepsBlocks);
     expect(get.body.choiceAnswer?.optionsBlocks).toEqual(optionsBlocks);
     expect(get.body.choiceAnswer?.correct).toEqual({ keys: ['B'] });
+    expect(get.body.blankAnswer?.blanks).toEqual(blanks);
+    expect(get.body.solutionAnswer?.finalAnswerLatex).toBe('x=42');
+    expect(get.body.solutionAnswer?.scoringPoints).toEqual(scoringPoints);
 
     const upsertSource = await request(base)
       .put(`/questions/${questionId}/source`)
