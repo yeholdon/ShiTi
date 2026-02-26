@@ -79,7 +79,7 @@ export class QuestionsController {
     const question = await this.prisma.withTenant(tenantId, (tx) => tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } }));
     if (!question) throw new NotFoundException('Question not found');
 
-    const [content, explanation, source, choiceAnswer, blankAnswer, solutionAnswer] = await this.prisma.withTenant(
+    const [content, explanation, source, choiceAnswer, blankAnswer, solutionAnswer, taggings] = await this.prisma.withTenant(
       tenantId,
       async (tx) => {
         const result = await Promise.all([
@@ -88,13 +88,20 @@ export class QuestionsController {
           tx.questionSource.findUnique({ where: { tenantId_questionId: { tenantId, questionId: id } } }),
           tx.questionAnswerChoice.findUnique({ where: { tenantId_questionId: { tenantId, questionId: id } } }),
           tx.questionAnswerBlank.findUnique({ where: { tenantId_questionId: { tenantId, questionId: id } } }),
-          tx.questionAnswerSolution.findUnique({ where: { tenantId_questionId: { tenantId, questionId: id } } })
+          tx.questionAnswerSolution.findUnique({ where: { tenantId_questionId: { tenantId, questionId: id } } }),
+          tx.questionTagging.findMany({
+            where: { tenantId, questionId: id },
+            include: { tag: true },
+            orderBy: { createdAt: 'asc' }
+          })
         ]);
         return result;
       }
     );
 
-    return { question, content, explanation, source, choiceAnswer, blankAnswer, solutionAnswer };
+    const tags = taggings.map((t: any) => t.tag);
+
+    return { question, content, explanation, source, choiceAnswer, blankAnswer, solutionAnswer, tags };
   }
 
   @Patch(':id')
@@ -298,6 +305,47 @@ export class QuestionsController {
     });
 
     return { blankAnswer };
+  }
+
+  @Put(':id/tags')
+  async setTags(@Req() req: Request, @Param('id') id: string, @Body() body: { tagIds: string[] }) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    if (!id) throw new BadRequestException('Missing id');
+    if (!Array.isArray(body?.tagIds)) throw new BadRequestException('Missing tagIds');
+
+    const result = await this.prisma.withTenant(tenantId, async (tx) => {
+      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id } } });
+      if (!question) throw new NotFoundException('Question not found');
+
+      const tagIds = Array.from(new Set(body.tagIds.filter(Boolean)));
+      const existing = await tx.questionTag.findMany({ where: { tenantId, id: { in: tagIds } } });
+
+      if (existing.length !== tagIds.length) {
+        throw new BadRequestException('Some tags not found');
+      }
+
+      await tx.questionTagging.deleteMany({ where: { tenantId, questionId: id } });
+
+      if (tagIds.length) {
+        await tx.questionTagging.createMany({
+          data: tagIds.map((tagId) => ({ tenantId, questionId: id, tagId })),
+          skipDuplicates: true
+        });
+      }
+
+      const taggings = await tx.questionTagging.findMany({
+        where: { tenantId, questionId: id },
+        include: { tag: true },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      return { tags: taggings.map((t: any) => t.tag) };
+    });
+
+    return result;
   }
 
   @Put(':id/answer-solution')

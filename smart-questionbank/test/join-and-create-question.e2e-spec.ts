@@ -3,7 +3,7 @@ import request from 'supertest';
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 describe('Business flow (e2e)', () => {
-  it('register -> join tenant -> create -> upsert content -> upsert answer -> get -> list', async () => {
+  it('register -> join tenant -> create -> upsert content -> upsert answer -> upsert tags -> get -> list', async () => {
     const suffix = Date.now();
     const tenant = { code: `flow-tenant-${suffix}`, name: 'Flow Tenant' };
 
@@ -86,6 +86,24 @@ describe('Business flow (e2e)', () => {
 
     expect(upsertSolutionAnswer.status).toBe(200);
 
+    const createdTag = await request(base)
+      .post('/question-tags')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: '重点题' });
+
+    expect(createdTag.status).toBe(201);
+    const tagId = createdTag.body.tag.id;
+
+    const setTags = await request(base)
+      .put(`/questions/${questionId}/tags`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tagIds: [tagId] });
+
+    expect(setTags.status).toBe(200);
+    expect(Array.isArray(setTags.body.tags)).toBe(true);
+
     const get = await request(base)
       .get(`/questions/${questionId}`)
       .set('X-Tenant-Code', tenant.code)
@@ -99,6 +117,7 @@ describe('Business flow (e2e)', () => {
     expect(get.body.blankAnswer?.blanks).toEqual(blanks);
     expect(get.body.solutionAnswer?.finalAnswerLatex).toBe('x=42');
     expect(get.body.solutionAnswer?.scoringPoints).toEqual(scoringPoints);
+    expect(get.body.tags?.map((t: any) => t.id)).toEqual([tagId]);
 
     const upsertSource = await request(base)
       .put(`/questions/${questionId}/source`)

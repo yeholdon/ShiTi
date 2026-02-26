@@ -31,6 +31,7 @@ ALTER TABLE "Document" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "LayoutElement" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "DocumentItem" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "QuestionTag" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionTagging" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Chapter" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Asset" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ExportJob" ENABLE ROW LEVEL SECURITY;
@@ -83,6 +84,10 @@ CREATE POLICY tenant_isolation_document_item ON "DocumentItem"
 
 DROP POLICY IF EXISTS tenant_isolation_question_tag ON "QuestionTag";
 CREATE POLICY tenant_isolation_question_tag ON "QuestionTag"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_question_tagging ON "QuestionTagging";
+CREATE POLICY tenant_isolation_question_tagging ON "QuestionTagging"
   USING ("tenantId" = current_setting('app.tenant_id', true)::uuid);
 
 DROP POLICY IF EXISTS tenant_isolation_chapter ON "Chapter";

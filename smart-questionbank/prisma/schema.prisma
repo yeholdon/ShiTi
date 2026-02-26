@@ -61,6 +61,38 @@ model Tenant {
   members   TenantMember[]
 }
 
+model Stage {
+  id        String   @id @db.Uuid
+  tenantId  String?  @db.Uuid
+  code      String
+  name      String
+  order     Int      @default(0)
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  grades    Grade[]
+
+  @@unique([tenantId, code])
+  @@unique([tenantId, name])
+}
+
+model Grade {
+  id        String   @id @db.Uuid
+  tenantId  String?  @db.Uuid
+  stageId   String   @db.Uuid
+  code      String
+  name      String
+  order     Int      @default(0)
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  stage     Stage    @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
+  @@unique([tenantId, stageId, code])
+  @@unique([tenantId, stageId, name])
+}
+
 model User {
   id          String   @id @default(uuid()) @db.Uuid
   username    String   @unique
@@ -125,8 +157,23 @@ model QuestionTag {
   name       String
   createdAt  DateTime @default(now())
 
+  questionTaggings QuestionTagging[]
+
   @@id([tenantId, id])
   @@unique([tenantId, name])
+}
+
+model QuestionTagging {
+  tenantId    String @db.Uuid
+  questionId  String @db.Uuid
+  tagId       String @db.Uuid
+  createdAt   DateTime @default(now())
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+  tag      QuestionTag @relation(fields: [tenantId, tagId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId, tagId])
+  @@index([tenantId, tagId])
 }
 
 model Question {
@@ -147,6 +194,8 @@ model Question {
   choiceAnswer  QuestionAnswerChoice?
   blankAnswer   QuestionAnswerBlank?
   solutionAnswer QuestionAnswerSolution?
+
+  questionTaggings QuestionTagging[]
 
   @@id([tenantId, id])
   @@index([subjectId])

@@ -6,6 +6,7 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { TenantMembersModule } from './modules/tenant-members/tenant-members.module';
 import { SubjectsModule } from './modules/subjects/subjects.module';
+import { QuestionTagsModule } from './modules/question-tags/question-tags.module';
 import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
 
 @Module({
@@ -19,6 +20,7 @@ import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
     AuthModule,
     TenantsModule,
     QuestionsModule,
+    QuestionTagsModule,
     TenantMembersModule,
     SubjectsModule
   ]
