@@ -152,5 +152,14 @@ describe('Business flow (e2e)', () => {
 
     expect(list.status).toBe(200);
     expect(Array.isArray(list.body.questions)).toBe(true);
+
+    const listWithTags = await request(base)
+      .get('/questions?include=tags')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(listWithTags.status).toBe(200);
+    const listedQuestion = listWithTags.body.questions.find((q: any) => q.id === questionId);
+    expect(listedQuestion?.tags?.map((t: any) => t.id)).toEqual([tagId]);
   });
 });

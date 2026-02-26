@@ -60,9 +60,39 @@ export class QuestionsController {
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
 
+    const includeParam = String((req as any)?.query?.include || '');
+    const include = includeParam
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    const includeTags = include.includes('tags');
+
     const result = await this.prisma.withTenant(tenantId, async (tx) => {
       const questions = await tx.question.findMany({ take: 50, orderBy: { createdAt: 'desc' } });
-      return { questions };
+
+      if (!includeTags) return { questions };
+
+      const questionIds = questions.map((q: any) => q.id);
+      const taggings = await tx.questionTagging.findMany({
+        where: { tenantId, questionId: { in: questionIds } },
+        include: { tag: true },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      const tagsByQuestionId = new Map<string, any[]>();
+      for (const tagging of taggings) {
+        const list = tagsByQuestionId.get(tagging.questionId) || [];
+        list.push(tagging.tag);
+        tagsByQuestionId.set(tagging.questionId, list);
+      }
+
+      const questionsWithTags = questions.map((q: any) => ({
+        ...q,
+        tags: tagsByQuestionId.get(q.id) || []
+      }));
+
+      return { questions: questionsWithTags };
     });
 
     return result;
