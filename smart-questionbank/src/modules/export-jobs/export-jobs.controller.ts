@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
@@ -10,14 +11,19 @@ import {
   UseGuards
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { requireActiveTenantMember, requireTenantId, requireUserId } from '../../tenant/tenant-guards';
+import { EXPORT_JOBS_QUEUE, QUEUE_CONNECTION } from '../../queue/queue.constants';
 
 @Controller('export-jobs')
 @UseGuards(JwtAuthGuard)
 export class ExportJobsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(QUEUE_CONNECTION) private readonly connection: any
+  ) {}
 
   @Post()
   async create(@Req() req: Request, @Body() body: { documentId?: string; kind?: 'pdf' }) {
@@ -44,6 +50,10 @@ export class ExportJobsController {
         }
       });
     });
+
+    const queue = new Queue(EXPORT_JOBS_QUEUE, { connection: this.connection });
+    await queue.add('export', { tenantId, exportJobId: job.id });
+    await queue.close();
 
     return { job };
   }
