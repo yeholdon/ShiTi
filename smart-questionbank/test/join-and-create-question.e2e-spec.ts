@@ -161,5 +161,20 @@ describe('Business flow (e2e)', () => {
     expect(listWithTags.status).toBe(200);
     const listedQuestion = listWithTags.body.questions.find((q: any) => q.id === questionId);
     expect(listedQuestion?.tags?.map((t: any) => t.id)).toEqual([tagId]);
+
+    const deleted = await request(base)
+      .delete(`/question-tags/${tagId}`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(deleted.status).toBe(200);
+
+    const get3 = await request(base)
+      .get(`/questions/${questionId}`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(get3.status).toBe(200);
+    expect(get3.body.tags).toEqual([]);
   });
 });
