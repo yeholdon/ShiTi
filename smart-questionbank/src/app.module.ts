@@ -8,6 +8,7 @@ import { TenantMembersModule } from './modules/tenant-members/tenant-members.mod
 import { SubjectsModule } from './modules/subjects/subjects.module';
 import { QuestionTagsModule } from './modules/question-tags/question-tags.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { ExportJobsModule } from './modules/export-jobs/export-jobs.module';
 import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
 
 @Module({
@@ -23,6 +24,7 @@ import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
     QuestionsModule,
     QuestionTagsModule,
     DocumentsModule,
+    ExportJobsModule,
     TenantMembersModule,
     SubjectsModule
   ]
