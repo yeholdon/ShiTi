@@ -7,6 +7,7 @@ import { QuestionsModule } from './modules/questions/questions.module';
 import { TenantMembersModule } from './modules/tenant-members/tenant-members.module';
 import { SubjectsModule } from './modules/subjects/subjects.module';
 import { QuestionTagsModule } from './modules/question-tags/question-tags.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
 
 @Module({
@@ -21,6 +22,7 @@ import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
     TenantsModule,
     QuestionsModule,
     QuestionTagsModule,
+    DocumentsModule,
     TenantMembersModule,
     SubjectsModule
   ]
