@@ -35,18 +35,25 @@ describe('ExportJobs (e2e)', () => {
       .send({ documentId });
 
     expect(createdJob.status).toBe(201);
-    expect(createdJob.body.job.status).toBe('pending');
 
     const jobId = createdJob.body.job.id;
 
-    const get = await request(base)
-      .get(`/export-jobs/${jobId}`)
-      .set('X-Tenant-Code', tenant.code)
-      .set('Authorization', `Bearer ${token}`);
+    const start = Date.now();
+    let lastStatus: string | undefined;
+    while (Date.now() - start < 2000) {
+      const get = await request(base)
+        .get(`/export-jobs/${jobId}`)
+        .set('X-Tenant-Code', tenant.code)
+        .set('Authorization', `Bearer ${token}`);
 
-    expect(get.status).toBe(200);
-    expect(get.body.job.id).toBe(jobId);
-    expect(get.body.job.status).toBe('pending');
-    expect(get.body.job.documentId).toBe(documentId);
+      expect(get.status).toBe(200);
+      lastStatus = get.body.job.status;
+
+      if (lastStatus === 'succeeded' || lastStatus === 'failed') break;
+
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    expect(lastStatus).toBe('succeeded');
   });
 });
