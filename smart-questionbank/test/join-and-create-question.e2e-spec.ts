@@ -95,6 +95,14 @@ describe('Business flow (e2e)', () => {
     expect(createdTag.status).toBe(201);
     const tagId = createdTag.body.tag.id;
 
+    const badSetTags = await request(base)
+      .put(`/questions/${questionId}/tags`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tagIds: ['00000000-0000-0000-0000-000000000000'] });
+
+    expect(badSetTags.status).toBe(400);
+
     const setTags = await request(base)
       .put(`/questions/${questionId}/tags`)
       .set('X-Tenant-Code', tenant.code)
