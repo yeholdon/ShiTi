@@ -176,5 +176,14 @@ describe('Business flow (e2e)', () => {
 
     expect(get3.status).toBe(200);
     expect(get3.body.tags).toEqual([]);
+
+    const listWithTagsAfterDelete = await request(base)
+      .get('/questions?include=tags')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(listWithTagsAfterDelete.status).toBe(200);
+    const listedQuestionAfterDelete = listWithTagsAfterDelete.body.questions.find((q: any) => q.id === questionId);
+    expect(listedQuestionAfterDelete?.tags).toEqual([]);
   });
 });
