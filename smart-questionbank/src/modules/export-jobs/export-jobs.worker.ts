@@ -13,6 +13,51 @@ function envRequired(name: string): string {
   return v;
 }
 
+function blocksToPlainText(blocks: unknown): string {
+  if (!Array.isArray(blocks)) return '';
+
+  const parts: string[] = [];
+
+  for (const b of blocks) {
+    if (!b || typeof b !== 'object') continue;
+    const type = (b as any).type;
+
+    if (typeof (b as any).text === 'string') {
+      const t = String((b as any).text).trim();
+      if (t) parts.push(t);
+      continue;
+    }
+
+    if (type === 'option') {
+      const key = typeof (b as any).key === 'string' ? String((b as any).key).trim() : '';
+      const text = typeof (b as any).text === 'string' ? String((b as any).text).trim() : '';
+      const line = `${key ? key + '. ' : ''}${text}`.trim();
+      if (line) parts.push(line);
+      continue;
+    }
+
+    if (type === 'step') {
+      const text = typeof (b as any).text === 'string' ? String((b as any).text).trim() : '';
+      if (text) parts.push(text);
+      continue;
+    }
+
+    if (typeof (b as any).latex === 'string') {
+      const t = String((b as any).latex).trim();
+      if (t) parts.push(t);
+      continue;
+    }
+
+    if (typeof (b as any).content === 'string') {
+      const t = String((b as any).content).trim();
+      if (t) parts.push(t);
+      continue;
+    }
+  }
+
+  return parts.join('\n');
+}
+
 async function renderDocumentPdf(args: {
   tenantId: string;
   documentId: string;
@@ -42,41 +87,78 @@ async function renderDocumentPdf(args: {
     pdf.on('error', reject);
   });
 
-  pdf.fontSize(20).text(doc.name || 'Untitled Document', { align: 'left' });
-  pdf.moveDown(0.5);
-  pdf.fontSize(10).fillColor('#666').text(`DocumentId: ${doc.id}`);
+  const marginLeft = pdf.page.margins.left;
+  const marginRight = pdf.page.margins.right;
+  const marginTop = pdf.page.margins.top;
+  const marginBottom = pdf.page.margins.bottom;
+  const contentWidth = pdf.page.width - marginLeft - marginRight;
+
+  let pageNo = 1;
+  const drawFooter = () => {
+    const y = pdf.page.height - marginBottom + 15;
+    pdf.save();
+    pdf.fontSize(9).fillColor('#888').text(String(pageNo), marginLeft, y, {
+      width: contentWidth,
+      align: 'center'
+    });
+    pdf.restore();
+  };
+
+  const ensureSpace = (minSpace: number) => {
+    const bottomLimit = pdf.page.height - marginBottom;
+    if (pdf.y + minSpace <= bottomLimit) return;
+    drawFooter();
+    pdf.addPage();
+    pageNo += 1;
+    pdf.y = marginTop;
+  };
+
+  pdf.fontSize(18).text(doc.name || 'Untitled Document', { align: 'center' });
+  pdf.moveDown(0.25);
+  pdf.fontSize(10).fillColor('#666').text(`DocumentId: ${doc.id}`, { align: 'center' });
   pdf.fillColor('#000');
   pdf.moveDown(1);
 
-  for (let idx = 0; idx < items.length; idx++) {
-    const item = items[idx];
-    pdf.fontSize(12).text(`${idx + 1}. ${item.itemType}`);
+  let qIndex = 0;
+  for (const item of items) {
+    if (item.itemType !== 'question' || !item.questionId) continue;
 
-    if (item.itemType === 'question' && item.questionId) {
-      const q = await prisma.withTenant(tenantId, (tx) =>
-        tx.question.findUnique({
-          where: { tenantId_id: { tenantId, id: item.questionId! } },
-          include: { content: true }
-        })
-      );
+    qIndex += 1;
+    ensureSpace(80);
 
-      if (q) {
-        pdf.fontSize(10).fillColor('#333').text(`QuestionId: ${q.id}`);
-        pdf.fillColor('#000');
-        if (q.content) {
-          pdf.fontSize(10).text(`Stem: ${JSON.stringify(q.content.stemBlocks)}`);
-        }
-      } else {
-        pdf.fontSize(10).fillColor('#b00').text(`Missing question: ${item.questionId}`);
-        pdf.fillColor('#000');
-      }
+    const q = await prisma.withTenant(tenantId, (tx) =>
+      tx.question.findUnique({
+        where: { tenantId_id: { tenantId, id: item.questionId! } },
+        include: { content: true, choiceAnswer: true }
+      })
+    );
+
+    if (!q) {
+      pdf.fontSize(11).fillColor('#b00').text(`${qIndex}. [Missing question ${item.questionId}]`);
+      pdf.fillColor('#000');
+      pdf.moveDown(0.75);
+      continue;
     }
 
-    pdf.moveDown(0.75);
+    pdf.fontSize(12).fillColor('#000').text(`${qIndex}.`, { continued: true });
+    pdf.fontSize(12).text(' ');
 
-    if (pdf.y > pdf.page.height - 80) pdf.addPage();
+    const stemText = blocksToPlainText(q.content?.stemBlocks) || '[Empty stem]';
+    pdf.fontSize(11).text(stemText, { width: contentWidth });
+
+    const optionsText = blocksToPlainText(q.choiceAnswer?.optionsBlocks);
+    if (optionsText) {
+      pdf.moveDown(0.35);
+      pdf.fontSize(11).text(optionsText, {
+        width: contentWidth,
+        indent: 12
+      });
+    }
+
+    pdf.moveDown(0.85);
   }
 
+  drawFooter();
   pdf.end();
   return done;
 }
