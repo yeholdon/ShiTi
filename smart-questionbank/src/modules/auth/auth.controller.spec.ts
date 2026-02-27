@@ -1,14 +1,14 @@
 import { AuthController } from './auth.controller';
 
 describe('AuthController', () => {
-  it('register upserts user and issues token', async () => {
-    const prisma = { user: { upsert: jest.fn().mockResolvedValue({ id: 'u1' }) } } as any;
+  it('register creates user and issues token', async () => {
+    const prisma = { user: { create: jest.fn().mockResolvedValue({ id: 'u1' }) } } as any;
     const auth = { issueToken: jest.fn().mockResolvedValue({ accessToken: 't' }) } as any;
     const ctrl = new AuthController(prisma, auth);
 
     const res = await ctrl.register({ username: 'alice' });
 
-    expect(prisma.user.upsert).toHaveBeenCalled();
+    expect(prisma.user.create).toHaveBeenCalledWith({ data: { username: 'alice', passwordHash: 'dev' } });
     expect(auth.issueToken).toHaveBeenCalledWith('u1');
     expect(res).toEqual({ accessToken: 't' });
   });
