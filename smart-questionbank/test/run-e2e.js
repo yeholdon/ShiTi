@@ -39,7 +39,9 @@ async function main() {
     cwd: path.join(__dirname, '..'),
     env: {
       ...process.env,
-      PORT: String(port)
+      PORT: String(port),
+      // E2E expects export jobs to complete; enable worker in the spawned API process.
+      EXPORT_JOBS_WORKER_ENABLED: process.env.EXPORT_JOBS_WORKER_ENABLED || '1'
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
