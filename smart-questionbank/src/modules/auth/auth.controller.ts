@@ -14,11 +14,16 @@ export class AuthController {
     const username = (body?.username || '').trim();
     if (!username) throw new Error('Missing username');
 
-    const user = await this.prisma.user.upsert({
-      where: { username },
-      update: {},
-      create: { username, passwordHash: 'dev' }
-    });
+    // Prisma upsert can still throw P2002 under concurrent register calls.
+    // Make register idempotent by falling back to lookup when username already exists.
+    let user;
+    try {
+      user = await this.prisma.user.create({ data: { username, passwordHash: 'dev' } });
+    } catch (e: any) {
+      if (e?.code !== 'P2002') throw e;
+      user = await this.prisma.user.findUnique({ where: { username } });
+      if (!user) throw e;
+    }
 
     return this.auth.issueToken(user.id);
   }
