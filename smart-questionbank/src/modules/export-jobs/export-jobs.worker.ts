@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Worker } from 'bullmq';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import PDFDocument from 'pdfkit';
 import { Client as MinioClient } from 'minio';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -115,8 +117,13 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    this.minio = makeMinioClientFromEnv();
-    await ensureBucket(this.minio.client, this.minio.bucket);
+    try {
+      this.minio = makeMinioClientFromEnv();
+      await ensureBucket(this.minio.client, this.minio.bucket);
+    } catch (e) {
+      this.logger.warn(`MinIO init failed; falling back to local export files (${String((e as any)?.message || e)})`);
+      this.minio = undefined;
+    }
 
     this.worker = new Worker(
       EXPORT_JOBS_QUEUE,
@@ -137,21 +144,28 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
           })
         );
 
-        if (!this.minio) throw new Error('MinIO client not initialized');
-
         const pdf = await renderDocumentPdf({ tenantId, documentId: existing.documentId, prisma: this.prisma });
 
-        const key = `tenants/${tenantId}/exports/${exportJobId}.pdf`;
-        await this.minio.client.putObject(this.minio.bucket, key, pdf, pdf.length, {
-          'Content-Type': 'application/pdf'
-        });
+        let storageKey: string;
+        if (this.minio) {
+          storageKey = `tenants/${tenantId}/exports/${exportJobId}.pdf`;
+          await this.minio.client.putObject(this.minio.bucket, storageKey, pdf, pdf.length, {
+            'Content-Type': 'application/pdf'
+          });
+        } else {
+          const dir = path.join('/tmp', 'smart-questionbank', 'exports', tenantId);
+          await fs.mkdir(dir, { recursive: true });
+          const filePath = path.join(dir, `${exportJobId}.pdf`);
+          await fs.writeFile(filePath, pdf);
+          storageKey = filePath;
+        }
 
         const asset = await this.prisma.withTenant(tenantId, (tx) =>
           tx.asset.create({
             data: {
               tenantId,
-              kind: 'export_document_pdf',
-              storageKey: key,
+              kind: this.minio ? 'export_document_pdf_minio' : 'export_document_pdf_local',
+              storageKey,
               mime: 'application/pdf',
               size: pdf.length
             }
