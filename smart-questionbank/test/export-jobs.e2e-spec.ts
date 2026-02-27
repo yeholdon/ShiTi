@@ -55,5 +55,20 @@ describe('ExportJobs (e2e)', () => {
     }
 
     expect(lastStatus).toBe('succeeded');
+
+    const result = await request(base)
+      .get(`/export-jobs/${jobId}/result`)
+      .buffer(true)
+      .parse((res, cb) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (d) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
+        res.on('end', () => cb(null, Buffer.concat(chunks)));
+      })
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(result.status).toBe(200);
+    expect(result.headers['content-type']).toMatch(/application\/pdf/);
+    expect((result.body as Buffer).length).toBeGreaterThan(100);
   });
 });
