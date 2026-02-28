@@ -69,7 +69,11 @@ export class QuestionsController {
     const includeTags = include.includes('tags');
 
     const result = await this.prisma.withTenant(tenantId, async (tx) => {
-      const questions = await tx.question.findMany({ take: 50, orderBy: { createdAt: 'desc' } });
+      const questions = await tx.question.findMany({
+        where: { tenantId },
+        take: 50,
+        orderBy: { createdAt: 'desc' }
+      });
 
       if (!includeTags) return { questions };
 
