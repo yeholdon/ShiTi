@@ -35,8 +35,24 @@ async function main() {
   const port = Number(process.env.E2E_PORT || 3100 + Math.floor(Math.random() * 1000));
   const baseUrl = `http://localhost:${port}`;
 
+  const cwd = path.join(__dirname, '..');
+
+  // Ensure tenant isolation policies exist in the test database.
+  // (RLS is a DB concern; without it, isolation relies purely on app code and is easier to regress.)
+  await new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, ['-r', 'ts-node/register', 'prisma/apply-rls.ts'], {
+      cwd,
+      env: { ...process.env },
+      stdio: 'inherit'
+    });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`apply-rls exited with code ${code}`));
+    });
+  });
+
   const serverProc = spawn(process.execPath, ['-r', 'ts-node/register', 'src/main.ts'], {
-    cwd: path.join(__dirname, '..'),
+    cwd,
     env: {
       ...process.env,
       PORT: String(port),
