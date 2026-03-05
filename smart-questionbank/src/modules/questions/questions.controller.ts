@@ -17,11 +17,15 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { requireActiveTenantMember, requireTenantId, requireUserId } from '../../tenant/tenant-guards';
+import { QuestionsImportService } from './questions-import.service';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
 export class QuestionsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly questionsImport: QuestionsImportService
+  ) {}
 
   @Post()
   async create(@Req() req: Request, @Body() body: { subjectId?: string }) {
@@ -84,131 +88,12 @@ export class QuestionsController {
     const ownerUserId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, ownerUserId);
 
-    if (!body?.items?.length) throw new BadRequestException('Missing items');
-    if (body.items.length > 200) throw new BadRequestException('Too many items (max 200)');
-
-    const fallbackSubjectId = await this.prisma.subject
-      .findFirst({ where: { tenantId: null, isSystem: true }, orderBy: { createdAt: 'asc' } })
-      .then((s) => s?.id);
-
-    if (!fallbackSubjectId) throw new Error('No system subject found; run prisma seed');
-
-    if (body.dryRun) {
-      return { ok: true, dryRun: true, count: body.items.length };
-    }
-
-    const result = await this.prisma.withTenant(tenantId, async (tx) => {
-      const createdQuestionIds: string[] = [];
-
-      for (const item of body.items) {
-        const type = item.type || 'single_choice';
-        const difficulty = typeof item.difficulty === 'number' ? item.difficulty : 3;
-        const defaultScore = item.defaultScore ?? '5.00';
-        const subjectId = item.subjectId || fallbackSubjectId;
-        const visibility = item.visibility || 'private';
-
-        if (difficulty < 1 || difficulty > 5) throw new BadRequestException('difficulty must be 1..5');
-
-        const question = await tx.question.create({
-          data: {
-            tenantId,
-            type,
-            difficulty,
-            defaultScore,
-            subjectId,
-            ownerUserId,
-            visibility
-          }
-        });
-
-        createdQuestionIds.push(question.id);
-
-        if (item.content?.stemBlocks != null) {
-          await tx.questionContent.create({
-            data: { tenantId, questionId: question.id, stemBlocks: item.content.stemBlocks }
-          });
-        }
-
-        if (item.explanation?.stepsBlocks != null) {
-          await tx.questionExplanation.create({
-            data: {
-              tenantId,
-              questionId: question.id,
-              overviewLatex: item.explanation.overviewLatex ?? null,
-              stepsBlocks: item.explanation.stepsBlocks,
-              commentaryLatex: item.explanation.commentaryLatex ?? null
-            }
-          });
-        }
-
-        if (item.source) {
-          await tx.questionSource.create({
-            data: {
-              tenantId,
-              questionId: question.id,
-              year: item.source.year ?? null,
-              month: item.source.month ?? null,
-              sourceText: item.source.sourceText ?? null
-            }
-          });
-        }
-
-        if (item.choiceAnswer) {
-          await tx.questionAnswerChoice.create({
-            data: {
-              tenantId,
-              questionId: question.id,
-              optionsBlocks: item.choiceAnswer.optionsBlocks,
-              correct: item.choiceAnswer.correct
-            }
-          });
-        }
-
-        if (item.blankAnswer) {
-          await tx.questionAnswerBlank.create({
-            data: {
-              tenantId,
-              questionId: question.id,
-              blanks: item.blankAnswer.blanks
-            }
-          });
-        }
-
-        if (item.solutionAnswer) {
-          await tx.questionAnswerSolution.create({
-            data: {
-              tenantId,
-              questionId: question.id,
-              finalAnswerLatex: item.solutionAnswer.finalAnswerLatex ?? null,
-              scoringPoints: item.solutionAnswer.scoringPoints
-            }
-          });
-        }
-
-        if (item.tags?.length) {
-          for (const rawName of item.tags) {
-            const name = String(rawName || '').trim();
-            if (!name) continue;
-
-            const tag = await tx.questionTag.upsert({
-              where: { tenantId_name: { tenantId, name } },
-              create: { tenantId, name },
-              update: {}
-            });
-
-            await tx.questionTagging.upsert({
-              where: { tenantId_questionId_tagId: { tenantId, questionId: question.id, tagId: tag.id } },
-              create: { tenantId, questionId: question.id, tagId: tag.id },
-              update: {}
-            });
-          }
-        }
-      }
-
-      return { createdQuestionIds };
+    return this.questionsImport.importQuestions({
+      tenantId,
+      ownerUserId,
+      dryRun: body?.dryRun,
+      items: body?.items as any
     });
-
-    return { ok: true, createdCount: result.createdQuestionIds.length, questionIds: result.createdQuestionIds };
   }
 
   @Get()
