@@ -51,6 +51,19 @@ async function main() {
     });
   });
 
+  // Seed system defaults (subjects/textbooks) required by e2e flows.
+  await new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, ['-r', 'ts-node/register', 'prisma/seed.ts'], {
+      cwd,
+      env: { ...process.env },
+      stdio: 'inherit'
+    });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`seed exited with code ${code}`));
+    });
+  });
+
   const serverProc = spawn(process.execPath, ['-r', 'ts-node/register', 'src/main.ts'], {
     cwd,
     env: {

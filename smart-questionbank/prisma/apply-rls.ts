@@ -1,6 +1,36 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+function inferAdminDatabaseUrl() {
+  const explicit = process.env.RLS_ADMIN_DATABASE_URL;
+  if (explicit && explicit.trim()) return explicit;
+
+  const raw = process.env.DATABASE_URL;
+  if (!raw) return undefined;
+
+  try {
+    const url = new URL(raw);
+
+    // In dev we run the API as a non-superuser (qb_app) to ensure RLS is effective.
+    // But applying RLS policies requires a table owner / elevated role.
+    if (url.username && url.username !== 'postgres') {
+      url.username = 'postgres';
+      // Default docker-compose password.
+      url.password = 'postgres';
+    }
+
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: inferAdminDatabaseUrl()
+    }
+  }
+});
 
 type TenantScopedTable = {
   table: string;
