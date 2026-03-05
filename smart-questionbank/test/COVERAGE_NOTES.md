@@ -1,4 +1,4 @@
-# smart-questionbank test coverage notes
+# ShiTi test coverage notes
 
 ## What is covered (unit)
 
@@ -20,6 +20,9 @@
 ## What is covered (e2e)
 
 - Tenant isolation: tenant A cannot see tenant B questions
+- Cross-tenant hard isolation:
+  - Question creation rejects subjectId from another tenant
+  - Export jobs cannot be fetched/downloaded from another tenant
 
 ## Test entrypoints
 
