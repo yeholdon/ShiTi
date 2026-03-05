@@ -59,9 +59,10 @@ const TABLES: TenantScopedTable[] = [
 async function main() {
   for (const { table, policy } of TABLES) {
     await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ENABLE ROW LEVEL SECURITY;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" FORCE ROW LEVEL SECURITY;`);
     await prisma.$executeRawUnsafe(`DROP POLICY IF EXISTS ${policy} ON "${table}";`);
     await prisma.$executeRawUnsafe(
-      `CREATE POLICY ${policy} ON "${table}" USING ("tenantId" = current_setting('app.tenant_id', true)::uuid);`
+      `CREATE POLICY ${policy} ON "${table}" USING ("tenantId" = current_setting('app.tenant_id', true)::uuid) WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);`
     );
   }
 }

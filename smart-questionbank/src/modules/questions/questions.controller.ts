@@ -18,6 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { requireActiveTenantMember, requireTenantId, requireUserId } from '../../tenant/tenant-guards';
 import { QuestionsImportService } from './questions-import.service';
+import { ensureTenantOrSystemSubject } from './subject-access';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
@@ -33,11 +34,11 @@ export class QuestionsController {
     const ownerUserId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, ownerUserId);
 
-    const subjectId =
-      body.subjectId ||
-      (await this.prisma.subject
-        .findFirst({ where: { tenantId: null, isSystem: true }, orderBy: { createdAt: 'asc' } })
-        .then((s) => s?.id));
+    const subjectId = body.subjectId
+      ? await ensureTenantOrSystemSubject(this.prisma, tenantId, body.subjectId)
+      : await this.prisma.subject
+          .findFirst({ where: { tenantId: null, isSystem: true }, orderBy: { createdAt: 'asc' } })
+          .then((s) => s?.id);
 
     if (!subjectId) throw new Error('No system subject found; run prisma seed');
 
@@ -192,7 +193,9 @@ export class QuestionsController {
     if (body.type) data.type = body.type;
     if (typeof body.difficulty === 'number') data.difficulty = body.difficulty;
     if (body.defaultScore != null) data.defaultScore = body.defaultScore;
-    if (body.subjectId) data.subjectId = body.subjectId;
+    if (body.subjectId) {
+      data.subjectId = await ensureTenantOrSystemSubject(this.prisma, tenantId, body.subjectId);
+    }
     if (body.visibility) data.visibility = body.visibility;
 
     const question = await this.prisma.withTenant(tenantId, (tx) =>

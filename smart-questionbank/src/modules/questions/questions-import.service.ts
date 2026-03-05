@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ensureTenantOrSystemSubject } from './subject-access';
 
 export type ImportQuestionItem = {
   type?: 'single_choice' | 'fill_blank' | 'solution';
@@ -53,7 +54,9 @@ export class QuestionsImportService {
         const type = item.type || 'single_choice';
         const difficulty = typeof item.difficulty === 'number' ? item.difficulty : 3;
         const defaultScore = item.defaultScore ?? '5.00';
-        const subjectId = item.subjectId || fallbackSubjectId;
+        const subjectId = item.subjectId
+          ? await ensureTenantOrSystemSubject(this.prisma, tenantId, item.subjectId)
+          : fallbackSubjectId;
         const visibility = item.visibility || 'private';
 
         if (difficulty < 1 || difficulty > 5) throw new BadRequestException('difficulty must be 1..5');
