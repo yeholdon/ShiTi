@@ -22,6 +22,7 @@
 - Tenant isolation: tenant A cannot see tenant B questions
 - Cross-tenant hard isolation:
   - Question creation rejects subjectId from another tenant
+  - Question import/patch rejects subjectId from another tenant
   - Export jobs cannot be fetched/downloaded from another tenant
 
 ## Test entrypoints

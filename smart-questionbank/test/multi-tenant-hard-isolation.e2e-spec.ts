@@ -109,4 +109,61 @@ describe('Multi-tenant hard isolation (e2e)', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(wrongTenantResult.status).toBe(404);
   });
+
+  it('rejects using another tenant subject in import and patch flows', async () => {
+    const suffix = Date.now();
+    const tenantA = { code: `iso-subject-a-${suffix}`, name: 'Subject A' };
+    const tenantB = { code: `iso-subject-b-${suffix}`, name: 'Subject B' };
+
+    await request(base).post('/tenants').send(tenantA);
+    await request(base).post('/tenants').send(tenantB);
+
+    const reg = await request(base).post('/auth/register').send({ username: `iso-subject-user-${suffix}` });
+    expect(reg.status).toBe(201);
+    const token = reg.body.accessToken;
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenantA.code, role: 'owner' });
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenantB.code, role: 'owner' });
+
+    const bSubject = await request(base)
+      .post('/subjects')
+      .set('X-Tenant-Code', tenantB.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: `TenantB Subject for Patch ${suffix}` });
+    expect(bSubject.status).toBe(201);
+    const tenantBSubjectId = bSubject.body.subject.id;
+
+    const imported = await request(base)
+      .post('/questions/import')
+      .set('X-Tenant-Code', tenantA.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [{ type: 'single_choice', subjectId: tenantBSubjectId, content: { stemBlocks: [{ type: 'text', text: 'x?' }] } }]
+      });
+    expect(imported.status).toBe(400);
+    expect(String(imported.body.message || '')).toContain('Invalid subjectId');
+
+    const createdQuestion = await request(base)
+      .post('/questions')
+      .set('X-Tenant-Code', tenantA.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(createdQuestion.status).toBe(201);
+    const questionId = createdQuestion.body.question.id;
+
+    const patched = await request(base)
+      .patch(`/questions/${questionId}`)
+      .set('X-Tenant-Code', tenantA.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ subjectId: tenantBSubjectId });
+    expect(patched.status).toBe(400);
+    expect(String(patched.body.message || '')).toContain('Invalid subjectId');
+  });
 });
