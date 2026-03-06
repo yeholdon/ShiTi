@@ -1,10 +1,37 @@
 const { spawn } = require('child_process');
 const path = require('path');
+const os = require('os');
 
 const jestBin = path.join(__dirname, '..', 'node_modules', '.bin', process.platform === 'win32' ? 'jest.cmd' : 'jest');
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function sanitizeNodeOptions(env) {
+  if (!env.NODE_OPTIONS) return env;
+  const tokens = env.NODE_OPTIONS.match(/"[^"]*"|'[^']*'|\\S+/g) || [];
+  const filtered = tokens.filter((token) => {
+    if (token === '--localstorage-file' || token === '--localstorage-file=') return false;
+    if (token.startsWith('--localstorage-file=')) {
+      return token.length > '--localstorage-file='.length;
+    }
+    return true;
+  });
+  const next = { ...env };
+  if (filtered.length === 0) delete next.NODE_OPTIONS;
+  else next.NODE_OPTIONS = filtered.join(' ');
+  return next;
+}
+
+function ensureLocalStorageFile(env) {
+  const next = sanitizeNodeOptions(env);
+  const tokens = next.NODE_OPTIONS ? next.NODE_OPTIONS.match(/"[^"]*"|'[^']*'|\\S+/g) || [] : [];
+  const withoutLocalStorage = tokens.filter((token) => !token.startsWith('--localstorage-file'));
+  const localStorageFile = `--localstorage-file=${path.join(os.tmpdir(), 'shiti-localstorage')}`;
+  withoutLocalStorage.push(localStorageFile);
+  next.NODE_OPTIONS = withoutLocalStorage.join(' ');
+  return next;
 }
 
 async function waitForServer(url, timeoutMs = 60000) {
@@ -36,13 +63,14 @@ async function main() {
   const baseUrl = `http://localhost:${port}`;
 
   const cwd = path.join(__dirname, '..');
+  const baseEnv = sanitizeNodeOptions({ ...process.env });
 
   // Ensure tenant isolation policies exist in the test database.
   // (RLS is a DB concern; without it, isolation relies purely on app code and is easier to regress.)
   await new Promise((resolve, reject) => {
     const proc = spawn(process.execPath, ['-r', 'ts-node/register', 'prisma/apply-rls.ts'], {
       cwd,
-      env: { ...process.env },
+      env: { ...baseEnv },
       stdio: 'inherit'
     });
     proc.on('close', (code) => {
@@ -55,7 +83,7 @@ async function main() {
   await new Promise((resolve, reject) => {
     const proc = spawn(process.execPath, ['-r', 'ts-node/register', 'prisma/seed.ts'], {
       cwd,
-      env: { ...process.env },
+      env: { ...baseEnv },
       stdio: 'inherit'
     });
     proc.on('close', (code) => {
@@ -67,7 +95,7 @@ async function main() {
   const serverProc = spawn(process.execPath, ['-r', 'ts-node/register', 'src/main.ts'], {
     cwd,
     env: {
-      ...process.env,
+      ...baseEnv,
       PORT: String(port),
       // E2E expects export jobs to complete; enable worker in the spawned API process.
       EXPORT_JOBS_WORKER_ENABLED: process.env.EXPORT_JOBS_WORKER_ENABLED || '1'
@@ -88,7 +116,7 @@ async function main() {
     const jestProc = spawn(jestBin, ['--config', 'test/jest-e2e.json'], {
       cwd: path.join(__dirname, '..'),
       env: {
-        ...process.env,
+        ...ensureLocalStorageFile(baseEnv),
         E2E_BASE_URL: baseUrl
       },
       stdio: 'inherit'
