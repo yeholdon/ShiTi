@@ -20,6 +20,10 @@
 ## What is covered (e2e)
 
 - Health probe: `/health` returns `{ status: 'ok' }`
+- Tenant members:
+  - Missing `tenantCode` returns `400`
+  - Unknown tenant returns `404`
+  - Re-joining the same tenant upserts and updates membership role
 - Question tags:
   - Tenant can create/list/delete its own tags
   - Other tenants cannot list or delete that tenant's tags
