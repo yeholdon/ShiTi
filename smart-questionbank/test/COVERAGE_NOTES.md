@@ -24,6 +24,11 @@
   - Missing `tenantCode` returns `400`
   - Unknown tenant returns `404`
   - Re-joining the same tenant upserts and updates membership role
+- Questions:
+  - Setting question tags rejects unknown tag IDs
+  - Question list with `include=tags` returns assigned tags
+  - Question detail returns assigned tags
+  - Replacing tags overwrites prior tag assignments
 - Question tags:
   - Tenant can create/list/delete its own tags
   - Other tenants cannot list or delete that tenant's tags
