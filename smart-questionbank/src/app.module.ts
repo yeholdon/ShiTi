@@ -10,6 +10,7 @@ import { QuestionTagsModule } from './modules/question-tags/question-tags.module
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ExportJobsModule } from './modules/export-jobs/export-jobs.module';
 import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { TenantResolveMiddleware } from './tenant/tenant-resolve.middleware';
     DocumentsModule,
     ExportJobsModule,
     TenantMembersModule,
-    SubjectsModule
+    SubjectsModule,
+    HealthModule
   ]
 })
 export class AppModule implements NestModule {

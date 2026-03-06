@@ -111,7 +111,7 @@ async function main() {
   forward(serverProc.stderr, '[api] ');
 
   try {
-    await waitForServer(baseUrl + '/');
+    await waitForServer(baseUrl + '/health');
 
     const jestProc = spawn(jestBin, ['--config', 'test/jest-e2e.json'], {
       cwd: path.join(__dirname, '..'),
