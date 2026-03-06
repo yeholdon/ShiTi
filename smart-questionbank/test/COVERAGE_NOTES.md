@@ -20,6 +20,9 @@
 ## What is covered (e2e)
 
 - Health probe: `/health` returns `{ status: 'ok' }`
+- Question tags:
+  - Tenant can create/list/delete its own tags
+  - Other tenants cannot list or delete that tenant's tags
 - Subjects:
   - Authenticated request without tenant header sees seeded system subjects
   - Tenant request sees system subjects plus its own tenant-created subjects
