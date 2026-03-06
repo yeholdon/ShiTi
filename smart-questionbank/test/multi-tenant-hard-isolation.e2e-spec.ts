@@ -166,4 +166,51 @@ describe('Multi-tenant hard isolation (e2e)', () => {
     expect(patched.status).toBe(400);
     expect(String(patched.body.message || '')).toContain('Invalid subjectId');
   });
+
+  it('rejects attaching another tenant question into document items', async () => {
+    const suffix = Date.now();
+    const tenantA = { code: `iso-doc-a-${suffix}`, name: 'Doc A' };
+    const tenantB = { code: `iso-doc-b-${suffix}`, name: 'Doc B' };
+
+    await request(base).post('/tenants').send(tenantA);
+    await request(base).post('/tenants').send(tenantB);
+
+    const reg = await request(base).post('/auth/register').send({ username: `iso-doc-user-${suffix}` });
+    expect(reg.status).toBe(201);
+    const token = reg.body.accessToken;
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenantA.code, role: 'owner' });
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenantB.code, role: 'owner' });
+
+    const aDocument = await request(base)
+      .post('/documents')
+      .set('X-Tenant-Code', tenantA.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Tenant A Doc', kind: 'paper' });
+    expect(aDocument.status).toBe(201);
+    const documentId = aDocument.body.document.id;
+
+    const bQuestion = await request(base)
+      .post('/questions')
+      .set('X-Tenant-Code', tenantB.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(bQuestion.status).toBe(201);
+    const questionId = bQuestion.body.question.id;
+
+    const badAttach = await request(base)
+      .post(`/documents/${documentId}/items`)
+      .set('X-Tenant-Code', tenantA.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ itemType: 'question', questionId });
+    expect(badAttach.status).toBe(400);
+    expect(String(badAttach.body.message || '')).toContain('Question not found');
+  });
 });

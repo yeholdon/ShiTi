@@ -23,6 +23,7 @@
 - Cross-tenant hard isolation:
   - Question creation rejects subjectId from another tenant
   - Question import/patch rejects subjectId from another tenant
+  - Document item rejects questionId from another tenant
   - Export jobs cannot be fetched/downloaded from another tenant
 
 ## Test entrypoints
