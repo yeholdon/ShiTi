@@ -19,6 +19,11 @@
 
 ## What is covered (e2e)
 
+- Health probe: `/health` returns `{ status: 'ok' }`
+- Subjects:
+  - Authenticated request without tenant header sees seeded system subjects
+  - Tenant request sees system subjects plus its own tenant-created subjects
+  - Other tenants cannot see that tenant-specific subject
 - Tenant isolation: tenant A cannot see tenant B questions
 - Cross-tenant hard isolation:
   - Question creation rejects subjectId from another tenant
