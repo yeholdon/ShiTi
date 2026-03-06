@@ -25,6 +25,7 @@
   - Unknown tenant returns `404`
   - Re-joining the same tenant upserts and updates membership role
 - Questions:
+  - Question content/explanation/source/choice-answer upserts round-trip through detail view
   - Setting question tags rejects unknown tag IDs
   - Question list with `include=tags` returns assigned tags
   - Question detail returns assigned tags
