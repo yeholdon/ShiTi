@@ -1,6 +1,5 @@
 const { spawn } = require('child_process');
 const path = require('path');
-const os = require('os');
 
 const jestBin = path.join(__dirname, '..', 'node_modules', '.bin', process.platform === 'win32' ? 'jest.cmd' : 'jest');
 
@@ -21,16 +20,6 @@ function sanitizeNodeOptions(env) {
   const next = { ...env };
   if (filtered.length === 0) delete next.NODE_OPTIONS;
   else next.NODE_OPTIONS = filtered.join(' ');
-  return next;
-}
-
-function ensureLocalStorageFile(env) {
-  const next = sanitizeNodeOptions(env);
-  const tokens = next.NODE_OPTIONS ? next.NODE_OPTIONS.match(/"[^"]*"|'[^']*'|\\S+/g) || [] : [];
-  const withoutLocalStorage = tokens.filter((token) => !token.startsWith('--localstorage-file'));
-  const localStorageFile = `--localstorage-file=${path.join(os.tmpdir(), 'shiti-localstorage')}`;
-  withoutLocalStorage.push(localStorageFile);
-  next.NODE_OPTIONS = withoutLocalStorage.join(' ');
   return next;
 }
 
@@ -116,7 +105,7 @@ async function main() {
     const jestProc = spawn(jestBin, ['--config', 'test/jest-e2e.json'], {
       cwd: path.join(__dirname, '..'),
       env: {
-        ...ensureLocalStorageFile(baseEnv),
+        ...baseEnv,
         E2E_BASE_URL: baseUrl
       },
       stdio: 'inherit'
