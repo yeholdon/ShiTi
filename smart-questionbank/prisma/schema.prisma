@@ -45,6 +45,7 @@ enum ExportJobStatus {
   running
   succeeded
   failed
+  canceled
 }
 
 enum ExportKind {
@@ -71,6 +72,7 @@ model Stage {
   createdAt DateTime @default(now())
 
   grades    Grade[]
+  questionStages QuestionStage[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, name])
@@ -87,6 +89,7 @@ model Grade {
   createdAt DateTime @default(now())
 
   stage     Stage    @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  questionGrades QuestionGrade[]
 
   @@index([stageId])
   @@unique([tenantId, stageId, code])
@@ -136,6 +139,8 @@ model Textbook {
   isSystem  Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  questionTextbooks QuestionTextbook[]
+
   @@unique([tenantId, name])
 }
 
@@ -146,6 +151,8 @@ model Chapter {
   parentId   String? @db.Uuid
   name       String
   createdAt  DateTime @default(now())
+
+  questionChapters QuestionChapter[]
 
   @@id([tenantId, id])
   @@index([textbookId])
@@ -176,6 +183,58 @@ model QuestionTagging {
   @@index([tenantId, tagId])
 }
 
+model QuestionStage {
+  tenantId   String @db.Uuid
+  questionId String @db.Uuid
+  stageId    String @db.Uuid
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+  stage    Stage    @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, questionId, stageId])
+  @@index([tenantId, stageId])
+}
+
+model QuestionGrade {
+  tenantId   String @db.Uuid
+  questionId String @db.Uuid
+  gradeId    String @db.Uuid
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+  grade    Grade    @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, questionId, gradeId])
+  @@index([tenantId, gradeId])
+}
+
+model QuestionTextbook {
+  tenantId   String @db.Uuid
+  questionId String @db.Uuid
+  textbookId String @db.Uuid
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+  textbook Textbook @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, questionId, textbookId])
+  @@index([tenantId, textbookId])
+}
+
+model QuestionChapter {
+  tenantId   String @db.Uuid
+  questionId String @db.Uuid
+  chapterId  String @db.Uuid
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
+  chapter  Chapter  @relation(fields: [tenantId, chapterId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, questionId, chapterId])
+  @@index([tenantId, chapterId])
+}
+
 model Question {
   tenantId     String @db.Uuid
   id           String @default(uuid()) @db.Uuid
@@ -196,6 +255,10 @@ model Question {
   solutionAnswer QuestionAnswerSolution?
 
   questionTaggings QuestionTagging[]
+  questionStages QuestionStage[]
+  questionGrades QuestionGrade[]
+  questionTextbooks QuestionTextbook[]
+  questionChapters QuestionChapter[]
 
   @@id([tenantId, id])
   @@index([subjectId])
@@ -218,8 +281,10 @@ model QuestionExplanation {
   tenantId        String @db.Uuid
   questionId      String @db.Uuid
   overviewLatex   String?
+  overviewBlocks  Json?
   stepsBlocks     Json
   commentaryLatex String?
+  commentaryBlocks Json?
 
   question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
 
@@ -263,7 +328,9 @@ model QuestionAnswerSolution {
   tenantId         String @db.Uuid
   questionId       String @db.Uuid
   finalAnswerLatex String?
+  referenceAnswerBlocks Json?
   scoringPoints    Json
+  scoringPointsBlocks Json?
 
   question Question @relation(fields: [tenantId, questionId], references: [tenantId, id], onDelete: Cascade)
 
@@ -315,6 +382,7 @@ model Asset {
   tenantId    String @db.Uuid
   id          String @default(uuid()) @db.Uuid
   kind        String
+  originalFilename String?
   storageKey  String
   mime        String
   size        Int
@@ -339,4 +407,21 @@ model ExportJob {
 
   @@id([tenantId, id])
   @@index([documentId])
+}
+
+model AuditLog {
+  tenantId   String @db.Uuid
+  id         String @default(uuid()) @db.Uuid
+  userId     String? @db.Uuid
+  action     String
+  targetType String
+  targetId   String? @db.Uuid
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@id([tenantId, id])
+  @@index([createdAt])
+  @@index([action])
+  @@index([targetType])
+  @@index([userId])
 }

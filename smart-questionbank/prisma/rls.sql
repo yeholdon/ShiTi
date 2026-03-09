@@ -45,12 +45,22 @@ ALTER TABLE "QuestionTag" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "QuestionTag" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "QuestionTagging" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "QuestionTagging" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionStage" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionStage" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionGrade" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionGrade" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionTextbook" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionTextbook" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionChapter" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuestionChapter" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Chapter" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Chapter" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Asset" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Asset" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "ExportJob" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ExportJob" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AuditLog" FORCE ROW LEVEL SECURITY;
 
 -- Policies: tenant_id must match session setting.
 
@@ -119,6 +129,26 @@ CREATE POLICY tenant_isolation_question_tagging ON "QuestionTagging"
   USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
   WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation_question_stage ON "QuestionStage";
+CREATE POLICY tenant_isolation_question_stage ON "QuestionStage"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_question_grade ON "QuestionGrade";
+CREATE POLICY tenant_isolation_question_grade ON "QuestionGrade"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_question_textbook ON "QuestionTextbook";
+CREATE POLICY tenant_isolation_question_textbook ON "QuestionTextbook"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_question_chapter ON "QuestionChapter";
+CREATE POLICY tenant_isolation_question_chapter ON "QuestionChapter"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
 DROP POLICY IF EXISTS tenant_isolation_chapter ON "Chapter";
 CREATE POLICY tenant_isolation_chapter ON "Chapter"
   USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
@@ -131,5 +161,10 @@ CREATE POLICY tenant_isolation_asset ON "Asset"
 
 DROP POLICY IF EXISTS tenant_isolation_export_job ON "ExportJob";
 CREATE POLICY tenant_isolation_export_job ON "ExportJob"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_audit_log ON "AuditLog";
+CREATE POLICY tenant_isolation_audit_log ON "AuditLog"
   USING ("tenantId" = current_setting('app.tenant_id', true)::uuid)
   WITH CHECK ("tenantId" = current_setting('app.tenant_id', true)::uuid);

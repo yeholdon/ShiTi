@@ -1,0 +1,355 @@
+// Draft only.
+// This file documents the intended future domain schema direction.
+// It is not wired into the current running application.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccessLevel {
+  user
+  member
+  admin
+}
+
+enum TenantRole {
+  member
+  admin
+  owner
+}
+
+enum QuestionType {
+  choice
+  blank
+  solution
+}
+
+enum DocumentKind {
+  paper
+  handout
+}
+
+enum DocumentItemType {
+  question
+  layout_element
+}
+
+enum ExportJobStatus {
+  pending
+  running
+  succeeded
+  failed
+  canceled
+}
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  passwordHash  String
+  accessLevel   AccessLevel    @default(user)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  memberships   TenantMember[]
+  createdQs     Question[]     @relation("QuestionCreatedBy")
+  updatedQs     Question[]     @relation("QuestionUpdatedBy")
+  auditLogs     AuditLog[]
+}
+
+model Tenant {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  name        String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  members     TenantMember[]
+}
+
+model TenantMember {
+  id         String     @id @default(uuid())
+  tenantId   String
+  userId     String
+  role       TenantRole @default(member)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+}
+
+model Question {
+  id            String               @id @default(uuid())
+  tenantId      String
+  type          QuestionType
+  difficulty    Int
+  defaultScore  Decimal              @db.Decimal(8, 2)
+  visibility    String               @default("private")
+  createdById   String
+  updatedById   String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  createdBy     User                 @relation("QuestionCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User                 @relation("QuestionUpdatedBy", fields: [updatedById], references: [id])
+  content       QuestionContent?
+  choiceAnswer  QuestionChoiceAnswer?
+  blankAnswer   QuestionBlankAnswer?
+  solutionAnswer QuestionSolutionAnswer?
+  subjects      QuestionSubject[]
+  stages        QuestionStage[]
+  grades        QuestionGrade[]
+  textbooks     QuestionTextbook[]
+  chapters      QuestionChapter[]
+  tags          QuestionTagMap[]
+}
+
+model QuestionContent {
+  questionId       String   @id
+  tenantId         String
+  stemBlocks       Json
+  analysisBlocks   Json?
+  solutionBlocks   Json
+  commentBlocks    Json?
+  sourceYear       Int?
+  sourceMonth      Int?
+  sourceText       String?
+
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionChoiceAnswer {
+  questionId     String @id
+  tenantId       String
+  optionsBlocks  Json
+  correctKeys    Json
+
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionBlankAnswer {
+  questionId     String @id
+  tenantId       String
+  answers        Json
+
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionSolutionAnswer {
+  questionId            String @id
+  tenantId              String
+  referenceAnswerBlocks Json?
+  scoringPointsBlocks   Json?
+
+  question              Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Subject {
+  id          String            @id @default(uuid())
+  tenantId    String?
+  name        String
+  isSystem    Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  questions   QuestionSubject[]
+}
+
+model Stage {
+  id          String            @id @default(uuid())
+  tenantId    String?
+  name        String
+  isSystem    Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  grades      Grade[]
+  questions   QuestionStage[]
+}
+
+model Grade {
+  id          String            @id @default(uuid())
+  tenantId    String?
+  stageId     String?
+  name        String
+  isSystem    Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  stage       Stage?            @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  questions   QuestionGrade[]
+}
+
+model Textbook {
+  id          String             @id @default(uuid())
+  tenantId    String?
+  name        String
+  isSystem    Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  chapters    Chapter[]
+  questions   QuestionTextbook[]
+}
+
+model Chapter {
+  id          String             @id @default(uuid())
+  tenantId    String
+  textbookId  String
+  name        String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  textbook    Textbook           @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+  questions   QuestionChapter[]
+}
+
+model QuestionTag {
+  id          String             @id @default(uuid())
+  tenantId    String?
+  name        String
+  isSystem    Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  questions   QuestionTagMap[]
+}
+
+model QuestionSubject {
+  tenantId    String
+  questionId  String
+  subjectId   String
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, subjectId])
+}
+
+model QuestionStage {
+  tenantId    String
+  questionId  String
+  stageId     String
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  stage       Stage    @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, stageId])
+}
+
+model QuestionGrade {
+  tenantId    String
+  questionId  String
+  gradeId     String
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  grade       Grade    @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, gradeId])
+}
+
+model QuestionTextbook {
+  tenantId    String
+  questionId  String
+  textbookId  String
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  textbook    Textbook @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, textbookId])
+}
+
+model QuestionChapter {
+  tenantId    String
+  questionId  String
+  chapterId   String
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, chapterId])
+}
+
+model QuestionTagMap {
+  tenantId    String
+  questionId  String
+  tagId       String
+
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag         QuestionTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
+}
+
+model Document {
+  id          String           @id @default(uuid())
+  tenantId    String
+  name        String
+  kind        DocumentKind
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  items       DocumentItem[]
+  exports     ExportJob[]
+}
+
+model LayoutElement {
+  id          String           @id @default(uuid())
+  tenantId    String
+  name        String
+  blocks      Json
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model DocumentItem {
+  id          String           @id @default(uuid())
+  tenantId    String
+  documentId  String
+  itemType    DocumentItemType
+  refId       String
+  sortOrder   Int
+  createdAt   DateTime         @default(now())
+
+  document    Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, sortOrder])
+}
+
+model Asset {
+  id               String      @id @default(uuid())
+  tenantId         String
+  originalFilename String?
+  mimeType         String
+  sizeBytes        Int
+  storageKey       String      @unique
+  createdAt        DateTime    @default(now())
+}
+
+model ExportJob {
+  id             String          @id @default(uuid())
+  tenantId       String
+  documentId     String
+  status         ExportJobStatus @default(pending)
+  resultAssetId  String?
+  errorMessage   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  document       Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  tenantId     String
+  userId       String?
+  action       String
+  targetType   String?
+  targetId     String?
+  details      Json?
+  createdAt    DateTime    @default(now())
+
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+

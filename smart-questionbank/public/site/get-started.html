@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）快速开始</title>
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-noise"></div>
+    <main class="content page-stack">
+      <nav class="topbar">
+        <div class="brand">
+          <a class="brand-mark link-reset" href="/">拾题</a>
+          <span class="brand-copy">ShiTi Quick Start</span>
+        </div>
+        <div class="top-actions">
+          <a href="/">首页</a>
+          <a href="/site/product.html">产品能力</a>
+          <a href="/site/architecture.html">系统架构</a>
+          <a href="/site/console.html">控制台导览</a>
+          <a href="/site/operations.html">运维流程</a>
+          <a href="/docs">接口文档</a>
+        </div>
+      </nav>
+
+      <section class="page-hero">
+        <p class="eyebrow">Quick Start</p>
+        <h1>第一次接手 ShiTi，从哪里开始最省时间。</h1>
+        <p class="lead">这里是管理台和 OpenAPI 之间的过渡层，帮助新同事先建立最基本的操作路径。</p>
+      </section>
+
+      <section class="journey-grid">
+        <article class="journey-card">
+          <strong>1. 起基础设施</strong>
+          <p>确保 Postgres、Redis、MinIO 可用，再启动 API。健康状态正常后再进入后台。</p>
+        </article>
+        <article class="journey-card">
+          <strong>2. 进入后台</strong>
+          <p>在 `/admin` 注册、创建租户、加入租户，然后先建立 taxonomy 和标签，再建题目与文档。</p>
+        </article>
+        <article class="journey-card">
+          <strong>3. 查接口细节</strong>
+          <p>如果要对接业务系统或脚本，用 `/docs` 和 `/docs/openapi.json` 直接查字段和接口形态。</p>
+        </article>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Takeover Checklist</p>
+          <h2>接手项目时最短的一条路径</h2>
+        </div>
+        <div class="flow-grid">
+          <article>
+            <strong>先跑 `npm run dev:up`</strong>
+            <p>它会把基础设施、Prisma、seed 和 API 一次拉起，比手工逐条执行更不容易漏步骤。</p>
+          </article>
+          <article>
+            <strong>先看 `/` 再进 `/admin`</strong>
+            <p>公开前台负责建立上下文，后台负责执行动作，两个入口职责不同。</p>
+          </article>
+          <article>
+            <strong>把 `/docs` 当作事实源</strong>
+            <p>脚本接入、联调和字段核对都应优先参考 Swagger 和 OpenAPI JSON。</p>
+          </article>
+          <article>
+            <strong>把 `TODO.md` 当作进度源</strong>
+            <p>仓库当前完成度和后续拓展入口优先看 TODO，而不是回头翻聊天记录。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

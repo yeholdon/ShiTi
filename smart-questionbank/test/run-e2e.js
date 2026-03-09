@@ -85,6 +85,7 @@ async function main() {
     cwd,
     env: {
       ...baseEnv,
+      NODE_ENV: 'test',
       PORT: String(port),
       // E2E expects export jobs to complete; enable worker in the spawned API process.
       EXPORT_JOBS_WORKER_ENABLED: process.env.EXPORT_JOBS_WORKER_ENABLED || '1'
@@ -106,6 +107,7 @@ async function main() {
       cwd: path.join(__dirname, '..'),
       env: {
         ...baseEnv,
+        NODE_ENV: 'test',
         E2E_BASE_URL: baseUrl
       },
       stdio: 'inherit'

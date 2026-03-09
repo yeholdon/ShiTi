@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）运维流程</title>
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-noise"></div>
+    <main class="content page-stack">
+      <nav class="topbar">
+        <div class="brand">
+          <a class="brand-mark link-reset" href="/">拾题</a>
+          <span class="brand-copy">ShiTi Operations Flow</span>
+        </div>
+        <div class="top-actions">
+          <a href="/">首页</a>
+          <a href="/site/product.html">产品能力</a>
+          <a href="/site/architecture.html">系统架构</a>
+          <a href="/site/console.html">控制台导览</a>
+          <a href="/site/get-started.html">快速开始</a>
+          <a href="/admin">管理台</a>
+        </div>
+      </nav>
+
+      <section class="page-hero">
+        <p class="eyebrow">Operations Flow</p>
+        <h1>把值守、排障、导出和审计组织成一条可执行路径。</h1>
+        <p class="lead">这页面向运维和后台操作者，用来解释进入 ShiTi 后应该先看什么、后看什么。</p>
+      </section>
+
+      <section class="journey-grid">
+        <article class="journey-card">
+          <strong>先看健康状态</strong>
+          <p>用 `/health` 和 `/health/ready` 判断系统是否只“活着”，还是已具备数据库、Redis、MinIO 的完整操作条件。</p>
+        </article>
+        <article class="journey-card">
+          <strong>再看控制台上下文</strong>
+          <p>进入 `/admin` 后先确认操作者身份、租户上下文和当前选中对象，避免误操作到错误租户。</p>
+        </article>
+        <article class="journey-card">
+          <strong>异常时看两层日志</strong>
+          <p>活动流给你本次操作轨迹，审计给你持久化事实，结构化请求日志和 requestId 用于继续下钻服务端。</p>
+        </article>
+      </section>
+
+      <section class="panel ops-runbook">
+        <div class="section-head">
+          <p class="eyebrow">Runbook</p>
+          <h2>日常值守的三段式路径</h2>
+        </div>
+        <div class="runbook-grid">
+          <article class="runbook-step">
+            <strong>值守</strong>
+            <p>看 `/site/status.html`、`/health/ready`、`/metrics`，确认依赖是否可用，再进入内容管理。</p>
+          </article>
+          <article class="runbook-step">
+            <strong>排障</strong>
+            <p>先用请求级 signals 判断是 API、队列还是存储问题，再去 `/admin` 查导出和审计上下文。</p>
+          </article>
+          <article class="runbook-step">
+            <strong>恢复</strong>
+            <p>导出恢复优先用重试；资源和导出清理只在 owner 确认后执行，避免清掉仍被引用的数据。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="signal-board">
+        <div class="section-copy">
+          <p class="eyebrow">Shift Routine</p>
+          <h2>一次值守最值得盯住的三类信号</h2>
+        </div>
+        <div class="signal-grid">
+          <article class="signal-card">
+            <span class="signal-label">Dependency State</span>
+            <strong>依赖退化</strong>
+            <p>readiness 掉线通常意味着数据库、Redis 或 MinIO 至少一项异常，此时应暂停高风险写操作。</p>
+          </article>
+          <article class="signal-card">
+            <span class="signal-label">Export Failures</span>
+            <strong>导出失败集中</strong>
+            <p>导出连续失败时，优先排查队列与存储，再回看文档内容和资源引用，而不是先怀疑题目模型。</p>
+          </article>
+          <article class="signal-card">
+            <span class="signal-label">High-risk Actions</span>
+            <strong>清理与角色变更</strong>
+            <p>如果审计里短时出现集中删除、清理或角色修改，应立即核对操作者、租户和操作窗口。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

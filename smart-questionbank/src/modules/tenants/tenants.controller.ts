@@ -1,12 +1,13 @@
 import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateTenantDto } from './dto/create-tenant.dto';
 
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post()
-  async createTenant(@Body() body: { code: string; name: string }) {
+  async createTenant(@Body() body: CreateTenantDto) {
     const existing = await this.prisma.tenant.findUnique({ where: { code: body.code } });
     if (existing) return { tenant: existing };
 

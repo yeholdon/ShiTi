@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）状态面板</title>
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-noise"></div>
+    <main class="content page-stack">
+      <nav class="topbar">
+        <div class="brand">
+          <a class="brand-mark link-reset" href="/">拾题</a>
+          <span class="brand-copy">ShiTi Live Status</span>
+        </div>
+        <div class="top-actions">
+          <a href="/">首页</a>
+          <a href="/site/product.html">产品能力</a>
+          <a href="/site/architecture.html">系统架构</a>
+          <a href="/site/console.html">控制台导览</a>
+          <a href="/site/operations.html">运维流程</a>
+          <a href="/admin">管理台</a>
+        </div>
+      </nav>
+
+      <section class="page-hero">
+        <p class="eyebrow">Live Status</p>
+        <h1>把后端运行状态直接拉进前端页。</h1>
+        <p class="lead">这页会读取 `/health`、`/health/ready` 和 `/metrics`，每 15 秒刷新一次，适合作为轻量状态观察页。</p>
+      </section>
+
+      <section class="ops-matrix">
+        <article class="panel ops-card status-tone tone-neutral" id="liveCard">
+          <p class="eyebrow">Liveness</p>
+          <h2 id="liveStatus">checking</h2>
+          <p id="liveHint" class="panel-copy">读取 `/health` 中...</p>
+        </article>
+        <article class="panel ops-card status-tone tone-neutral" id="readyCard">
+          <p class="eyebrow">Readiness</p>
+          <h2 id="readyStatusPage">checking</h2>
+          <p id="readyHint" class="panel-copy">读取 `/health/ready` 中...</p>
+        </article>
+        <article class="panel ops-card status-tone tone-neutral" id="metricsCard">
+          <p class="eyebrow">HTTP Metrics</p>
+          <h2 id="metricsStatus">checking</h2>
+          <p id="metricsHint" class="panel-copy">读取 `/metrics` 中...</p>
+        </article>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Dependency Board</p>
+          <h2>依赖状态</h2>
+        </div>
+        <div class="dependency-grid">
+          <article class="dependency-card" id="depDatabase">
+            <strong>Database</strong>
+            <p class="dependency-state">checking</p>
+          </article>
+          <article class="dependency-card" id="depRedis">
+            <strong>Redis</strong>
+            <p class="dependency-state">checking</p>
+          </article>
+          <article class="dependency-card" id="depMinio">
+            <strong>MinIO</strong>
+            <p class="dependency-state">checking</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel ops-runbook">
+        <div class="section-head">
+          <p class="eyebrow">Metric Snapshot</p>
+          <h2>关键指标摘要</h2>
+        </div>
+        <div class="runbook-grid">
+          <article class="runbook-step">
+            <strong>进程运行时间</strong>
+            <p id="uptimeValue">-</p>
+          </article>
+          <article class="runbook-step">
+            <strong>总请求数</strong>
+            <p id="requestCountValue">-</p>
+          </article>
+          <article class="runbook-step">
+            <strong>最近刷新</strong>
+            <p id="lastRefreshValue">-</p>
+          </article>
+          <article class="runbook-step">
+            <strong>总体判断</strong>
+            <p id="systemSummaryValue">-</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head section-head-inline">
+          <div>
+            <p class="eyebrow">Trend View</p>
+            <h2>最近几次刷新趋势</h2>
+          </div>
+          <button id="refreshNowButton" class="button button-quiet" type="button">立即刷新</button>
+        </div>
+        <div class="trend-grid">
+          <article class="trend-card">
+            <strong>请求量</strong>
+            <svg id="requestTrend" class="trend-chart" viewBox="0 0 220 72" preserveAspectRatio="none"></svg>
+            <p id="requestTrendHint" class="panel-copy">等待采样...</p>
+          </article>
+          <article class="trend-card">
+            <strong>运行时长</strong>
+            <svg id="uptimeTrend" class="trend-chart" viewBox="0 0 220 72" preserveAspectRatio="none"></svg>
+            <p id="uptimeTrendHint" class="panel-copy">等待采样...</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Recent Snapshots</p>
+          <h2>最近刷新记录</h2>
+        </div>
+        <div id="snapshotList" class="snapshot-list">
+          <article class="snapshot-row">
+            <strong>等待第一次刷新</strong>
+            <p>状态样本将显示在这里。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Operator Guidance</p>
+          <h2>看到这些状态后该怎么判断</h2>
+        </div>
+        <div class="flow-grid">
+          <article>
+            <strong>Liveness 失败</strong>
+            <p>说明 API 进程本身已经不可用，优先检查生命周期日志和进程退出原因。</p>
+          </article>
+          <article>
+            <strong>Readiness 失败</strong>
+            <p>说明 API 还活着，但数据库、Redis 或 MinIO 至少有一项不满足操作条件。</p>
+          </article>
+          <article>
+            <strong>Metrics 失败</strong>
+            <p>说明观测面已有盲区，不一定代表业务不可用，但排障成本会明显上升。</p>
+          </article>
+          <article>
+            <strong>依赖出现告警</strong>
+            <p>先判断导出、上传、清理和审计这些依赖敏感动作是否需要暂停。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="section-head">
+          <p class="eyebrow">Raw Metrics</p>
+          <h2>原始 metrics 片段</h2>
+        </div>
+        <pre id="metricsPreview" class="log">等待加载...</pre>
+      </section>
+    </main>
+
+    <script type="module" src="/site/status.js"></script>
+  </body>
+</html>

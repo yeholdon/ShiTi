@@ -3,6 +3,50 @@ import request from 'supertest';
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 describe('Business flow (e2e)', () => {
+  it('validates question create and patch payloads', async () => {
+    const suffix = Date.now();
+    const tenant = { code: `flow-validate-${suffix}`, name: 'Flow Validate' };
+
+    await request(base).post('/tenants').send(tenant);
+
+    const reg = await request(base).post('/auth/register').send({ username: `flow-validate-${suffix}` });
+    expect(reg.status).toBe(201);
+    const token = reg.body.accessToken;
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenant.code, role: 'owner' });
+
+    const created = await request(base)
+      .post('/questions')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ subjectId: 123 });
+
+    expect(created.status).toBe(400);
+    expect(created.body.message).toContain('Invalid subjectId');
+    expect(created.body.error.code).toBe('validation_failed');
+
+    const validQuestion = await request(base)
+      .post('/questions')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+
+    expect(validQuestion.status).toBe(201);
+
+    const patched = await request(base)
+      .patch(`/questions/${validQuestion.body.question.id}`)
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ difficulty: 9 });
+
+    expect(patched.status).toBe(400);
+    expect(patched.body.message).toContain('Invalid difficulty');
+    expect(patched.body.error.code).toBe('validation_failed');
+  });
+
   it('register -> join tenant -> create -> upsert content -> upsert answer -> upsert tags -> get -> list', async () => {
     const suffix = Date.now();
     const tenant = { code: `flow-tenant-${suffix}`, name: 'Flow Tenant' };

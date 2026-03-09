@@ -18,5 +18,11 @@ describe('Tenant membership authorization (e2e)', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(403);
+    expect(res.body.message).toContain('Not a tenant member');
+    expect(res.body.statusCode).toBe(403);
+    expect(res.body.error.code).toBe('forbidden');
+    expect(res.body.path).toBe('/questions');
+    expect(typeof res.body.requestId).toBe('string');
+    expect(res.headers['x-request-id']).toBe(res.body.requestId);
   });
 });

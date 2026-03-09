@@ -3,6 +3,31 @@ import request from 'supertest';
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 describe('Question tags (e2e)', () => {
+  it('validates tag creation payloads', async () => {
+    const suffix = Date.now();
+    const tenant = { code: `tags-validate-${suffix}`, name: 'Tags Validate' };
+
+    const login = await request(base).post('/auth/register').send({ username: `tags-validate-${suffix}` });
+    expect(login.status).toBe(201);
+    const token = login.body.accessToken as string;
+
+    await request(base).post('/tenants').send(tenant);
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tenantCode: tenant.code, role: 'owner' });
+
+    const createTag = await request(base)
+      .post('/question-tags')
+      .set('X-Tenant-Code', tenant.code)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+
+    expect(createTag.status).toBe(400);
+    expect(createTag.body.message).toContain('Missing name');
+    expect(createTag.body.error.code).toBe('validation_failed');
+  });
+
   it('supports CRUD within a tenant and hides tags from other tenants', async () => {
     const suffix = Date.now();
     const tenantA = { code: `tags-a-${suffix}`, name: 'Tags A' };
@@ -43,6 +68,15 @@ describe('Question tags (e2e)', () => {
 
     expect(tenantAList.status).toBe(200);
     expect(tenantAList.body.tags.some((tag: any) => tag.id === createTag.body.tag.id)).toBe(true);
+    expect(tenantAList.body.meta).toMatchObject({
+      limit: 50,
+      offset: 0,
+      returned: 1,
+      total: 1,
+      hasMore: false,
+      sortBy: 'createdAt',
+      sortOrder: 'asc'
+    });
 
     const tenantBList = await request(base)
       .get('/question-tags')
@@ -74,5 +108,10 @@ describe('Question tags (e2e)', () => {
 
     expect(tenantAListAfterDelete.status).toBe(200);
     expect(tenantAListAfterDelete.body.tags.some((tag: any) => tag.id === createTag.body.tag.id)).toBe(false);
+    expect(tenantAListAfterDelete.body.meta).toMatchObject({
+      total: 0,
+      returned: 0,
+      hasMore: false
+    });
   });
 });

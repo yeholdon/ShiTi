@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）系统架构</title>
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-noise"></div>
+    <main class="content page-stack">
+      <nav class="topbar">
+        <div class="brand">
+          <a class="brand-mark link-reset" href="/">拾题</a>
+          <span class="brand-copy">ShiTi Architecture</span>
+        </div>
+        <div class="top-actions">
+          <a href="/">首页</a>
+          <a href="/site/product.html">产品能力</a>
+          <a href="/site/console.html">控制台导览</a>
+          <a href="/site/status.html">状态面板</a>
+        </div>
+      </nav>
+
+      <section class="page-hero">
+        <p class="eyebrow">Architecture</p>
+        <h1>把 API、存储、队列和控制台放到一张图里理解。</h1>
+        <p class="lead">
+          这页不是画炫酷框图，而是解释 ShiTi 当前线上最重要的几个技术层次，方便前端、后端和运维对齐职责边界。
+        </p>
+      </section>
+
+      <section class="architecture-grid">
+        <article class="architecture-card accent-card">
+          <span class="signal-label">Surface</span>
+          <h2>操作面</h2>
+          <p>公开入口页负责说明系统能力，`/admin` 负责租户级运营和内容管理，`/docs` 提供 OpenAPI 文档。</p>
+          <ul class="detail-list">
+            <li>公开前台用于说明系统和引导路径</li>
+            <li>运维控制台用于高频管理动作</li>
+            <li>Swagger UI 用于脚本和系统集成</li>
+          </ul>
+        </article>
+        <article class="architecture-card">
+          <span class="signal-label">API Layer</span>
+          <h2>NestJS 控制层</h2>
+          <p>认证、题目、文档、资源、审计、导出等能力都由同一套 NestJS API 暴露，并统一错误包、请求 ID、校验和 RBAC。</p>
+          <ul class="detail-list">
+            <li>ValidationPipe 和 DTO 负责入口收口</li>
+            <li>统一错误信封负责请求语义一致</li>
+            <li>租户角色控制高风险写接口</li>
+          </ul>
+        </article>
+        <article class="architecture-card">
+          <span class="signal-label">Data Plane</span>
+          <h2>Postgres + Prisma + RLS</h2>
+          <p>题目、taxonomy、文档、导出、资产元数据和审计日志都存于 Postgres，Prisma 负责 ORM，RLS 负责租户边界兜底。</p>
+          <ul class="detail-list">
+            <li>应用层校验和 RLS 双重租户隔离</li>
+            <li>Prisma schema 与 RLS 规则保持同步</li>
+            <li>审计日志已持久化，不再依赖进程内存</li>
+          </ul>
+        </article>
+        <article class="architecture-card">
+          <span class="signal-label">Queue & Storage</span>
+          <h2>Redis、Worker 与 MinIO</h2>
+          <p>Redis 同时服务限流和导出队列，MinIO 承接资产和导出结果对象存储，worker 负责异步 PDF 生成。</p>
+          <ul class="detail-list">
+            <li>限流优先走 Redis，异常时回退内存 bucket</li>
+            <li>导出队列支持取消、重试、清理</li>
+            <li>MinIO 失败路径已经补了回滚和 503 语义</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="panel architecture-flow">
+        <div class="section-head">
+          <p class="eyebrow">Request Path</p>
+          <h2>典型请求链路</h2>
+        </div>
+        <div class="flow-line">
+          <div class="flow-node">
+            <strong>1. Operator</strong>
+            <p>在 `/admin` 或业务脚本中触发请求。</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <strong>2. API</strong>
+            <p>完成校验、RBAC、租户上下文和审计。</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <strong>3. Storage</strong>
+            <p>命中 Postgres、Redis、MinIO 或 worker。</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <strong>4. Signals</strong>
+            <p>产生日志、审计、metrics 和状态更新。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

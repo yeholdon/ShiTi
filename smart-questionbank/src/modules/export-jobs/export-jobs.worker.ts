@@ -17,43 +17,53 @@ function blocksToPlainText(blocks: unknown): string {
   if (!Array.isArray(blocks)) return '';
 
   const parts: string[] = [];
+  const walk = (value: unknown) => {
+    if (!value || typeof value !== 'object') return;
 
-  for (const b of blocks) {
-    if (!b || typeof b !== 'object') continue;
-    const type = (b as any).type;
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item);
+      return;
+    }
 
-    if (typeof (b as any).text === 'string') {
-      const t = String((b as any).text).trim();
-      if (t) parts.push(t);
-      continue;
+    const block = value as any;
+    const type = block.type;
+
+    if (typeof block.text === 'string') {
+      const text = String(block.text).trim();
+      if (text) parts.push(text);
+    }
+
+    if (typeof block.assetId === 'string' && block.assetId.trim()) {
+      parts.push(`[Asset ${block.assetId.trim()}]`);
     }
 
     if (type === 'option') {
-      const key = typeof (b as any).key === 'string' ? String((b as any).key).trim() : '';
-      const text = typeof (b as any).text === 'string' ? String((b as any).text).trim() : '';
+      const key = typeof block.key === 'string' ? String(block.key).trim() : '';
+      const text = typeof block.text === 'string' ? String(block.text).trim() : '';
       const line = `${key ? key + '. ' : ''}${text}`.trim();
       if (line) parts.push(line);
-      continue;
     }
 
     if (type === 'step') {
-      const text = typeof (b as any).text === 'string' ? String((b as any).text).trim() : '';
+      const text = typeof block.text === 'string' ? String(block.text).trim() : '';
       if (text) parts.push(text);
-      continue;
     }
 
-    if (typeof (b as any).latex === 'string') {
-      const t = String((b as any).latex).trim();
+    if (typeof block.latex === 'string') {
+      const t = String(block.latex).trim();
       if (t) parts.push(t);
-      continue;
     }
 
-    if (typeof (b as any).content === 'string') {
-      const t = String((b as any).content).trim();
+    if (typeof block.content === 'string') {
+      const t = String(block.content).trim();
       if (t) parts.push(t);
-      continue;
     }
-  }
+
+    if (Array.isArray(block.children)) walk(block.children);
+    if (Array.isArray(block.blocks)) walk(block.blocks);
+  };
+
+  for (const b of blocks) walk(b);
 
   return parts.join('\n');
 }
@@ -62,8 +72,9 @@ async function renderDocumentPdf(args: {
   tenantId: string;
   documentId: string;
   prisma: PrismaService;
+  minio?: { client: MinioClient; bucket: string };
 }): Promise<Buffer> {
-  const { tenantId, documentId, prisma } = args;
+  const { tenantId, documentId, prisma, minio } = args;
 
   const { doc, items } = await prisma.withTenant(tenantId, async (tx) => {
     const doc = await tx.document.findUnique({ where: { tenantId_id: { tenantId, id: documentId } } });
@@ -77,7 +88,7 @@ async function renderDocumentPdf(args: {
     return { doc, items };
   });
 
-  const pdf = new PDFDocument({ size: 'A4', margin: 50 });
+  const pdf = new PDFDocument({ size: 'A4', margin: 50, compress: false });
   const chunks: Buffer[] = [];
 
   pdf.on('data', (d) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
@@ -113,6 +124,85 @@ async function renderDocumentPdf(args: {
     pdf.y = marginTop;
   };
 
+  const assetCache = new Map<string, Promise<{ buffer: Buffer; mime: string } | null>>();
+  const loadImageAsset = async (assetId: string) => {
+    if (!assetCache.has(assetId)) {
+      assetCache.set(
+        assetId,
+        (async () => {
+          const asset = await prisma.withTenant(tenantId, (tx) =>
+            tx.asset.findUnique({ where: { tenantId_id: { tenantId, id: assetId } } })
+          );
+          if (!asset || !asset.mime.startsWith('image/')) return null;
+
+          if (asset.storageKey.startsWith('/')) {
+            const buffer = await fs.readFile(asset.storageKey);
+            return { buffer, mime: asset.mime };
+          }
+
+          if (!minio) return null;
+
+          const stream = await minio.client.getObject(minio.bucket, asset.storageKey);
+          const chunks: Buffer[] = [];
+          await new Promise<void>((resolve, reject) => {
+            stream.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+            stream.on('end', () => resolve());
+            stream.on('error', reject);
+          });
+
+          return { buffer: Buffer.concat(chunks), mime: asset.mime };
+        })()
+      );
+    }
+
+    return assetCache.get(assetId)!;
+  };
+
+  const renderBlocks = async (blocks: unknown) => {
+    if (!Array.isArray(blocks)) return;
+
+    for (const block of blocks as any[]) {
+      if (!block || typeof block !== 'object') continue;
+
+      if (typeof block.assetId === 'string' && block.assetId.trim()) {
+        const asset = await loadImageAsset(block.assetId.trim());
+        if (asset) {
+          ensureSpace(220);
+          pdf.image(asset.buffer, {
+            fit: [contentWidth, 200]
+          });
+          pdf.moveDown(0.5);
+        } else {
+          pdf.fontSize(11).fillColor('#444').text(`[Asset ${block.assetId.trim()}]`, { width: contentWidth });
+          pdf.fillColor('#000');
+          pdf.moveDown(0.35);
+        }
+      }
+
+      if (typeof block.text === 'string' && block.text.trim()) {
+        pdf.fontSize(11).fillColor('#000').text(block.text.trim(), { width: contentWidth });
+        pdf.moveDown(0.35);
+      }
+
+      if (Array.isArray(block.children)) {
+        const childText = blocksToPlainText(block.children);
+        if (childText) {
+          pdf.fontSize(11).fillColor('#000').text(childText, { width: contentWidth });
+          pdf.moveDown(0.35);
+        }
+      }
+
+      if (Array.isArray(block.blocks)) {
+        await renderBlocks(block.blocks);
+      }
+
+      if (typeof block.latex === 'string' && block.latex.trim()) {
+        pdf.fontSize(11).fillColor('#000').text(block.latex.trim(), { width: contentWidth });
+        pdf.moveDown(0.35);
+      }
+    }
+  };
+
   pdf.fontSize(18).text(doc.name || 'Untitled Document', { align: 'center' });
   pdf.moveDown(0.25);
   pdf.fontSize(10).fillColor('#666').text(`DocumentId: ${doc.id}`, { align: 'center' });
@@ -121,6 +211,21 @@ async function renderDocumentPdf(args: {
 
   let qIndex = 0;
   for (const item of items) {
+    if (item.itemType === 'layout_element' && item.layoutElementId) {
+      ensureSpace(50);
+
+      const layoutElement = await prisma.withTenant(tenantId, (tx) =>
+        tx.layoutElement.findUnique({ where: { tenantId_id: { tenantId, id: item.layoutElementId! } } })
+      );
+
+      if (layoutElement) {
+        await renderBlocks(layoutElement.blocks);
+        pdf.moveDown(0.5);
+      }
+
+      continue;
+    }
+
     if (item.itemType !== 'question' || !item.questionId) continue;
 
     qIndex += 1;
@@ -143,8 +248,11 @@ async function renderDocumentPdf(args: {
     pdf.fontSize(12).fillColor('#000').text(`${qIndex}.`, { continued: true });
     pdf.fontSize(12).text(' ');
 
-    const stemText = blocksToPlainText(q.content?.stemBlocks) || '[Empty stem]';
-    pdf.fontSize(11).text(stemText, { width: contentWidth });
+    if (Array.isArray(q.content?.stemBlocks) && q.content.stemBlocks.length > 0) {
+      await renderBlocks(q.content.stemBlocks);
+    } else {
+      pdf.fontSize(11).text('[Empty stem]', { width: contentWidth });
+    }
 
     const optionsText = blocksToPlainText(q.choiceAnswer?.optionsBlocks);
     if (optionsText) {
@@ -194,7 +302,7 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit() {
-    if (process.env.EXPORT_JOBS_WORKER_ENABLED !== '1') {
+    if (process.env.EXPORT_JOBS_WORKER_ENABLED === '0') {
       this.logger.log('Worker disabled (set EXPORT_JOBS_WORKER_ENABLED=1 to enable)');
       return;
     }
@@ -217,7 +325,7 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
           tx.exportJob.findUnique({ where: { tenantId_id: { tenantId, id: exportJobId } } })
         );
         if (!existing) throw new Error('ExportJob not found');
-        if (existing.status === 'succeeded') return;
+        if (existing.status === 'succeeded' || existing.status === 'canceled') return;
 
         await this.prisma.withTenant(tenantId, (tx) =>
           tx.exportJob.update({
@@ -226,7 +334,7 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
           })
         );
 
-        const pdf = await renderDocumentPdf({ tenantId, documentId: existing.documentId, prisma: this.prisma });
+        const pdf = await renderDocumentPdf({ tenantId, documentId: existing.documentId, prisma: this.prisma, minio: this.minio });
 
         let storageKey: string;
         if (this.minio) {

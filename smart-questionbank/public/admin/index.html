@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）管理后台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand-card">
+          <p class="eyebrow">ShiTi · 拾题</p>
+          <h1>运维控制台</h1>
+          <p class="brand-copy">围绕多租户题库后端的日常运营、内容维护、资源管理和故障排查而设计。</p>
+        </div>
+
+        <section class="panel compact">
+          <div class="section-head">
+            <p class="eyebrow">Identity</p>
+            <h2>操作者身份</h2>
+          </div>
+          <p class="panel-copy">注册或登录一个操作者账号。后续所有租户级写操作、审计和导出权限都依赖这里的身份。</p>
+          <label>
+            <span>用户名</span>
+            <input id="username" placeholder="owner-demo" />
+          </label>
+          <div class="actions">
+            <button id="registerBtn" class="primary">注册</button>
+            <button id="loginBtn">登录</button>
+          </div>
+          <p id="authState" class="muted">尚未登录</p>
+        </section>
+
+        <section class="panel compact">
+          <div class="section-head">
+            <p class="eyebrow">Tenant</p>
+            <h2>租户上下文</h2>
+          </div>
+          <p class="panel-copy">这里决定你接下来看到的题库、文档、资源、审计和导出范围。没有租户上下文，后端管理能力不会展开。</p>
+          <label>
+            <span>租户代码</span>
+            <input id="tenantCode" placeholder="school-a" />
+          </label>
+          <label>
+            <span>租户名称</span>
+            <input id="tenantName" placeholder="School A" />
+          </label>
+          <div class="actions">
+            <button id="createTenantBtn" class="primary">创建租户</button>
+            <button id="joinTenantBtn">加入租户</button>
+          </div>
+          <p id="tenantState" class="muted">尚未选择租户</p>
+        </section>
+
+        <section class="panel compact">
+          <div class="section-head">
+            <p class="eyebrow">Control</p>
+            <h2>控制台动作</h2>
+          </div>
+          <p class="panel-copy">这是人工运维时最常用的一组入口：刷新全局状态、重拉文档、清空本地活动流，适合演示和排障。</p>
+          <div class="actions stacked">
+            <button id="refreshBtn" class="primary">刷新全局看板</button>
+            <button id="exportDocsBtn">刷新文档列表</button>
+            <button id="clearLogBtn">清空活动日志</button>
+          </div>
+        </section>
+      </aside>
+
+      <main class="content">
+        <header class="hero panel">
+          <div class="hero-copy">
+            <p class="eyebrow">ShiTi Operations Console</p>
+            <h2>面向后端运营，而不是面向接口调试。</h2>
+            <p class="hero-text">
+              这里把租户化题库系统的核心后端能力压到一个控制面上。你可以在同一页里处理租户、题目、文档编排、资源上传、导出、taxonomy 和审计，并实时判断服务是否处于可操作状态。
+            </p>
+          </div>
+          <div class="hero-status">
+            <div class="status-card status-api">
+              <span>API 状态</span>
+              <strong id="apiStatus">unknown</strong>
+            </div>
+            <div class="status-card status-ready">
+              <span>Readiness</span>
+              <strong id="readyStatus">unknown</strong>
+            </div>
+          </div>
+        </header>
+
+        <section class="command-deck panel">
+          <div class="command-copy">
+            <p class="eyebrow">Mission Control</p>
+            <h2>优先暴露当前上下文、关键对象和控制入口。</h2>
+            <p class="panel-copy">
+              运维视角最怕“我现在到底在操作哪个租户、哪道题、哪份文档”。这一层把身份、租户和当前选中对象固定下来，并提供跨区块快速跳转。
+            </p>
+          </div>
+          <div class="command-status">
+            <div class="chip-group">
+              <span id="contextUserChip" class="context-chip">未登录</span>
+              <span id="contextTenantChip" class="context-chip">未选租户</span>
+              <span id="contextQuestionChip" class="context-chip subtle">题目：未选中</span>
+              <span id="contextDocumentChip" class="context-chip subtle">文档：未选中</span>
+              <span id="contextLayoutChip" class="context-chip subtle">布局：未选中</span>
+            </div>
+            <nav class="quick-nav">
+              <a href="#questions-section">题目</a>
+              <a href="#documents-section">文档</a>
+              <a href="#document-detail-section">编排</a>
+              <a href="#question-detail-section">编辑</a>
+              <a href="#taxonomy-section">taxonomy</a>
+              <a href="#audit-section">审计</a>
+            </nav>
+          </div>
+        </section>
+
+        <section class="ops-matrix">
+          <article class="panel ops-card">
+            <p class="eyebrow">Service Gates</p>
+            <h2>健康检查含义</h2>
+            <p class="panel-copy">`API 状态` 对应 liveness；`Readiness` 会继续探测数据库、Redis 和 MinIO，可用时才适合执行写入、导出和资源流转。</p>
+          </article>
+          <article class="panel ops-card">
+            <p class="eyebrow">Primary Surfaces</p>
+            <h2>管理面职责</h2>
+            <p class="panel-copy">上半部分处理高频操作，下半部分负责深度编辑与审计。你可以把它当作一个面向租户的后端 runbook，而不是 CMS 首页。</p>
+          </article>
+          <article class="panel ops-card">
+            <p class="eyebrow">What To Watch</p>
+            <h2>排障优先级</h2>
+            <p class="panel-copy">先看健康状态，再看审计和活动流；若是导出或资源问题，优先确认租户上下文、owner/admin 权限和对象是否被正确选中。</p>
+          </article>
+        </section>
+
+        <section class="panel ops-runbook">
+          <div class="section-head">
+            <p class="eyebrow">Console Runbook</p>
+            <h2>这页到底该怎么用</h2>
+          </div>
+          <div class="runbook-grid">
+            <article class="runbook-step">
+              <strong>1. 先确认服务</strong>
+              <p>先看 `API 状态` 和 `Readiness`。如果 readiness 失败，不要急着导出或上传资源，通常是数据库、Redis 或 MinIO 没准备好。</p>
+            </article>
+            <article class="runbook-step">
+              <strong>2. 再确认上下文</strong>
+              <p>运维视角里，最常见的人为错误不是接口坏了，而是“操作到了错误租户”或“没选中文档 / 题目 / 布局对象”。顶部指挥区就是为此存在。</p>
+            </article>
+            <article class="runbook-step">
+              <strong>3. 最后下钻日志</strong>
+              <p>审计日志看系统事实，活动日志看本次交互轨迹。先看聚合分布，再看明细，最后结合下方工作区复现操作。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="overview-grid">
+          <article class="metric metric-questions">
+            <span>题目</span>
+            <strong id="questionsCount">0</strong>
+          </article>
+          <article class="metric metric-documents">
+            <span>文档</span>
+            <strong id="documentsCount">0</strong>
+          </article>
+          <article class="metric metric-assets">
+            <span>资源</span>
+            <strong id="assetsCount">0</strong>
+          </article>
+          <article class="metric metric-layouts">
+            <span>布局元素</span>
+            <strong id="layoutsCount">0</strong>
+          </article>
+        </section>
+
+        <div class="section-divider" id="questions-section">
+          <div>
+            <p class="eyebrow">Question Operations</p>
+            <h2>题库工作区</h2>
+          </div>
+          <p>创建、筛选和选中题目，再进入下方的深度编辑区。</p>
+        </div>
+
+        <section class="workspace workspace-primary">
+          <article class="panel workspace-card workspace-wide">
+            <div class="section-head">
+              <p class="eyebrow">Questions</p>
+              <h2>新建题目</h2>
+            </div>
+            <p class="panel-copy">这里负责题目入口和列表检索。你可以先创建空题，再通过筛选器收敛到特定题型、标签、教材、章节和可见性范围，然后进入下方详情区编辑。</p>
+            <div class="ops-note">
+              <strong>操作说明</strong>
+              <p>创建会走 `POST /questions`；列表会拉 `GET /questions`，并带上 `tags, summary` 以便快速判断题目内容和 taxonomy 绑定情况。</p>
+            </div>
+            <div class="endpoint-row">
+              <span class="endpoint-pill">POST /questions</span>
+              <span class="endpoint-pill">GET /questions</span>
+              <span class="endpoint-pill">admin / owner 写入</span>
+              <span class="endpoint-pill">member 只读</span>
+            </div>
+            <label>
+              <span>科目 ID（可选）</span>
+              <input id="questionSubjectId" placeholder="留空时优先使用系统学科" />
+            </label>
+            <div class="filter-grid">
+              <label>
+                <span>搜索</span>
+                <input id="questionFilterQ" placeholder="按题干关键字筛选" />
+              </label>
+              <label>
+                <span>题型</span>
+                <select id="questionFilterType">
+                  <option value="">全部</option>
+                  <option value="single_choice">single_choice</option>
+                  <option value="fill_blank">fill_blank</option>
+                  <option value="solution">solution</option>
+                </select>
+              </label>
+              <label>
+                <span>难度</span>
+                <input id="questionFilterDifficulty" type="number" min="1" max="10" placeholder="全部" />
+              </label>
+              <label>
+                <span>可见性</span>
+                <select id="questionFilterVisibility">
+                  <option value="">全部</option>
+                  <option value="private">private</option>
+                  <option value="tenant_shared">tenant_shared</option>
+                </select>
+              </label>
+              <label>
+                <span>标签</span>
+                <select id="questionFilterTagId">
+                  <option value="">全部</option>
+                </select>
+              </label>
+              <label>
+                <span>阶段</span>
+                <select id="questionFilterStageId">
+                  <option value="">全部</option>
+                </select>
+              </label>
+              <label>
+                <span>年级</span>
+                <select id="questionFilterGradeId">
+                  <option value="">全部</option>
+                </select>
+              </label>
+              <label>
+                <span>教材</span>
+                <select id="questionFilterTextbookId">
+                  <option value="">全部</option>
+                </select>
+              </label>
+              <label>
+                <span>章节</span>
+                <select id="questionFilterChapterId">
+                  <option value="">全部</option>
+                </select>
+              </label>
+            </div>
+            <div class="actions">
+              <button id="createQuestionBtn" class="primary">创建题目</button>
+              <button id="loadQuestionsBtn">刷新列表</button>
+              <button id="clearQuestionFiltersBtn">清空筛选</button>
+            </div>
+            <div id="questionsList" class="list"></div>
+          </article>
+
+          <article id="documents-section" class="panel workspace-card">
+            <div class="section-head">
+              <p class="eyebrow">Documents</p>
+              <h2>创建文档</h2>
+            </div>
+            <p class="panel-copy">这里是文档主入口。`handout` 适合讲义和版式元素混排，`paper` 更偏试卷。创建后可进入下方文档编排区做细化操作。</p>
+            <div class="ops-note">
+              <strong>操作说明</strong>
+              <p>创建文档后，文档列表会展示当前项数、题目数、布局项数和最近一次导出状态，便于快速判断这份文档是否已经成型。</p>
+            </div>
+            <div class="endpoint-row">
+              <span class="endpoint-pill">POST /documents</span>
+              <span class="endpoint-pill">GET /documents</span>
+              <span class="endpoint-pill">文档摘要 / 最近导出</span>
+            </div>
+            <label>
+              <span>文档名称</span>
+              <input id="documentName" placeholder="周练讲义" />
+            </label>
+            <label>
+              <span>文档类型</span>
+              <select id="documentKind">
+                <option value="handout">handout</option>
+                <option value="paper">paper</option>
+              </select>
+            </label>
+            <div class="actions">
+              <button id="createDocumentBtn" class="primary">创建文档</button>
+              <button id="loadDocumentsBtn">刷新列表</button>
+            </div>
+            <div id="documentsList" class="list"></div>
+          </article>
+
+          <article class="panel workspace-card">
+            <div class="section-head">
+              <p class="eyebrow">Layout</p>
+              <h2>创建布局元素</h2>
+            </div>
+            <p class="panel-copy">布局元素只服务于 `handout`，适合插入导语、节间说明、提示语或版式占位文本。它们会在导出链路里与题目一起渲染。</p>
+            <div class="endpoint-row">
+              <span class="endpoint-pill">POST /layout-elements</span>
+              <span class="endpoint-pill">GET /layout-elements</span>
+              <span class="endpoint-pill">仅 handout 使用</span>
+            </div>
+            <label>
+              <span>文本块</span>
+              <textarea id="layoutText" rows="5" placeholder="输入讲义导语、提醒语或版心文字"></textarea>
+            </label>
+            <div class="actions">
+              <button id="createLayoutBtn" class="primary">创建布局</button>
+              <button id="loadLayoutsBtn">刷新列表</button>
+            </div>
+            <div id="layoutsList" class="list"></div>
+          </article>
+
+          <article class="panel workspace-card">
+            <div class="section-head">
+              <p class="eyebrow">Assets</p>
+              <h2>上传资源</h2>
+            </div>
+            <p class="panel-copy">资源上传会先生成元数据和预签名地址，再由浏览器把文件传给对象存储。后台会保留原始文件名，并阻止删除仍被引用的资源。</p>
+            <div class="endpoint-row">
+              <span class="endpoint-pill">POST /assets/upload</span>
+              <span class="endpoint-pill">GET /assets</span>
+              <span class="endpoint-pill">DELETE /assets/:id</span>
+              <span class="endpoint-pill">引用保护</span>
+            </div>
+            <label>
+              <span>选择文件</span>
+              <input id="assetFile" type="file" />
+            </label>
+            <div class="actions">
+              <button id="uploadAssetBtn" class="primary">上传资源</button>
+              <button id="loadAssetsBtn">刷新列表</button>
+            </div>
+            <div id="assetsList" class="list"></div>
+          </article>
+        </section>
+
+        <div class="section-divider" id="document-detail-section">
+          <div>
+            <p class="eyebrow">Document Studio</p>
+            <h2>文档编排与导出</h2>
+          </div>
+          <p>选中文档后，在这里统一处理编排、导出、下载和导出结果回看。</p>
+        </div>
+
+        <section class="panel document-detail">
+          <div class="document-detail-top">
+            <div class="section-head">
+              <p class="eyebrow">Document Detail</p>
+              <h2 id="documentDetailName">未选中文档</h2>
+            </div>
+            <div class="detail-toolbar">
+              <button id="renameSelectedDocumentBtn">重命名文档</button>
+              <button id="deleteSelectedDocumentBtn">删除文档</button>
+              <button id="addSelectedQuestionToDocumentBtn">加入当前题目</button>
+              <button id="addSelectedLayoutToDocumentBtn">加入当前布局元素</button>
+              <button id="exportSelectedDocumentBtn" class="primary">导出当前文档</button>
+              <button id="downloadExportBtn">下载导出结果</button>
+              <button id="refreshDocumentDetailBtn">刷新详情</button>
+            </div>
+          </div>
+          <p id="documentDetailMeta" class="panel-copy">先在上面的文档列表中选择一个文档，再查看它的统计、文档项顺序和导出状态。</p>
+          <div class="ops-note">
+            <strong>操作说明</strong>
+            <p>这里是编排工作区。你可以把当前选中的题目或布局元素加入文档，调整顺序，删除不需要的项，并直接触发 PDF 导出。</p>
+          </div>
+          <div class="endpoint-row">
+            <span class="endpoint-pill">GET /documents/:id</span>
+            <span class="endpoint-pill">POST /documents/:id/items</span>
+            <span class="endpoint-pill">POST /documents/:id/items/bulk</span>
+            <span class="endpoint-pill">PATCH /documents/:id/items/reorder</span>
+            <span class="endpoint-pill">POST /export-jobs</span>
+          </div>
+          <div class="detail-grid">
+            <article class="detail-kpi">
+              <span>题目数</span>
+              <strong id="documentStatQuestions">0</strong>
+            </article>
+            <article class="detail-kpi">
+              <span>平均难度</span>
+              <strong id="documentStatDifficulty">-</strong>
+            </article>
+            <article class="detail-kpi">
+              <span>文档项数量</span>
+              <strong id="documentItemsCount">0</strong>
+            </article>
+            <article class="detail-kpi">
+              <span>导出状态</span>
+              <strong id="exportJobStatus">idle</strong>
+            </article>
+          </div>
+          <div id="documentItemsList" class="list"></div>
+        </section>
+
+        <div class="section-divider" id="question-detail-section">
+          <div>
+            <p class="eyebrow">Question Studio</p>
+            <h2>题目深度编辑</h2>
+          </div>
+          <p>基础信息、题干、解析、taxonomy、标签和答案都在这一层完成。</p>
+        </div>
+
+        <section class="panel question-detail">
+          <div class="document-detail-top">
+            <div class="section-head">
+              <p class="eyebrow">Question Detail</p>
+              <h2 id="questionDetailName">未选中题目</h2>
+            </div>
+            <div class="detail-toolbar">
+              <button id="saveQuestionBasicsBtn" class="primary">保存基础信息</button>
+              <button id="saveQuestionContentBtn">保存题干</button>
+              <button id="saveQuestionExplanationBtn">保存解析</button>
+              <button id="saveQuestionSourceBtn">保存来源</button>
+              <button id="refreshQuestionDetailBtn">刷新题目详情</button>
+            </div>
+          </div>
+          <p id="questionDetailMeta" class="panel-copy">先在题目列表中选择一题，再编辑基础属性、题干、解析、taxonomy、标签和答案。</p>
+          <div class="ops-note">
+            <strong>操作说明</strong>
+            <p>这一层按后端写接口拆分，避免一次性提交过多字段。保存按钮会分别命中题目基础信息、题干、解析、来源、答案、标签和 taxonomy 的专用接口。</p>
+          </div>
+          <div class="endpoint-row">
+            <span class="endpoint-pill">PATCH /questions/:id</span>
+            <span class="endpoint-pill">PUT /questions/:id/content</span>
+            <span class="endpoint-pill">PUT /questions/:id/explanation</span>
+            <span class="endpoint-pill">PUT /questions/:id/source</span>
+            <span class="endpoint-pill">PUT /questions/:id/taxonomy</span>
+            <span class="endpoint-pill">PUT /questions/:id/tags</span>
+          </div>
+          <div class="editor-grid">
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Basics</p>
+                <h2>基础属性</h2>
+              </div>
+              <label>
+                <span>题型</span>
+                <select id="questionType">
+                  <option value="single_choice">single_choice</option>
+                  <option value="fill_blank">fill_blank</option>
+                  <option value="solution">solution</option>
+                </select>
+              </label>
+              <label>
+                <span>难度</span>
+                <input id="questionDifficulty" type="number" min="1" max="10" />
+              </label>
+              <label>
+                <span>可见性</span>
+                <select id="questionVisibility">
+                  <option value="private">private</option>
+                  <option value="tenant_shared">tenant_shared</option>
+                </select>
+              </label>
+              <label>
+                <span>默认分值</span>
+                <input id="questionDefaultScore" placeholder="5.00" />
+              </label>
+              <label>
+                <span>科目 ID</span>
+                <input id="questionDetailSubjectId" placeholder="subject uuid" />
+              </label>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Stem</p>
+                <h2>题干</h2>
+              </div>
+              <label>
+                <span>题干文本</span>
+                <textarea id="questionStemText" rows="8" placeholder="每行都会按段落写入 stemBlocks"></textarea>
+              </label>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Explanation</p>
+                <h2>解析</h2>
+              </div>
+              <label>
+                <span>概述</span>
+                <input id="questionExplanationOverview" placeholder="可选 overviewLatex / plain text" />
+              </label>
+              <label>
+                <span>步骤文本</span>
+                <textarea id="questionExplanationSteps" rows="7" placeholder="每行会写入 stepsBlocks"></textarea>
+              </label>
+              <label>
+                <span>评注</span>
+                <textarea id="questionExplanationCommentary" rows="4" placeholder="可选 commentaryLatex / plain text"></textarea>
+              </label>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Source</p>
+                <h2>来源</h2>
+              </div>
+              <label>
+                <span>年份</span>
+                <input id="questionSourceYear" type="number" min="1900" max="2100" />
+              </label>
+              <label>
+                <span>月份</span>
+                <input id="questionSourceMonth" type="number" min="1" max="12" />
+              </label>
+              <label>
+                <span>来源文本</span>
+                <textarea id="questionSourceText" rows="5" placeholder="例如：2025 江苏苏州一模"></textarea>
+              </label>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Taxonomy</p>
+                <h2>阶段与教材绑定</h2>
+              </div>
+              <label>
+                <span>阶段</span>
+                <select id="questionStageIds" multiple></select>
+              </label>
+              <label>
+                <span>年级</span>
+                <select id="questionGradeIds" multiple></select>
+              </label>
+              <label>
+                <span>教材</span>
+                <select id="questionTextbookIds" multiple></select>
+              </label>
+              <label>
+                <span>章节</span>
+                <select id="questionChapterIds" multiple></select>
+              </label>
+              <div class="actions">
+                <button id="saveQuestionTaxonomyBtn" class="primary">保存 taxonomy</button>
+              </div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Tags</p>
+                <h2>标签绑定</h2>
+              </div>
+              <label>
+                <span>题目标签</span>
+                <select id="questionTagIds" multiple></select>
+              </label>
+              <div class="actions">
+                <button id="saveQuestionTagsBtn" class="primary">保存标签</button>
+              </div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Answer</p>
+                <h2>答案编辑</h2>
+              </div>
+              <p class="panel-copy">按当前题型保存到对应答案接口。单选题使用选项和正确答案；填空题使用空位配置；解答题使用最终答案和评分点。</p>
+              <label>
+                <span>单选题选项（每行一项）</span>
+                <textarea id="questionChoiceOptions" rows="6" placeholder="A. 选项一&#10;B. 选项二"></textarea>
+              </label>
+              <label>
+                <span>单选题正确答案（如：A,B）</span>
+                <input id="questionChoiceCorrect" placeholder="A" />
+              </label>
+              <label>
+                <span>填空题答案（格式：blank-1:答案1|答案2）</span>
+                <textarea id="questionBlankAnswers" rows="5" placeholder="blank-1: 42|四十二"></textarea>
+              </label>
+              <label>
+                <span>解答题最终答案</span>
+                <input id="questionSolutionFinalAnswer" placeholder="x = 2" />
+              </label>
+              <label>
+                <span>评分点（格式：step-1|2.00|列出方程）</span>
+                <textarea id="questionSolutionScoringPoints" rows="5" placeholder="step-1|2.00|列出方程"></textarea>
+              </label>
+              <div class="actions">
+                <button id="saveQuestionAnswerBtn" class="primary">保存答案</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="section-divider" id="taxonomy-section">
+          <div>
+            <p class="eyebrow">Taxonomy Control</p>
+            <h2>分类维度维护</h2>
+          </div>
+          <p>阶段、年级、教材、章节和标签在这里统一建模。</p>
+        </div>
+
+        <section class="panel taxonomy-panel">
+          <div class="document-detail-top">
+            <div class="section-head">
+              <p class="eyebrow">Taxonomy Admin</p>
+              <h2>taxonomy 管理</h2>
+            </div>
+            <div class="detail-toolbar">
+              <button id="refreshTaxonomyBtn">刷新 taxonomy</button>
+            </div>
+          </div>
+          <p class="panel-copy">这里维护阶段、年级、教材、章节和题目标签。创建完即可回到题目详情区进行绑定，也可用于题目列表筛选。</p>
+          <div class="endpoint-row">
+            <span class="endpoint-pill">POST /stages</span>
+            <span class="endpoint-pill">POST /grades</span>
+            <span class="endpoint-pill">POST /textbooks</span>
+            <span class="endpoint-pill">POST /chapters</span>
+            <span class="endpoint-pill">POST /question-tags</span>
+          </div>
+
+          <div class="editor-grid">
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Tags</p>
+                <h2>题目标签管理</h2>
+              </div>
+              <label>
+                <span>标签名称</span>
+                <input id="questionTagName" placeholder="压轴题 / 易错题 / 真题" />
+              </label>
+              <div class="actions">
+                <button id="createQuestionTagBtn" class="primary">创建标签</button>
+                <button id="refreshQuestionTagsBtn">刷新标签</button>
+              </div>
+              <div id="questionTagsList" class="list"></div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Stages</p>
+                <h2>新增阶段</h2>
+              </div>
+              <label>
+                <span>代码</span>
+                <input id="stageCode" placeholder="junior" />
+              </label>
+              <label>
+                <span>名称</span>
+                <input id="stageName" placeholder="初中" />
+              </label>
+              <label>
+                <span>排序</span>
+                <input id="stageOrder" type="number" value="0" />
+              </label>
+              <div class="actions">
+                <button id="createStageBtn" class="primary">创建阶段</button>
+              </div>
+              <div id="stagesList" class="list"></div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Grades</p>
+                <h2>新增年级</h2>
+              </div>
+              <label>
+                <span>所属阶段</span>
+                <select id="gradeStageId"></select>
+              </label>
+              <label>
+                <span>代码</span>
+                <input id="gradeCode" placeholder="grade-7" />
+              </label>
+              <label>
+                <span>名称</span>
+                <input id="gradeName" placeholder="七年级" />
+              </label>
+              <label>
+                <span>排序</span>
+                <input id="gradeOrder" type="number" value="0" />
+              </label>
+              <div class="actions">
+                <button id="createGradeBtn" class="primary">创建年级</button>
+              </div>
+              <div id="gradesList" class="list"></div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Textbooks</p>
+                <h2>新增教材</h2>
+              </div>
+              <label>
+                <span>教材名称</span>
+                <input id="textbookName" placeholder="人教版数学七上" />
+              </label>
+              <div class="actions">
+                <button id="createTextbookBtn" class="primary">创建教材</button>
+              </div>
+              <div id="textbooksList" class="list"></div>
+            </article>
+
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">Chapters</p>
+                <h2>新增章节</h2>
+              </div>
+              <label>
+                <span>所属教材</span>
+                <select id="chapterTextbookId"></select>
+              </label>
+              <label>
+                <span>章节名称</span>
+                <input id="chapterName" placeholder="整式的加减" />
+              </label>
+              <div class="actions">
+                <button id="createChapterBtn" class="primary">创建章节</button>
+              </div>
+              <div id="chaptersList" class="list"></div>
+            </article>
+          </div>
+        </section>
+
+        <div class="section-divider" id="audit-section">
+          <div>
+            <p class="eyebrow">Audit & Ops</p>
+            <h2>审计与运行轨迹</h2>
+          </div>
+          <p>先看聚合，再下钻日志，最后回到活动流排查具体请求。</p>
+        </div>
+
+        <section class="panel log-panel">
+          <div class="section-head">
+            <p class="eyebrow">Audit</p>
+            <h2>审计日志</h2>
+          </div>
+          <p class="panel-copy">这里展示当前租户的持久化审计记录。适合排查谁改了题目、谁动了文档、谁触发了导出，或在某个时间窗口里哪些动作异常偏多。</p>
+          <div class="ops-note">
+            <strong>操作说明</strong>
+            <p>优先观察动作/用户/目标类型分布，再看底部日志明细。聚合视图适合发现异常趋势，明细视图适合回溯单次操作。</p>
+          </div>
+          <div class="endpoint-row">
+            <span class="endpoint-pill">GET /audit-logs</span>
+            <span class="endpoint-pill">GET /audit-logs/stats</span>
+            <span class="endpoint-pill">admin / owner 可见</span>
+          </div>
+          <div class="filter-grid">
+            <label>
+              <span>动作</span>
+              <input id="auditFilterAction" placeholder="question.created" />
+            </label>
+            <label>
+              <span>目标类型</span>
+              <input id="auditFilterTargetType" placeholder="question / document / asset" />
+            </label>
+            <label>
+              <span>用户 ID</span>
+              <input id="auditFilterUserId" placeholder="可选 user uuid" />
+            </label>
+            <label>
+              <span>开始时间</span>
+              <input id="auditFilterSince" type="datetime-local" />
+            </label>
+            <label>
+              <span>结束时间</span>
+              <input id="auditFilterUntil" type="datetime-local" />
+            </label>
+          </div>
+          <div class="actions">
+            <button id="refreshAuditLogsBtn" class="primary">刷新审计日志</button>
+            <button id="auditPreset1hBtn">最近 1 小时</button>
+            <button id="auditPreset24hBtn">最近 24 小时</button>
+            <button id="clearAuditFiltersBtn">清空审计筛选</button>
+          </div>
+          <div class="detail-grid">
+            <article class="detail-kpi">
+              <span>日志总数</span>
+              <strong id="auditTotalCount">0</strong>
+            </article>
+            <article class="detail-kpi">
+              <span>高频提示</span>
+              <strong id="auditAnomalyHint">-</strong>
+            </article>
+          </div>
+          <div class="workspace">
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">By Action</p>
+                <h2>动作分布</h2>
+              </div>
+              <div id="auditActionStatsList" class="list"></div>
+            </article>
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">By User</p>
+                <h2>用户分布</h2>
+              </div>
+              <div id="auditUserStatsList" class="list"></div>
+            </article>
+            <article class="editor-card">
+              <div class="section-head">
+                <p class="eyebrow">By Target</p>
+                <h2>目标类型分布</h2>
+              </div>
+              <div id="auditTargetTypeStatsList" class="list"></div>
+            </article>
+          </div>
+          <div id="auditLogsList" class="list"></div>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="section-head">
+            <p class="eyebrow">Activity</p>
+            <h2>活动日志</h2>
+          </div>
+          <p class="panel-copy">每次前端动作都会在这里留下即时反馈，适合和上面的持久化审计日志对照使用。审计偏“系统事实”，活动流偏“本次操作轨迹”。</p>
+          <pre id="activityLog" class="log"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShiTi（拾题）用户端工作台</title>
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-noise"></div>
+    <main class="content page-stack">
+      <nav class="topbar">
+        <div class="brand">
+          <a class="brand-mark link-reset" href="/">拾题</a>
+          <span class="brand-copy">ShiTi Teaching Workspace</span>
+        </div>
+        <div class="top-actions">
+          <a href="/">首页</a>
+          <a href="/site/product.html">产品能力</a>
+          <a href="/site/get-started.html">快速开始</a>
+          <a href="/admin">后端管理台</a>
+        </div>
+      </nav>
+
+      <section class="page-hero">
+        <p class="eyebrow">Teaching Workspace</p>
+        <h1>用户端应该更像备课与教研工具，而不是运维控制台。</h1>
+        <p class="lead">
+          这页专门描述面向教师、教研员和内容运营同学的使用界面。它关注找题、整理、编讲义和复用，不要求用户理解对象存储、导出队列或维护权限。
+        </p>
+      </section>
+
+      <section class="workspace-shell">
+        <aside class="workspace-sidebar">
+          <p class="eyebrow">Workspace</p>
+          <a class="workspace-link is-active" href="#">我的备课</a>
+          <a class="workspace-link" href="#">题库检索</a>
+          <a class="workspace-link" href="#">讲义与试卷</a>
+          <a class="workspace-link" href="#">最近导出</a>
+          <a class="workspace-link" href="#">协作记录</a>
+        </aside>
+
+        <div class="workspace-main">
+          <section class="workspace-search">
+            <div>
+              <p class="eyebrow">Search Flow</p>
+              <h2>先找题，再组织成材料</h2>
+            </div>
+            <div class="search-bar">
+              <span>七年级上册 分式运算 课堂例题</span>
+            </div>
+            <div class="workspace-strip">
+              <span>七年级</span>
+              <span>人教版</span>
+              <span>分式</span>
+              <span>计算题</span>
+              <span>课堂讲义</span>
+            </div>
+          </section>
+
+          <section class="workspace-board">
+            <article class="workspace-panel">
+              <div class="section-head">
+                <p class="eyebrow">Recent Materials</p>
+                <h2>最近整理的材料</h2>
+              </div>
+              <div class="material-list">
+                <article>
+                  <strong>七上分式运算随堂讲义</strong>
+                  <p>12 道题 · 3 张配图 · 最近导出于今天 14:20</p>
+                </article>
+                <article>
+                  <strong>期中复习基础训练</strong>
+                  <p>18 道题 · 章节覆盖 4 个单元 · 适合作业使用</p>
+                </article>
+                <article>
+                  <strong>函数入门课堂练习</strong>
+                  <p>9 道题 · 标签包含“基础题”“板演题”</p>
+                </article>
+              </div>
+            </article>
+
+            <article class="workspace-panel">
+              <div class="section-head">
+                <p class="eyebrow">Question Basket</p>
+                <h2>当前选题篮</h2>
+              </div>
+              <div class="material-list">
+                <article>
+                  <strong>例题 1 · 分式化简</strong>
+                  <p>已绑定 七年级 / 分式 / 课堂引入</p>
+                </article>
+                <article>
+                  <strong>变式 2 · 条件补全</strong>
+                  <p>已绑定 七年级 / 分式 / 易错点</p>
+                </article>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section class="journey-grid">
+        <article class="journey-card">
+          <strong>找题入口要轻</strong>
+          <p>用户端优先暴露学科、章节、关键词、标签和题型筛选，而不是大量系统状态和治理信息。</p>
+        </article>
+        <article class="journey-card">
+          <strong>编辑区要围绕内容</strong>
+          <p>题干、解析、答案、素材和讲义编排应该构成主工作区，管理项和维护项应退到次级入口。</p>
+        </article>
+        <article class="journey-card">
+          <strong>结果导向要明确</strong>
+          <p>用户端最终要交付的是讲义、练习或试卷，因此重点应该是选题、组织和导出结果预览。</p>
+        </article>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Interface Split</p>
+          <h2>两套界面，各做各的事</h2>
+        </div>
+        <div class="flow-grid">
+          <article>
+            <strong>用户端</strong>
+            <p>更简洁、更少术语、更强调任务流。核心是备课、题库复用、讲义与试卷产出。</p>
+          </article>
+          <article>
+            <strong>管理端</strong>
+            <p>更强调租户、资源、导出、审计和维护操作，适合管理员和值守同学，而不是普通教研用户。</p>
+          </article>
+          <article>
+            <strong>用户端看到什么</strong>
+            <p>题库入口、最近文档、常用筛选、教材章节、标签、导出结果和协作上下文。</p>
+          </article>
+          <article>
+            <strong>用户端不该先看到什么</strong>
+            <p>RLS、对象存储、readiness、清理接口和高风险维护动作，这些应该留给后端管理台。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel route-panel">
+        <div class="section-head">
+          <p class="eyebrow">Experience Direction</p>
+          <h2>后续用户端界面的设计原则</h2>
+        </div>
+        <div class="route-grid">
+          <article>
+            <strong>任务优先</strong>
+            <p>先回答“今天要备什么、导出什么”，再展示系统能力。</p>
+          </article>
+          <article>
+            <strong>少术语</strong>
+            <p>避免把管理和运维术语直接堆给教师用户，界面尽量使用教学场景语言。</p>
+          </article>
+          <article>
+            <strong>高频对象可见</strong>
+            <p>题目篮、最近材料、最近导出和常用筛选应长期可见，不要埋得太深。</p>
+          </article>
+          <article>
+            <strong>管理能力后置</strong>
+            <p>角色、审计、状态和维护功能应该在后台管理台，而不是占据用户端首屏。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

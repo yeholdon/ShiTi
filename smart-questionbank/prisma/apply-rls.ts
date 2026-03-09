@@ -51,9 +51,14 @@ const TABLES: TenantScopedTable[] = [
   { table: 'DocumentItem', policy: 'tenant_isolation_document_item' },
   { table: 'QuestionTag', policy: 'tenant_isolation_question_tag' },
   { table: 'QuestionTagging', policy: 'tenant_isolation_question_tagging' },
+  { table: 'QuestionStage', policy: 'tenant_isolation_question_stage' },
+  { table: 'QuestionGrade', policy: 'tenant_isolation_question_grade' },
+  { table: 'QuestionTextbook', policy: 'tenant_isolation_question_textbook' },
+  { table: 'QuestionChapter', policy: 'tenant_isolation_question_chapter' },
   { table: 'Chapter', policy: 'tenant_isolation_chapter' },
   { table: 'Asset', policy: 'tenant_isolation_asset' },
-  { table: 'ExportJob', policy: 'tenant_isolation_export_job' }
+  { table: 'ExportJob', policy: 'tenant_isolation_export_job' },
+  { table: 'AuditLog', policy: 'tenant_isolation_audit_log' }
 ];
 
 async function main() {
