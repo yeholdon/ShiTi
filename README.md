@@ -2,6 +2,19 @@
 
 ShiTi（拾题）是一个多租户题库后端，基于 NestJS、Prisma、Postgres、Redis 和 MinIO 构建。
 
+当前仓库已经开始从单体入口向 `apps/api + apps/worker` 结构迁移：
+
+- `apps/api/main.ts` 是独立 API 入口
+- `apps/api/bootstrap.ts` 持有 API 启动逻辑
+- `apps/api/tenant.types.ts` 持有 API 的 Express 请求类型增强
+- `apps/api/tenant.types-shim.ts` 持有 API 专属类型 shim
+- `apps/api/tenant-resolve.middleware.ts` 持有 API 专属租户解析中间件
+- `apps/api/*.spec.ts` 现在也承载这些 API 专属入口文件的单测
+- `apps/worker/main.ts` 是独立导出 worker 入口
+- `apps/worker/bootstrap.ts` 持有 worker 启动逻辑
+- `apps/worker/export-jobs-worker.module.ts` 持有 worker 专属模块组合层
+- `src/main.ts` 暂时保留为兼容入口
+
 ## What Works
 
 - Auth and tenant membership
@@ -18,6 +31,7 @@ ShiTi（拾题）是一个多租户题库后端，基于 NestJS、Prisma、Postg
 - Request IDs and structured JSON request logs for API traffic
 - Redis-backed rate limiting with in-memory fallback for protected endpoints
 - Tenant-role-aware write controls for management APIs
+- MVP agent-team demo flow with parent-mediated topic routing simulation
 
 ## Quick Start
 
@@ -41,7 +55,13 @@ npm run prisma:backfill:block-fields
 
 ```bash
 npm install
-npm run start:dev
+npm run api:dev
+```
+
+4. Start the export worker in a separate process when needed:
+
+```bash
+npm run worker:dev
 ```
 
 Or use the one-shot dev entrypoint:
@@ -50,7 +70,7 @@ Or use the one-shot dev entrypoint:
 npm run dev:up
 ```
 
-This starts `postgres`, `redis`, and `minio` via Docker Compose, prepares Prisma, seeds defaults, reapplies RLS, then runs the API locally. It avoids relying on the Dockerized `api` service, which can be blocked by image pull/network issues.
+This starts `postgres`, `redis`, and `minio` via Docker Compose, prepares Prisma, seeds defaults, reapplies RLS, then runs the API locally with `EXPORT_JOBS_WORKER_ENABLED=0`. It avoids relying on the Dockerized `api` service, which can be blocked by image pull/network issues. Start the worker separately with `npm run worker:dev` so the local process layout matches production reality.
 
 If Prisma reports `must be owner of table ...`, repair ownership first:
 
@@ -100,6 +120,35 @@ API docs:
 http://localhost:3000/docs
 ```
 
+## MVP Agent-Team Demo
+
+A minimal demo endpoint is available at:
+
+```text
+POST /agent-team/mvp/run
+```
+
+Example body:
+
+```json
+{
+  "task": "请执行一个 MVP 流程测试",
+  "topicMap": {
+    "control": { "chatId": -1000000000000, "threadId": 101 },
+    "coder": { "chatId": -1000000000000, "threadId": 201 },
+    "tester": { "chatId": -1000000000000, "threadId": 202 }
+  }
+}
+```
+
+It simulates the MVP flow discussed in planning:
+
+- Control creates the task
+- main orchestrates coder + tester
+- coder/tester emit only `agent_started`, `agent_progress`, and `agent_result`
+- parent routes readable messages to the mapped role topics
+- final summary returns to Control
+
 OpenAPI JSON:
 
 ```text
@@ -134,7 +183,7 @@ Operations runbook:
 - Current schema vs target gap checklist:
   - `./docs/schema-gap-checklist.md`
 
-4. Run tests:
+5. Run tests:
 
 ```bash
 npm run test:unit -- --runInBand
