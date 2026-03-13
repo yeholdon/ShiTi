@@ -10,10 +10,27 @@ ShiTi（拾题）是一个多租户题库后端，基于 NestJS、Prisma、Postg
 - `apps/api/tenant.types-shim.ts` 持有 API 专属类型 shim
 - `apps/api/tenant-resolve.middleware.ts` 持有 API 专属租户解析中间件
 - `apps/api/*.spec.ts` 现在也承载这些 API 专属入口文件的单测
+- `apps/api/agent-team/*` 持有 API 专属的 MVP agent-team demo 模块
+- `apps/api/health/*` 持有 API 专属的 liveness/readiness 模块
+- `apps/api/subjects/*` 持有 API 专属的 subjects taxonomy 入口模块
+- `apps/api/stages/*` 持有 API 专属的 stages taxonomy 入口模块
+- `apps/api/grades/*` 持有 API 专属的 grades taxonomy 入口模块
+- `apps/api/textbooks/*` 持有 API 专属的 textbooks taxonomy 入口模块
+- `apps/api/chapters/*` 持有 API 专属的 chapters taxonomy 入口模块
+- `apps/api/question-tags/*` 持有 API 专属的 question-tags 入口模块
+- `apps/api/layout-elements/*` 持有 API 专属的 layout-elements 入口模块
+- `apps/api/assets/*` 持有 API 专属的 assets 入口模块
+- `apps/api/tenants/*`、`apps/api/tenant-members/*` 和 `apps/api/auth/*` 持有 API 专属的租户与认证入口模块
+- `apps/api/documents/*`、`apps/api/export-jobs/*` 和 `apps/api/questions/*` 持有 API 专属的文档、导出和题目入口模块
+- `apps/api/metrics/*` 和 `apps/api/request-context.middleware.ts` 持有 API 专属的指标与请求上下文逻辑
+- `apps/api/audit/*` 持有 API 专属的审计查询入口与模块装配
+- `apps/api/http-exception.filter.ts` 持有 API 专属的统一错误包出口
 - `apps/worker/main.ts` 是独立导出 worker 入口
 - `apps/worker/bootstrap.ts` 持有 worker 启动逻辑
 - `apps/worker/export-jobs-worker.module.ts` 持有 worker 专属模块组合层
-- `src/main.ts` 暂时保留为兼容入口
+- `src/domain/questions/*` 持有题目导入、subject/taxonomy 可访问性校验和 explanation block 兼容等共享题目实现
+- `src/domain/assets/*`、`src/domain/taxonomy/*`、`src/domain/export-jobs/*` 分别承载资源引用校验、taxonomy 列表 helper 和导出 worker 共享实现
+- 根 `src/modules/` 已清空，不再承载 API 入口模块或共享实现
 
 ## What Works
 
@@ -104,6 +121,20 @@ The public frontend now includes:
 - `/site/status.html` for lightweight live status, dependency state, metrics summary, recent snapshots, and simple trend charts
 
 The public-facing `/`, `/site/workspace.html`, and `/site/product.html` pages are now written more like a teaching-research tool than an infrastructure showcase: the primary story is question curation, taxonomy-driven reuse, document composition, and teacher workflow, while operator and observability views remain available as separate secondary routes.
+
+Cross-platform client scaffold:
+
+- `apps/flutter_app/lib/features/home/*` holds the user-facing workspace home
+- `apps/flutter_app/lib/features/library/*` holds the question-library prototype, local filter state, and question-detail route skeleton
+- `apps/flutter_app/lib/features/basket/*` and `apps/flutter_app/lib/features/documents/*` hold the first user-facing basket and document-workspace skeletons
+- `apps/flutter_app/lib/features/exports/*` and `apps/flutter_app/lib/features/documents/document_detail_page.dart` now extend that into export and document-detail flows
+- `apps/flutter_app/lib/core/models/document_item_summary.dart` and the document-detail page now also model the first pass of document-item composition
+- the local Flutter prototype now includes in-memory add-to-document and item-reorder actions, giving the document flow a minimal interactive state model
+- the Flutter client now also has repository abstractions and remote HTTP adapters behind `AppConfig.useMockData`, so it can move toward real API integration without another page-layer refactor
+- `apps/flutter_app/lib/features/auth/*` holds the login flow skeleton
+- `apps/flutter_app/lib/features/tenants/*` holds the tenant-switch skeleton
+- `apps/flutter_app/lib/core/api/*` and `apps/flutter_app/lib/core/models/*` define the first client-side API boundary
+- the local environment still lacks the `flutter` CLI, so platform directories and Flutter build/test verification are pending
 
 Role model:
 

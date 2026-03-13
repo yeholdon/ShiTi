@@ -14,6 +14,7 @@ skills/
 # Node/TS build artifacts (project should have its own ignores too)
 **/node_modules/
 **/dist/
+tmp/
 
 # Workspace meta files
 AGENTS.md
