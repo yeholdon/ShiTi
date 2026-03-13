@@ -1,0 +1,1 @@
+import './tenant.types';

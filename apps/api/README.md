@@ -1,6 +1,15 @@
 # apps/api
 
-Reserved target directory for the future standalone NestJS API app.
+Standalone API entrypoint for the ShiTi NestJS application.
 
-Current implementation still lives in the repository root.
+Development:
 
+```bash
+npm run api:dev
+```
+
+Production build output:
+
+```text
+dist/apps/api/main.js
+```

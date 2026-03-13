@@ -23,6 +23,22 @@ function sanitizeNodeOptions(env) {
   return next;
 }
 
+function withDefaultTestEnv(env) {
+  return {
+    DATABASE_URL: 'postgresql://qb_app:qb_app@localhost:5432/qb?schema=public',
+    RLS_ADMIN_DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/qb?schema=public',
+    REDIS_URL: 'redis://localhost:6379',
+    MINIO_ENDPOINT: 'localhost',
+    MINIO_PORT: '9000',
+    MINIO_USE_SSL: 'false',
+    MINIO_ACCESS_KEY: 'minioadmin',
+    MINIO_SECRET_KEY: 'minioadmin',
+    MINIO_BUCKET: 'questionbank',
+    JWT_SECRET: 'dev-secret-change-me',
+    ...env
+  };
+}
+
 async function waitForServer(url, timeoutMs = 60000) {
   const http = await import('node:http');
   const start = Date.now();
@@ -52,7 +68,7 @@ async function main() {
   const baseUrl = `http://localhost:${port}`;
 
   const cwd = path.join(__dirname, '..');
-  const baseEnv = sanitizeNodeOptions({ ...process.env });
+  const baseEnv = withDefaultTestEnv(sanitizeNodeOptions({ ...process.env }));
 
   // Ensure tenant isolation policies exist in the test database.
   // (RLS is a DB concern; without it, isolation relies purely on app code and is easier to regress.)
@@ -81,13 +97,22 @@ async function main() {
     });
   });
 
-  const serverProc = spawn(process.execPath, ['-r', 'ts-node/register', 'src/main.ts'], {
+  const serverProc = spawn(process.execPath, ['-r', 'ts-node/register', 'apps/api/main.ts'], {
     cwd,
     env: {
       ...baseEnv,
       NODE_ENV: 'test',
       PORT: String(port),
-      // E2E expects export jobs to complete; enable worker in the spawned API process.
+      EXPORT_JOBS_WORKER_ENABLED: '0'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const workerProc = spawn(process.execPath, ['-r', 'ts-node/register', 'apps/worker/main.ts'], {
+    cwd,
+    env: {
+      ...baseEnv,
+      NODE_ENV: 'test',
       EXPORT_JOBS_WORKER_ENABLED: process.env.EXPORT_JOBS_WORKER_ENABLED || '1'
     },
     stdio: ['ignore', 'pipe', 'pipe']
@@ -99,6 +124,8 @@ async function main() {
 
   forward(serverProc.stdout, '[api] ');
   forward(serverProc.stderr, '[api] ');
+  forward(workerProc.stdout, '[worker] ');
+  forward(workerProc.stderr, '[worker] ');
 
   try {
     await waitForServer(baseUrl + '/health');
@@ -117,6 +144,7 @@ async function main() {
     process.exitCode = code;
   } finally {
     serverProc.kill('SIGTERM');
+    workerProc.kill('SIGTERM');
   }
 }
 

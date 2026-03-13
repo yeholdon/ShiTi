@@ -37,7 +37,7 @@ services:
       - ./:/app
     env_file:
       - .env
-    command: bash -lc "npm i && npx prisma generate && npm run start:dev"
+    command: bash -lc "npm i && npx prisma generate && EXPORT_JOBS_WORKER_ENABLED=0 npm run start:dev"
     ports:
       - "3000:3000"
     depends_on:
@@ -51,9 +51,11 @@ services:
       - ./:/app
     env_file:
       - .env
-    command: bash -lc "npm i && npx prisma generate && node dist/worker.js"
+    command: bash -lc "npm i && npx prisma generate && npm run start:worker:dev"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_started
+      minio:
         condition: service_started

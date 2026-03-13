@@ -24,4 +24,4 @@ npm run prisma:seed
 npm run prisma:rls
 
 echo "Starting API on http://localhost:${PORT:-3000}"
-exec npm run start:dev
+exec npm run api:dev

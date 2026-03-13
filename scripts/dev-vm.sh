@@ -21,4 +21,4 @@ echo "Generating Prisma client..."
 npx prisma generate
 
 echo "Starting API (ts-node)..."
-exec npm run start:dev
+exec npm run api:dev

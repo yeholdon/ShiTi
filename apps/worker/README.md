@@ -1,6 +1,15 @@
 # apps/worker
 
-Reserved target directory for the future standalone BullMQ worker app.
+Standalone BullMQ worker entrypoint for ShiTi export jobs.
 
-Current worker code still lives inside the main NestJS project.
+Development:
 
+```bash
+npm run start:worker:dev
+```
+
+Production build output:
+
+```text
+dist/apps/worker/main.js
+```
