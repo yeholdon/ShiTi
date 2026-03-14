@@ -234,6 +234,11 @@ When work status changes, update this file in the same change.
   - tenant-member cards now also show queue context for the current priority target, including the next handoff target, so top queue state no longer disappears before opening the details drawer
   - tenant-member queue progress and completion messaging now also use one shared summary helper across the top queue panel, section headers, cards, and the details drawer, so queue state no longer drifts between surfaces
   - tenant-member invited rows now also show a shared lifecycle state (`等待自助加入 / 已过期待处理 / 已重发待回看`) across cards and the details drawer, so invitation follow-up status is visible without reopening the full governance flow
+  - tenant-member active rows that were just activated from invited now also show a shared invitation-resolution state (`邀请已完成`) across cards and the details drawer, so the invite lifecycle has an explicit completion state instead of stopping at in-progress follow-up guidance
+  - tenant-member cards and the details drawer now also share one status-narrative helper, so invited/disabled/active governance wording no longer drifts between the list view and the drawer
+  - tenant-member cards now also avoid repeating invitation-lifecycle detail in both the status summary and the recommendation box, so the list view reads like one compact governance surface instead of two overlapping invite hints
+  - tenant-member details now also keep `当前可执行动作` strictly positive and leave blocked cases to the dedicated lock-reason block, so the drawer no longer repeats the same “不能做什么” guidance twice
+  - tenant-member details now also rely on the shared queue summary text directly, so the drawer no longer repeats the same priority/next-target queue context beneath that summary
 
 ## Backend completion notes
 

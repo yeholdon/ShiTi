@@ -2023,6 +2023,76 @@ _TenantInvitationLifecycleSummary? _tenantInvitationLifecycleSummary({
   );
 }
 
+class _TenantInvitationResolutionSummary {
+  const _TenantInvitationResolutionSummary({
+    required this.label,
+    required this.detail,
+    required this.color,
+  });
+
+  final String label;
+  final String detail;
+  final Color color;
+}
+
+_TenantInvitationResolutionSummary? _tenantInvitationResolutionSummary({
+  required TenantMemberSummary member,
+  _TenantMemberRecentAction? recentAction,
+  List<_TenantMemberRecentAction> history = const <_TenantMemberRecentAction>[],
+}) {
+  if (member.status != 'active') {
+    return null;
+  }
+  final actions = <_TenantMemberRecentAction>[
+    if (recentAction != null) recentAction,
+    ...history,
+  ];
+  final activatedFromInvite = actions.any(
+    (entry) =>
+        entry.changeType == _TenantMemberRecentActionType.status &&
+        entry.beforeValue == '待加入' &&
+        entry.afterValue == '活跃',
+  );
+  if (!activatedFromInvite) {
+    return null;
+  }
+  return const _TenantInvitationResolutionSummary(
+    label: '邀请已完成',
+    detail: '该成员已经从待加入状态完成激活，当前邀请流程已收口。',
+    color: TelegramPalette.accentDark,
+  );
+}
+
+String _tenantMemberStatusNarrative({
+  required TenantMemberSummary member,
+  _TenantInvitationLifecycleSummary? invitationLifecycle,
+  _TenantInvitationResolutionSummary? invitationResolution,
+  required bool concise,
+}) {
+  final base = switch (member.status) {
+    'invited' => concise
+        ? member.isInvitationExpired
+            ? '该账号的邀请已过期，建议重新发送邀请或直接激活成员关系。'
+            : '该账号已收到邀请，等待自行加入或由管理员直接激活。'
+        : member.isInvitationExpired
+            ? '该成员当前仍处于邀请态，但这次邀请已经过期。你可以重新发送邀请，直接激活成员关系，或撤销当前邀请。'
+            : '该成员当前仍处于邀请态。你可以直接激活成员关系，重新发送邀请，或撤销当前邀请。',
+    'disabled' => concise
+        ? '该账号当前无法访问当前租户，可恢复或移除。'
+        : '该成员当前已被停用。恢复后会重新获得当前租户访问权限。',
+    _ => concise
+        ? '该账号当前处于活跃状态，可继续参与当前租户。'
+        : '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出租户。',
+  };
+  if (invitationResolution != null) {
+    return '$base ${invitationResolution.detail}';
+  }
+  if (invitationLifecycle != null) {
+    return '$base ${invitationLifecycle.detail}';
+  }
+  return base;
+}
+
 class _TenantMemberCard extends StatelessWidget {
   const _TenantMemberCard({
     super.key,
@@ -2075,6 +2145,10 @@ class _TenantMemberCard extends StatelessWidget {
       member: member,
       recentAction: recentAction,
     );
+    final invitationResolution = _tenantInvitationResolutionSummary(
+      member: member,
+      recentAction: recentAction,
+    );
     final queueSummary = activeQueueTitle == null
         ? null
         : _tenantMemberQueueStatusSummary(
@@ -2090,13 +2164,12 @@ class _TenantMemberCard extends StatelessWidget {
     };
     final invitationStateLabel = member.isInvitationExpired ? '邀请已过期' : '邀请仍有效';
     final removeLabel = member.status == 'invited' ? '撤销邀请' : '移除成员';
-    final statusHint = switch (member.status) {
-      'invited' => member.isInvitationExpired
-          ? '该账号的邀请已过期，建议重新发送邀请或直接激活成员关系。'
-          : '该账号已收到邀请，等待自行加入或由管理员直接激活。',
-      'disabled' => '该账号当前无法访问当前租户，可恢复或移除。',
-      _ => '该账号当前处于活跃状态，可继续参与当前租户。',
-    };
+    final statusHint = _tenantMemberStatusNarrative(
+      member: member,
+      invitationLifecycle: invitationLifecycle,
+      invitationResolution: invitationResolution,
+      concise: true,
+    );
     final emphasizePrimaryAction = member.status != 'active';
     final lockedReasonLines = _tenantMemberLockedReasons(
       member: member,
@@ -2207,6 +2280,22 @@ class _TenantMemberCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                      if (invitationResolution != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: TelegramPalette.surfaceAccent,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: TelegramPalette.border),
+                          ),
+                          child: Text(
+                            invitationResolution.label,
+                            style: TextStyle(
+                              color: invitationResolution.color,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -2243,7 +2332,7 @@ class _TenantMemberCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${invitationGuidance.detail} ${invitationLifecycle?.detail ?? ''}'.trim(),
+                            invitationGuidance.detail,
                             style: const TextStyle(
                               color: TelegramPalette.textMuted,
                               height: 1.35,
@@ -2759,19 +2848,23 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
       recentAction: recentAction,
       history: history,
     );
+    final invitationResolution = _tenantInvitationResolutionSummary(
+      member: member,
+      recentAction: recentAction,
+      history: history,
+    );
     final prioritizeResend = invitationGuidance?.prioritizeResend ?? false;
     final statusActionLabel = switch (member.status) {
       'invited' => '激活成员',
       'active' => '停用成员',
       _ => '重新启用',
     };
-    final statusHint = switch (member.status) {
-      'invited' => member.isInvitationExpired
-          ? '该成员当前仍处于邀请态，但这次邀请已经过期。你可以重新发送邀请，直接激活成员关系，或撤销当前邀请。'
-          : '该成员当前仍处于邀请态。你可以直接激活成员关系，重新发送邀请，或撤销这次邀请。',
-      'disabled' => '该成员当前已被停用。恢复后会重新获得当前租户访问权限。',
-      _ => '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出租户。',
-    };
+    final statusHint = _tenantMemberStatusNarrative(
+      member: member,
+      invitationLifecycle: invitationLifecycle,
+      invitationResolution: invitationResolution,
+      concise: false,
+    );
     final removeLabel = member.status == 'invited' ? '撤销邀请' : '移除成员';
     final primaryActionDetail = switch (member.status) {
       'invited' => '把待加入成员直接转为当前租户可用账号。',
@@ -2800,20 +2893,13 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
             memberIsInQueue: true,
           );
     final capabilityLines = <String>[
-      if (canManageRoles)
-        '你可以调整此成员的角色。'
-      else
-        '你当前不能调整此成员的角色。',
+      if (canManageRoles) '你可以调整此成员的角色。',
       if (canManageStatuses)
         member.status == 'active'
             ? '你可以停用此成员。'
-            : '你可以更新此成员的可用状态。'
-      else
-        '你当前不能变更此成员的状态。',
+            : '你可以更新此成员的可用状态。',
       if (canRemoveMembers)
-        member.status == 'invited' ? '你可以撤销这次邀请。' : '你可以将此成员移出租户。'
-      else
-        '你当前不能移除此成员。',
+        member.status == 'invited' ? '你可以撤销这次邀请。' : '你可以将此成员移出租户。',
     ];
     final lockedReasonLines = _tenantMemberLockedReasons(
       member: member,
@@ -2874,6 +2960,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                   ),
                 if (invitationLifecycle != null)
                   _InfoChip(label: '跟进状态', value: invitationLifecycle.label),
+                if (invitationResolution != null)
+                  _InfoChip(label: '邀请收口', value: invitationResolution.label),
                 _InfoChip(label: '用户 ID', value: member.userId),
               ],
             ),
@@ -2898,9 +2986,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    invitationLifecycle == null
-                        ? statusHint
-                        : '$statusHint ${invitationLifecycle.detail}',
+                    statusHint,
                     style: const TextStyle(
                       color: TelegramPalette.textMuted,
                       height: 1.45,
@@ -2928,6 +3014,14 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (capabilityLines.isEmpty)
+                    const Text(
+                      '当前没有可直接执行的治理动作。',
+                      style: TextStyle(
+                        color: TelegramPalette.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
                   if (lockedReasonLines.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Container(
@@ -3033,28 +3127,6 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                               height: 1.4,
                             ),
                           ),
-                          if (queuePriorityMemberUsername != null &&
-                              !queueSummary.isComplete) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              '当前优先对象：$queuePriorityMemberUsername',
-                              style: const TextStyle(
-                                color: TelegramPalette.textStrong,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                          if (queueNextMemberUsername != null &&
-                              !queueSummary.isComplete) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              '下一处理对象：$queueNextMemberUsername',
-                              style: const TextStyle(
-                                color: TelegramPalette.textSoft,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
