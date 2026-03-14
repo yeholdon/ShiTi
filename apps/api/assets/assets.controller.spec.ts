@@ -1,7 +1,7 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { AssetsController } from '../../../apps/api/assets/assets.controller';
 
-jest.mock('../../tenant/tenant-guards', () => ({
+jest.mock('../../../src/tenant/tenant-guards', () => ({
   requireTenantId: jest.fn(() => 'tenant-1'),
   requireUserId: jest.fn(() => 'user-1'),
   requireTenantRole: jest.fn().mockResolvedValue(undefined),

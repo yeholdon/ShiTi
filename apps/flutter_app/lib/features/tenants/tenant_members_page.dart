@@ -1062,7 +1062,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '当前队列状态 · $_activeQueueTitle',
+                                '当前处理队列 · $_activeQueueTitle',
                                   style: const TextStyle(
                                     color: TelegramPalette.textStrong,
                                     fontWeight: FontWeight.w800,
@@ -2356,7 +2356,7 @@ class _TenantMemberCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '队列上下文 · $activeQueueTitle',
+                            '当前处理队列 · $activeQueueTitle',
                             style: const TextStyle(
                               color: TelegramPalette.accentDark,
                               fontWeight: FontWeight.w800,
@@ -3113,7 +3113,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '队列上下文 · $activeQueueTitle',
+                            '当前处理队列 · $activeQueueTitle',
                             style: const TextStyle(
                               color: TelegramPalette.accentDark,
                               fontWeight: FontWeight.w800,

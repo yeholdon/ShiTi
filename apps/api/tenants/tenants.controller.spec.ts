@@ -70,7 +70,7 @@ describe('TenantsController', () => {
       .mockResolvedValueOnce({ role: 'member', status: 'disabled' });
 
     const ctrl = new TenantsController(prisma);
-    const res = await ctrl.listTenants({ user: { userId: 'u1' } } as any);
+    const res = await ctrl.listTenants({ auth: { userId: 'u1' } } as any);
 
     expect(prisma.tenant.findMany).toHaveBeenCalledWith({
       orderBy: {
