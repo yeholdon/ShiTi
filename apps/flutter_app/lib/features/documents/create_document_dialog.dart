@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/document_summary.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
 
 Future<DocumentSummary?> showCreateDocumentDialog(BuildContext context) {
   return showDialog<DocumentSummary>(
@@ -83,7 +84,10 @@ class _CreateDocumentDialogState extends State<_CreateDocumentDialog> {
             if (_errorMessage != null) ...[
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Color(0xFF9F1239), height: 1.4),
+                style: const TextStyle(
+                  color: TelegramPalette.errorText,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 12),
             ],

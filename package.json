@@ -14,6 +14,8 @@
     "start:worker": "npm run worker:start",
     "start:worker:dev": "npm run worker:dev",
     "dev:up": "bash scripts/dev-up.sh",
+    "local:up": "bash scripts/local-up.sh",
+    "local:down": "bash scripts/local-down.sh",
     "db:fix-ownership": "bash scripts/fix-db-ownership.sh",
     "lint": "eslint .",
     "format": "prettier -w .",

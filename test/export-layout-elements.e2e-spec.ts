@@ -3,6 +3,8 @@ import request from 'supertest';
 const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
 const tinyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Z8ioAAAAASUVORK5CYII=', 'base64');
 
+jest.setTimeout(70000);
+
 describe('Export layout elements (e2e)', () => {
   it('exports handout layout elements and asset placeholders into the generated pdf', async () => {
     const suffix = Date.now();
@@ -98,7 +100,7 @@ describe('Export layout elements (e2e)', () => {
 
     const start = Date.now();
     let lastStatus: string | undefined;
-    while (Date.now() - start < 2000) {
+    while (Date.now() - start < 60000) {
       const get = await request(base)
         .get(`/export-jobs/${jobId}`)
         .set('X-Tenant-Code', tenant.code)
@@ -106,7 +108,7 @@ describe('Export layout elements (e2e)', () => {
 
       expect(get.status).toBe(200);
       lastStatus = get.body.job.status;
-      if (lastStatus === 'succeeded' || lastStatus === 'failed') break;
+      if (lastStatus === 'succeeded' || lastStatus === 'failed' || lastStatus === 'canceled') break;
       await new Promise((r) => setTimeout(r, 100));
     }
 

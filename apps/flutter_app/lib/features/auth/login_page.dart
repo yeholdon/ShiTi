@@ -4,6 +4,7 @@ import '../../core/config/app_config.dart';
 import '../../core/models/auth_session.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 
 class LoginPage extends StatefulWidget {
@@ -108,7 +109,10 @@ class _LoginPageState extends State<LoginPage> {
                         _registerMode
                             ? '先创建一个用户会话，再进入租户选择。当前后端注册只要求用户名，密码字段暂作占位。'
                             : '先建立登录会话，再进入租户选择。后续这里会接真实 JWT 登录和多租户切换。',
-                        style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+                        style: TextStyle(
+                          height: 1.5,
+                          color: TelegramPalette.textMuted,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       SegmentedButton<bool>(
@@ -177,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F3F0),
+                            color: TelegramPalette.surfaceAccent,
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Column(
@@ -218,8 +222,8 @@ class _ModeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = AppConfig.useMockData
-        ? const Color(0xFFB7791F)
-        : const Color(0xFF0F766E);
+        ? TelegramPalette.warningText
+        : TelegramPalette.accentDark;
     final label = AppConfig.useMockData ? '当前模式：MOCK 本地数据' : '当前模式：REMOTE 真实接口';
 
     return Container(
@@ -254,13 +258,13 @@ class _ErrorBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
+        color: TelegramPalette.errorSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDA4AF)),
+        border: Border.all(color: TelegramPalette.errorBorder),
       ),
       child: Text(
         message,
-        style: const TextStyle(color: Color(0xFF9F1239), height: 1.4),
+        style: const TextStyle(color: TelegramPalette.errorText, height: 1.4),
       ),
     );
   }

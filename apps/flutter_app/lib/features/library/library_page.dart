@@ -6,6 +6,7 @@ import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -19,7 +20,16 @@ class _LibraryPageState extends State<LibraryPage> {
   final _searchController = TextEditingController();
 
   LibraryFilterState _filters = const LibraryFilterState();
-  late Future<List<QuestionSummary>> _questionsFuture = _reload();
+  List<QuestionSummary> _questions = const <QuestionSummary>[];
+  Set<String> _basketQuestionIds = <String>{};
+  Object? _loadError;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
 
   @override
   void dispose() {
@@ -27,8 +37,32 @@ class _LibraryPageState extends State<LibraryPage> {
     super.dispose();
   }
 
-  Future<List<QuestionSummary>> _reload() {
-    return AppServices.instance.questionRepository.listQuestions(filters: _filters);
+  Future<void> _reload() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    final repository = AppServices.instance.questionRepository;
+    try {
+      final questions = await repository.listQuestions(filters: _filters);
+      final basketIds = await repository.listBasketQuestionIds();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _questions = questions;
+        _basketQuestionIds = basketIds;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadError = error;
+        _loading = false;
+      });
+    }
   }
 
   void _updateFilters(LibraryFilterState next) {
@@ -37,13 +71,21 @@ class _LibraryPageState extends State<LibraryPage> {
       if (_searchController.text != next.query) {
         _searchController.text = next.query;
       }
-      _questionsFuture = _reload();
     });
+    _reload();
   }
 
   Future<void> _reloadWithGuard() async {
+    await _reload();
+  }
+
+  void _setBasketMembership(String questionId, bool isInBasket) {
     setState(() {
-      _questionsFuture = _reload();
+      if (isInBasket) {
+        _basketQuestionIds.add(questionId);
+      } else {
+        _basketQuestionIds.remove(questionId);
+      }
     });
   }
 
@@ -78,52 +120,50 @@ class _LibraryPageState extends State<LibraryPage> {
             onChanged: _updateFilters,
           ),
           const SizedBox(height: 16),
-          FutureBuilder<List<QuestionSummary>>(
-            future: _questionsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                final error = snapshot.error;
-                final message = error is HttpJsonException
-                    ? '题库加载失败：${error.message}（HTTP ${error.statusCode}）'
-                    : '题库加载失败：$error';
-                return _LibraryErrorCard(
-                  message: message,
-                  onRetry: _reloadWithGuard,
-                );
-              }
-              if (!snapshot.hasData) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
+          if (_loadError != null)
+            _LibraryErrorCard(
+              message: _loadError is HttpJsonException
+                  ? '题库加载失败：${(_loadError as HttpJsonException).message}（HTTP ${(_loadError as HttpJsonException).statusCode}）'
+                  : '题库加载失败：$_loadError',
+              onRetry: _reloadWithGuard,
+            )
+          else if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_questions.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  '当前没有可展示的题目。REMOTE 模式下请先登录并选择租户；MOCK 模式下可直接查看本地样例数据。',
+                  style: TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
                   ),
-                );
-              }
-
-              final questions = snapshot.data!;
-              if (questions.isEmpty) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      '当前没有可展示的题目。REMOTE 模式下请先登录并选择租户；MOCK 模式下可直接查看本地样例数据。',
-                      style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
-                    ),
-                  ),
-                );
-              }
-              return Column(
-                children: questions
-                    .map(
-                      (question) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _QuestionPreviewCard(question: question),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: _questions
+                  .map(
+                    (question) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _QuestionPreviewCard(
+                        question: question,
+                        isInBasket: _basketQuestionIds.contains(question.id),
+                        onBasketChanged: (isInBasket) {
+                          _setBasketMembership(question.id, isInBasket);
+                        },
                       ),
-                    )
-                    .toList(),
-              );
-            },
-          ),
+                    ),
+                  )
+                  .toList(),
+            ),
         ],
       ),
     );
@@ -174,13 +214,13 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F3F0),
+        color: TelegramPalette.surface,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         '$label：$value',
         style: const TextStyle(
-          color: Color(0xFF35524E),
+          color: TelegramPalette.textStrong,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -214,7 +254,10 @@ class _LibraryErrorCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               message,
-              style: const TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+              style: const TextStyle(
+                height: 1.5,
+                color: TelegramPalette.textMuted,
+              ),
             ),
             const SizedBox(height: 14),
             FilledButton.tonalIcon(
@@ -366,9 +409,43 @@ class _FilterDropdown extends StatelessWidget {
 }
 
 class _QuestionPreviewCard extends StatelessWidget {
-  const _QuestionPreviewCard({required this.question});
+  const _QuestionPreviewCard({
+    required this.question,
+    required this.isInBasket,
+    required this.onBasketChanged,
+  });
 
   final QuestionSummary question;
+  final bool isInBasket;
+  final ValueChanged<bool> onBasketChanged;
+
+  Future<void> _toggleBasket(BuildContext context) async {
+    final repository = AppServices.instance.questionRepository;
+    if (isInBasket) {
+      await repository.removeQuestionFromBasket(question.id);
+    } else {
+      await repository.addQuestionToBasket(question);
+    }
+    onBasketChanged(!isInBasket);
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isInBasket ? '已从选题篮移除：${question.title}' : '已加入选题篮：${question.title}',
+        ),
+        action: isInBasket
+            ? null
+            : SnackBarAction(
+                label: '查看',
+                onPressed: () {
+                  Navigator.of(context).pushNamed(AppRouter.basket);
+                },
+              ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +470,7 @@ class _QuestionPreviewCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '${question.subject} · ${question.grade} · ${question.textbook} · ${question.chapter}',
-                style: const TextStyle(color: Color(0xFF52726D)),
+                style: const TextStyle(color: TelegramPalette.textSoft),
               ),
               const SizedBox(height: 10),
               Text(
@@ -409,6 +486,32 @@ class _QuestionPreviewCard extends StatelessWidget {
                 children: [
                   Chip(label: Text('难度 ${question.difficulty}')),
                   ...question.tags.map((tag) => Chip(label: Text(tag))),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => _toggleBasket(context),
+                    icon: Icon(
+                      isInBasket
+                          ? Icons.bookmark_remove_outlined
+                          : Icons.collections_bookmark_outlined,
+                    ),
+                    label: Text(isInBasket ? '移出选题篮' : '加入选题篮'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(
+                        AppRouter.questionDetail,
+                        arguments: QuestionDetailArgs(questionId: question.id),
+                      );
+                    },
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('查看详情'),
+                  ),
                 ],
               ),
             ],

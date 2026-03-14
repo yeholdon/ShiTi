@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/document_detail_args.dart';
+import '../../core/models/question_detail.dart';
 import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
 import '../../core/services/app_services.dart';
-import '../documents/select_document_dialog.dart';
+import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
+import '../documents/select_document_dialog.dart';
+import 'question_block_renderer.dart';
 
 class QuestionDetailPage extends StatefulWidget {
   const QuestionDetailPage({
@@ -24,17 +27,26 @@ class QuestionDetailPage extends StatefulWidget {
 }
 
 class _QuestionDetailPageState extends State<QuestionDetailPage> {
-  late final Future<QuestionSummary?> _questionFuture =
-      AppServices.instance.questionRepository.getQuestion(widget.questionId);
+  late Future<_QuestionDetailViewData> _pageFuture = _loadPageData();
 
-  Future<void> _addToDocument(QuestionSummary question) async {
+  Future<_QuestionDetailViewData> _loadPageData() async {
+    final repository = AppServices.instance.questionRepository;
+    final question = await repository.getQuestionDetail(widget.questionId);
+    final basketIds = await repository.listBasketQuestionIds();
+    return _QuestionDetailViewData(
+      question: question,
+      isInBasket: question != null && basketIds.contains(question.id),
+    );
+  }
+
+  Future<void> _addToDocument(QuestionDetail question) async {
     final targetDocument = await pickTargetDocument(context);
     if (targetDocument == null) {
       return;
     }
-    await AppServices.instance.documentRepository.addQuestionToDocument(
+    final createdItem = await AppServices.instance.documentRepository.addQuestionToDocument(
       documentId: targetDocument.id,
-      question: question,
+      question: question.toSummary(),
     );
     if (!mounted) {
       return;
@@ -44,7 +56,42 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
     );
     Navigator.of(context).pushNamed(
       AppRouter.documentDetail,
-      arguments: DocumentDetailArgs(documentId: targetDocument.id),
+      arguments: DocumentDetailArgs(
+        documentId: targetDocument.id,
+        focusItemId: createdItem.id,
+        focusItemTitle: question.title,
+      ),
+    );
+  }
+
+  Future<void> _toggleBasket(QuestionDetail question, bool isInBasket) async {
+    final repository = AppServices.instance.questionRepository;
+    if (isInBasket) {
+      await repository.removeQuestionFromBasket(question.id);
+    } else {
+      await repository.addQuestionToBasket(question.toSummary());
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _pageFuture = _loadPageData();
+    });
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isInBasket ? '已从选题篮移除' : '已加入选题篮'),
+        action: isInBasket
+            ? null
+            : SnackBarAction(
+                label: '查看',
+                onPressed: () {
+                  Navigator.of(context).pushNamed(AppRouter.basket);
+                },
+              ),
+      ),
     );
   }
 
@@ -52,13 +99,14 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('题目详情')),
-      body: FutureBuilder<QuestionSummary?>(
-        future: _questionFuture,
+      body: FutureBuilder<_QuestionDetailViewData>(
+        future: _pageFuture,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final question = snapshot.data;
+          final question = snapshot.data!.question;
+          final isInBasket = snapshot.data!.isInBasket;
           if (question == null) {
             return const Center(child: Text('未找到对应题目'));
           }
@@ -89,6 +137,7 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                           _MetaChip(label: question.textbook),
                           _MetaChip(label: question.chapter),
                           _MetaChip(label: '难度 ${question.difficulty}'),
+                          for (final tag in question.tags) _MetaChip(label: '#$tag'),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -97,10 +146,25 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        question.stemPreview,
-                        style: const TextStyle(height: 1.6),
+                      QuestionBlockRenderer(
+                        blocks: question.stemBlocks,
+                        fallbackText: question.stemText,
                       ),
+                      if (question.sourceText.trim().isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          '题目出处',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          question.sourceText,
+                          style: const TextStyle(
+                            height: 1.6,
+                            color: TelegramPalette.textMuted,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       Wrap(
                         spacing: 12,
@@ -110,6 +174,15 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                             onPressed: () => _addToDocument(question),
                             icon: const Icon(Icons.playlist_add_outlined),
                             label: const Text('加入指定文档'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _toggleBasket(question, isInBasket),
+                            icon: Icon(
+                              isInBasket
+                                  ? Icons.bookmark_remove_outlined
+                                  : Icons.collections_bookmark_outlined,
+                            ),
+                            label: Text(isInBasket ? '移出选题篮' : '加入选题篮'),
                           ),
                           FilledButton.tonalIcon(
                             onPressed: () {
@@ -122,13 +195,45 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        '题解结构',
+                        '整体分析',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 10),
+                      DefaultTextStyle(
+                        style: const TextStyle(
+                          height: 1.6,
+                          color: TelegramPalette.textMuted,
+                        ),
+                        child: QuestionBlockRenderer(
+                          blocks: question.analysisBlocks,
+                          fallbackText: question.analysisText,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       const Text(
-                        '这里预留给 block / LaTeX 详情渲染。下一步直接接 questions detail API，就可以在移动端、网页端、桌面端共用同一套详情组件。',
-                        style: TextStyle(height: 1.6, color: Color(0xFF4C6964)),
+                        '详细题解',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      QuestionBlockRenderer(
+                        blocks: question.solutionBlocks,
+                        fallbackText: question.solutionText,
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '点评',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      DefaultTextStyle(
+                        style: const TextStyle(
+                          height: 1.6,
+                          color: TelegramPalette.textMuted,
+                        ),
+                        child: QuestionBlockRenderer(
+                          blocks: question.commentaryBlocks,
+                          fallbackText: question.commentaryText,
+                        ),
                       ),
                     ],
                   ),
@@ -140,6 +245,33 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
       ),
     );
   }
+}
+
+extension on QuestionDetail {
+  QuestionSummary toSummary() {
+    return QuestionSummary(
+      id: id,
+      title: title,
+      subject: subject,
+      stage: stage,
+      grade: grade,
+      textbook: textbook,
+      chapter: chapter,
+      difficulty: difficulty,
+      tags: tags,
+      stemPreview: stemText,
+    );
+  }
+}
+
+class _QuestionDetailViewData {
+  const _QuestionDetailViewData({
+    required this.question,
+    required this.isInBasket,
+  });
+
+  final QuestionDetail? question;
+  final bool isInBasket;
 }
 
 class _MetaChip extends StatelessWidget {

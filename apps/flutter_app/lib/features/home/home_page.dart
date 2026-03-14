@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/library_filter_state.dart';
+import '../../core/models/question_summary.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 
 class HomePage extends StatelessWidget {
@@ -152,7 +154,10 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                   SizedBox(height: 10),
                   Text(
                     '当前还没有完整的远程上下文。先登录并选择租户后，这里会显示题库和文档工作区的真实加载结果。',
-                    style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+                    style: TextStyle(
+                      height: 1.5,
+                      color: TelegramPalette.textMuted,
+                    ),
                   ),
                 ],
               );
@@ -173,7 +178,10 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                   const SizedBox(height: 10),
                   Text(
                     message,
-                    style: const TextStyle(height: 1.5, color: Color(0xFF7C2D12)),
+                    style: const TextStyle(
+                      height: 1.5,
+                      color: TelegramPalette.warningText,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
@@ -222,7 +230,10 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                 const SizedBox(height: 10),
                 const Text(
                   '真实后端已经返回题库和文档工作区数据，可以直接进入对应页面继续操作。',
-                  style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+                  style: TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Wrap(
@@ -296,7 +307,10 @@ class _RemoteModeGuideCard extends StatelessWidget {
               hasSession && hasTenant
                   ? '当前已经具备会话和租户上下文，可以直接进入题库和文档工作区加载真实后端数据。'
                   : '当前还缺少真实后端上下文。先登录，再按租户代码解析并进入工作区，题库和文档列表才会走远程接口。',
-              style: const TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+              style: const TextStyle(
+                height: 1.5,
+                color: TelegramPalette.textMuted,
+              ),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -365,13 +379,13 @@ class _ContextChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F3F0),
+        color: TelegramPalette.surface,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         '$label：$value',
         style: const TextStyle(
-          color: Color(0xFF35524E),
+          color: TelegramPalette.textStrong,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -388,7 +402,7 @@ class _WorkspaceRail extends StatelessWidget {
       width: 260,
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
       decoration: const BoxDecoration(
-        color: Color(0xFF123B37),
+        color: TelegramPalette.text,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +418,7 @@ class _WorkspaceRail extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             '教研工作台',
-            style: TextStyle(color: Color(0xFFB8D7D1)),
+            style: TextStyle(color: TelegramPalette.borderAccent),
           ),
           const SizedBox(height: 32),
           ...const [
@@ -418,7 +432,7 @@ class _WorkspaceRail extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF194843),
+              color: TelegramPalette.textStrong,
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Text(
@@ -449,17 +463,17 @@ class _RailItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: active ? const Color(0xFF225953) : Colors.transparent,
+        color: active ? TelegramPalette.accent : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          Icon(icon, color: active ? Colors.white : const Color(0xFFB8D7D1)),
+          Icon(icon, color: active ? Colors.white : TelegramPalette.borderAccent),
           const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
-              color: active ? Colors.white : const Color(0xFFD5E8E4),
+              color: active ? Colors.white : TelegramPalette.surfaceAccent,
               fontWeight: active ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
@@ -480,7 +494,7 @@ class _HeroSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE7F2EE), Color(0xFFF7FBF9)],
+          colors: [TelegramPalette.surfaceAccent, TelegramPalette.surfaceSoft],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -517,7 +531,7 @@ class _HeroCopy extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFD5E8E4),
+            color: TelegramPalette.surfaceAccent,
             borderRadius: BorderRadius.circular(999),
           ),
           child: const Text('跨平台教研工作流'),
@@ -530,7 +544,11 @@ class _HeroCopy extends StatelessWidget {
         const SizedBox(height: 14),
         const Text(
           '优先服务教研场景：按教材章节找题、维护选题篮、沉淀讲义结构，并跟踪导出结果。',
-          style: TextStyle(fontSize: 16, height: 1.5, color: Color(0xFF35524E)),
+          style: TextStyle(
+            fontSize: 16,
+            height: 1.5,
+            color: TelegramPalette.textMuted,
+          ),
         ),
         const SizedBox(height: 18),
         Wrap(
@@ -563,6 +581,9 @@ class _WorkspaceEntryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeTenantRole = AppServices.instance.activeTenant?.role ?? '';
+    final canManageTenantMembers =
+        activeTenantRole == 'owner' || activeTenantRole == 'admin';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -588,7 +609,10 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 SizedBox(height: 6),
                 Text(
                   '当前 Flutter 端已经区分工作台首页、题库、登录和租户切换四个入口，下一步可以直接接 API 会话和题目列表。',
-                  style: TextStyle(height: 1.45, color: Color(0xFF4C6964)),
+                  style: TextStyle(
+                    height: 1.45,
+                    color: TelegramPalette.textMuted,
+                  ),
                 ),
               ],
             ),
@@ -632,6 +656,14 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 icon: const Icon(Icons.cloud_outlined),
                 label: const Text('导出记录'),
               ),
+              if (canManageTenantMembers)
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(AppRouter.tenantMembers);
+                  },
+                  icon: const Icon(Icons.group_outlined),
+                  label: const Text('成员管理'),
+                ),
             ],
           ),
         ],
@@ -654,7 +686,10 @@ class _HeroPanel extends StatelessWidget {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('当前聚焦', style: TextStyle(fontSize: 12, color: Color(0xFF52726D))),
+          Text(
+            '当前聚焦',
+            style: TextStyle(fontSize: 12, color: TelegramPalette.textSoft),
+          ),
           SizedBox(height: 8),
           Text('九年级几何复习讲义', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
           SizedBox(height: 16),
@@ -680,7 +715,7 @@ class _FocusMetric extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF52726D))),
+          Text(label, style: const TextStyle(color: TelegramPalette.textSoft)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
@@ -721,7 +756,7 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(card.title, style: const TextStyle(color: Color(0xFF52726D))),
+          Text(card.title, style: const TextStyle(color: TelegramPalette.textSoft)),
           const SizedBox(height: 10),
           Text(card.value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
@@ -769,7 +804,10 @@ class _TaskRow extends StatelessWidget {
           Container(
             width: 10,
             height: 10,
-            decoration: const BoxDecoration(color: Color(0xFF0F766E), shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: TelegramPalette.accent,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -778,7 +816,7 @@ class _TaskRow extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(detail, style: const TextStyle(color: Color(0xFF52726D))),
+                Text(detail, style: const TextStyle(color: TelegramPalette.textSoft)),
               ],
             ),
           ),
@@ -788,27 +826,143 @@ class _TaskRow extends StatelessWidget {
   }
 }
 
-class _QuestionBasketPanel extends StatelessWidget {
+class _QuestionBasketPanel extends StatefulWidget {
   const _QuestionBasketPanel();
+
+  @override
+  State<_QuestionBasketPanel> createState() => _QuestionBasketPanelState();
+}
+
+class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
+  late Future<List<QuestionSummary>> _basketFuture = _loadBasket();
+
+  Future<List<QuestionSummary>> _loadBasket() {
+    return AppServices.instance.questionRepository.listBasketQuestions();
+  }
+
+  void _reload() {
+    setState(() {
+      _basketFuture = _loadBasket();
+    });
+  }
+
+  Future<void> _openBasket() async {
+    await Navigator.of(context).pushNamed(AppRouter.basket);
+    if (!mounted) {
+      return;
+    }
+    _reload();
+  }
+
+  Future<void> _openLibrary() async {
+    await Navigator.of(context).pushNamed(AppRouter.library);
+    if (!mounted) {
+      return;
+    }
+    _reload();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('选题篮', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-          SizedBox(height: 16),
-          Text('当前已选 18 题，平均难度 2.9。'),
-          SizedBox(height: 12),
-          Text('按章节分布：'),
-          SizedBox(height: 8),
-          Text('函数图像 6 题'),
-          Text('相似三角形 5 题'),
-          Text('圆综合 7 题'),
-        ],
+      child: FutureBuilder<List<QuestionSummary>>(
+        future: _basketFuture,
+        builder: (context, snapshot) {
+          final questions = snapshot.data ?? const <QuestionSummary>[];
+          final questionCount = questions.length;
+          final averageDifficulty = questionCount == 0
+              ? 0.0
+              : questions
+                      .map((question) => question.difficulty)
+                      .reduce((left, right) => left + right) /
+                  questionCount;
+          final chapterCounts = <String, int>{};
+          final subjectCounts = <String, int>{};
+          for (final question in questions) {
+            final chapter = question.chapter.trim().isEmpty
+                ? '未标注章节'
+                : question.chapter;
+            chapterCounts.update(chapter, (value) => value + 1, ifAbsent: () => 1);
+            final subject = question.subject.trim().isEmpty ? '未标注学科' : question.subject;
+            subjectCounts.update(subject, (value) => value + 1, ifAbsent: () => 1);
+          }
+          final topChapters = chapterCounts.entries.toList()
+            ..sort((left, right) => right.value.compareTo(left.value));
+          final topSubjects = subjectCounts.entries.toList()
+            ..sort((left, right) => right.value.compareTo(left.value));
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '选题篮',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '刷新选题篮',
+                    onPressed: _reload,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (!snapshot.hasData)
+                const Text('正在同步当前选题篮状态...')
+              else ...[
+                Text(
+                  questionCount == 0
+                      ? '当前选题篮为空。'
+                      : '当前已选 $questionCount 题，平均难度 ${averageDifficulty.toStringAsFixed(1)}。',
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: _openLibrary,
+                      icon: const Icon(Icons.travel_explore_outlined),
+                      label: const Text('继续挑题'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _openBasket,
+                      icon: const Icon(Icons.collections_bookmark_outlined),
+                      label: const Text('查看选题篮'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (questionCount == 0)
+                  const Text(
+                    '建议先从题库按教材、章节或关键词收题，再回到这里做批量编排。',
+                    style: TextStyle(
+                      height: 1.5,
+                      color: TelegramPalette.textMuted,
+                    ),
+                  )
+                else ...[
+                  const Text('按学科分布：'),
+                  const SizedBox(height: 8),
+                  ...topSubjects.take(3).map(
+                        (entry) => Text('${entry.key} ${entry.value} 题'),
+                      ),
+                  const SizedBox(height: 12),
+                  const Text('按章节分布：'),
+                  const SizedBox(height: 8),
+                  ...topChapters.take(3).map(
+                        (entry) => Text('${entry.key} ${entry.value} 题'),
+                      ),
+                ],
+              ],
+            ],
+          );
+        },
       ),
     );
   }

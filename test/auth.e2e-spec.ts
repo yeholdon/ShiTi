@@ -63,4 +63,35 @@ describe('Auth (e2e)', () => {
     expect(res200.status).toBe(200);
     expect(Array.isArray(res200.body.questions)).toBe(true);
   });
+
+  it('lists active tenants for the authenticated user', async () => {
+    const suffix = Date.now();
+    const tenant = { code: `tenant-list-${suffix}`, name: 'Tenant List' };
+
+    await request(base).post('/tenants').send(tenant);
+
+    const login = await request(base).post('/auth/register').send({ username: `tenant-list-${suffix}` });
+    expect(login.status).toBe(201);
+
+    await request(base)
+      .post('/tenant-members')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .send({ tenantCode: tenant.code, role: 'owner' });
+
+    const res = await request(base)
+      .get('/tenants')
+      .set('Authorization', `Bearer ${login.body.accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.tenants)).toBe(true);
+    expect(res.body.tenants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: tenant.code,
+          name: tenant.name,
+          role: 'owner'
+        })
+      ])
+    );
+  });
 });

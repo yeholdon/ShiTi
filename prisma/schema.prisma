@@ -57,7 +57,7 @@ model Tenant {
   code      String   @unique
   name      String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   members   TenantMember[]
 }
@@ -113,6 +113,7 @@ model TenantMember {
   role      TenantMemberRole @default(member)
   status    TenantMemberStatus @default(active)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User   @relation(fields: [userId], references: [id])

@@ -320,12 +320,16 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
       async (job) => {
         const { tenantId, exportJobId } = (job.data || {}) as { tenantId?: string; exportJobId?: string };
         if (!tenantId || !exportJobId) throw new Error('Missing tenantId/exportJobId');
+        this.logger.log(`Processing export job ${exportJobId} for tenant ${tenantId}`);
 
         const existing = await this.prisma.withTenant(tenantId, (tx) =>
           tx.exportJob.findUnique({ where: { tenantId_id: { tenantId, id: exportJobId } } })
         );
         if (!existing) throw new Error('ExportJob not found');
-        if (existing.status === 'succeeded' || existing.status === 'canceled') return;
+        if (existing.status === 'succeeded' || existing.status === 'canceled') {
+          this.logger.log(`Skipping export job ${exportJobId} with status ${existing.status}`);
+          return;
+        }
 
         await this.prisma.withTenant(tenantId, (tx) =>
           tx.exportJob.update({
@@ -368,6 +372,8 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
             data: { status: 'succeeded', resultAssetId: asset.id }
           })
         );
+
+        this.logger.log(`Export job ${exportJobId} succeeded`);
       },
       {
         connection: this.connection,
@@ -376,6 +382,7 @@ export class ExportJobsWorker implements OnModuleInit, OnModuleDestroy {
     );
 
     this.worker.on('failed', async (job, err) => {
+      this.logger.error(`Export job ${(job?.data || {}).exportJobId || job?.id || 'unknown'} failed`, err as any);
       try {
         const { tenantId, exportJobId } = (job?.data || {}) as { tenantId?: string; exportJobId?: string };
         if (tenantId && exportJobId) {

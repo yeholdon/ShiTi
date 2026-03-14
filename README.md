@@ -10,7 +10,6 @@ ShiTi（拾题）是一个多租户题库后端，基于 NestJS、Prisma、Postg
 - `apps/api/tenant.types-shim.ts` 持有 API 专属类型 shim
 - `apps/api/tenant-resolve.middleware.ts` 持有 API 专属租户解析中间件
 - `apps/api/*.spec.ts` 现在也承载这些 API 专属入口文件的单测
-- `apps/api/agent-team/*` 持有 API 专属的 MVP agent-team demo 模块
 - `apps/api/health/*` 持有 API 专属的 liveness/readiness 模块
 - `apps/api/subjects/*` 持有 API 专属的 subjects taxonomy 入口模块
 - `apps/api/stages/*` 持有 API 专属的 stages taxonomy 入口模块
@@ -48,7 +47,6 @@ ShiTi（拾题）是一个多租户题库后端，基于 NestJS、Prisma、Postg
 - Request IDs and structured JSON request logs for API traffic
 - Redis-backed rate limiting with in-memory fallback for protected endpoints
 - Tenant-role-aware write controls for management APIs
-- MVP agent-team demo flow with parent-mediated topic routing simulation
 
 ## Quick Start
 
@@ -88,6 +86,20 @@ npm run dev:up
 ```
 
 This starts `postgres`, `redis`, and `minio` via Docker Compose, prepares Prisma, seeds defaults, reapplies RLS, then runs the API locally with `EXPORT_JOBS_WORKER_ENABLED=0`. It avoids relying on the Dockerized `api` service, which can be blocked by image pull/network issues. Start the worker separately with `npm run worker:dev` so the local process layout matches production reality.
+
+For a one-command local workspace that also brings up the worker and Flutter web client in the background, use:
+
+```bash
+npm run local:up
+```
+
+Stop those local background processes with:
+
+```bash
+npm run local:down
+```
+
+`local:up` writes logs and pid files under `tmp/local-run/` and prints both localhost and LAN URLs after readiness checks pass. It now also self-seeds the standard local development env (`DATABASE_URL`, `REDIS_URL`, `MINIO_*`, `JWT_SECRET`) when no `.env` file exists, and `local:down` cleans up stale listeners/processes by pattern and port so repeated local runs do not get stuck on half-dead API/worker instances.
 
 If Prisma reports `must be owner of table ...`, repair ownership first:
 
@@ -134,7 +146,8 @@ Cross-platform client scaffold:
 - `apps/flutter_app/lib/features/auth/*` holds the login flow skeleton
 - `apps/flutter_app/lib/features/tenants/*` holds the tenant-switch skeleton
 - `apps/flutter_app/lib/core/api/*` and `apps/flutter_app/lib/core/models/*` define the first client-side API boundary
-- the local environment still lacks the `flutter` CLI, so platform directories and Flutter build/test verification are pending
+- Flutter CLI is now installed locally, and `flutter create` has generated the platform directories under `apps/flutter_app`
+- `flutter analyze` and `flutter test` now pass locally
 
 Role model:
 
@@ -150,35 +163,6 @@ API docs:
 ```text
 http://localhost:3000/docs
 ```
-
-## MVP Agent-Team Demo
-
-A minimal demo endpoint is available at:
-
-```text
-POST /agent-team/mvp/run
-```
-
-Example body:
-
-```json
-{
-  "task": "请执行一个 MVP 流程测试",
-  "topicMap": {
-    "control": { "chatId": -1000000000000, "threadId": 101 },
-    "coder": { "chatId": -1000000000000, "threadId": 201 },
-    "tester": { "chatId": -1000000000000, "threadId": 202 }
-  }
-}
-```
-
-It simulates the MVP flow discussed in planning:
-
-- Control creates the task
-- main orchestrates coder + tester
-- coder/tester emit only `agent_started`, `agent_progress`, and `agent_result`
-- parent routes readable messages to the mapped role topics
-- final summary returns to Control
 
 OpenAPI JSON:
 

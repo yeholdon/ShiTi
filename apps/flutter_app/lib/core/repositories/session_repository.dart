@@ -1,5 +1,7 @@
 import '../api/shiti_api_client.dart';
 import '../models/auth_session.dart';
+import '../models/tenant_member_audit_event.dart';
+import '../models/tenant_member_summary.dart';
 import '../models/tenant_summary.dart';
 import '../network/http_json_client.dart';
 
@@ -21,6 +23,45 @@ abstract class SessionRepository {
   Future<TenantSummary> createTenant({
     required String code,
     required String name,
+  });
+
+  Future<List<TenantMemberSummary>> listTenantMembers({
+    required String tenantCode,
+  });
+
+  Future<TenantMemberSummary> updateTenantMemberRole({
+    required String tenantCode,
+    required String memberId,
+    required String role,
+  });
+
+  Future<TenantMemberSummary> addTenantMember({
+    required String tenantCode,
+    required String username,
+    required String role,
+    String status = 'active',
+  });
+
+  Future<TenantMemberSummary> updateTenantMemberStatus({
+    required String tenantCode,
+    required String memberId,
+    required String status,
+  });
+
+  Future<TenantMemberSummary> resendTenantMemberInvite({
+    required String tenantCode,
+    required String memberId,
+  });
+
+  Future<void> removeTenantMember({
+    required String tenantCode,
+    required String memberId,
+  });
+
+  Future<List<TenantMemberAuditEvent>> listTenantMemberAuditEvents({
+    required String tenantCode,
+    required String userId,
+    int limit = 5,
   });
 }
 
@@ -67,6 +108,89 @@ class FakeSessionRepository implements SessionRepository {
     required String name,
   }) {
     return _apiClient.createTenant(code: code, name: name);
+  }
+
+  @override
+  Future<List<TenantMemberSummary>> listTenantMembers({
+    required String tenantCode,
+  }) async {
+    return _apiClient.listTenantMembers(tenantCode: tenantCode);
+  }
+
+  @override
+  Future<TenantMemberSummary> updateTenantMemberRole({
+    required String tenantCode,
+    required String memberId,
+    required String role,
+  }) async {
+    return _apiClient.updateTenantMemberRole(
+      tenantCode: tenantCode,
+      memberId: memberId,
+      role: role,
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> addTenantMember({
+    required String tenantCode,
+    required String username,
+    required String role,
+    String status = 'active',
+  }) async {
+    return _apiClient.addTenantMember(
+      tenantCode: tenantCode,
+      username: username,
+      role: role,
+      status: status,
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> updateTenantMemberStatus({
+    required String tenantCode,
+    required String memberId,
+    required String status,
+  }) async {
+    return _apiClient.updateTenantMemberStatus(
+      tenantCode: tenantCode,
+      memberId: memberId,
+      status: status,
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> resendTenantMemberInvite({
+    required String tenantCode,
+    required String memberId,
+  }) async {
+    return _apiClient.resendTenantMemberInvite(
+      tenantCode: tenantCode,
+      memberId: memberId,
+    );
+  }
+
+  @override
+  Future<void> removeTenantMember({
+    required String tenantCode,
+    required String memberId,
+  }) async {
+    await _apiClient.removeTenantMember(
+      tenantCode: tenantCode,
+      memberId: memberId,
+    );
+  }
+
+  @override
+  Future<List<TenantMemberAuditEvent>> listTenantMemberAuditEvents({
+    required String tenantCode,
+    required String userId,
+    int limit = 5,
+  }) async {
+    return _apiClient.listTenantMemberAuditEvents(
+      tenantCode: tenantCode,
+      userId: userId,
+      limit: limit,
+    );
   }
 }
 
@@ -129,7 +253,18 @@ class RemoteSessionRepository implements SessionRepository {
 
   @override
   Future<List<TenantSummary>> listTenants() async {
-    return const <TenantSummary>[];
+    final items = await _client.getList('/tenants', listKey: 'tenants');
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (tenant) => TenantSummary(
+            id: (tenant['id'] ?? '').toString(),
+            code: (tenant['code'] ?? '').toString(),
+            name: (tenant['name'] ?? '未命名租户').toString(),
+            role: (tenant['role'] ?? 'member').toString(),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -177,5 +312,222 @@ class RemoteSessionRepository implements SessionRepository {
       name: name,
       role: 'owner',
     );
+  }
+
+  @override
+  Future<List<TenantMemberSummary>> listTenantMembers({
+    required String tenantCode,
+  }) async {
+    final items = await _client.getList('/tenant-members', listKey: 'members');
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (member) => TenantMemberSummary(
+            id: (member['id'] ?? '').toString(),
+            userId: (member['userId'] ?? '').toString(),
+            username: (member['username'] ?? 'unknown').toString(),
+            role: (member['role'] ?? 'member').toString(),
+            status: (member['status'] ?? 'active').toString(),
+            createdAtLabel: (member['createdAtLabel'] ?? '最近').toString(),
+            updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['updatedAt'] ?? '').toString(),
+            invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<TenantMemberSummary> updateTenantMemberRole({
+    required String tenantCode,
+    required String memberId,
+    required String role,
+  }) async {
+    final object = await _client.patchObject(
+      '/tenant-members/$memberId/role',
+      body: <String, dynamic>{'role': role},
+    );
+    final member = object['membership'];
+    if (member is Map<String, dynamic>) {
+      return TenantMemberSummary(
+        id: (member['id'] ?? '').toString(),
+        userId: (member['userId'] ?? '').toString(),
+        username: (member['username'] ?? 'unknown').toString(),
+        role: (member['role'] ?? role).toString(),
+        status: (member['status'] ?? 'active').toString(),
+        createdAtLabel: '刚刚更新',
+        updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['updatedAt'] ?? '').toString(),
+        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['invitationExpiresAt'] ?? '').toString(),
+      );
+    }
+    return TenantMemberSummary(
+      id: memberId,
+      userId: '',
+      username: 'unknown',
+      role: role,
+      status: 'active',
+      createdAtLabel: '刚刚更新',
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> addTenantMember({
+    required String tenantCode,
+    required String username,
+    required String role,
+    String status = 'active',
+  }) async {
+    final object = await _client.postObject(
+      '/tenant-members',
+      body: <String, dynamic>{
+        'tenantCode': tenantCode,
+        'username': username,
+        'role': role,
+        'status': status,
+      },
+    );
+    final member = object['membership'];
+    if (member is Map<String, dynamic>) {
+      return TenantMemberSummary(
+        id: (member['id'] ?? '').toString(),
+        userId: (member['userId'] ?? '').toString(),
+        username: (member['username'] ?? username).toString(),
+        role: (member['role'] ?? role).toString(),
+        status: (member['status'] ?? status).toString(),
+        createdAtLabel: '刚刚加入',
+        updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['updatedAt'] ?? '').toString(),
+        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['invitationExpiresAt'] ?? '').toString(),
+      );
+    }
+    return TenantMemberSummary(
+      id: '',
+      userId: '',
+      username: username,
+      role: role,
+      status: status,
+      createdAtLabel: '刚刚加入',
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> updateTenantMemberStatus({
+    required String tenantCode,
+    required String memberId,
+    required String status,
+  }) async {
+    final object = await _client.patchObject(
+      '/tenant-members/$memberId/status',
+      body: <String, dynamic>{'status': status},
+    );
+    final member = object['membership'];
+    if (member is Map<String, dynamic>) {
+      return TenantMemberSummary(
+        id: (member['id'] ?? memberId).toString(),
+        userId: (member['userId'] ?? '').toString(),
+        username: (member['username'] ?? 'unknown').toString(),
+        role: (member['role'] ?? 'member').toString(),
+        status: (member['status'] ?? status).toString(),
+        createdAtLabel: '刚刚更新',
+        updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['updatedAt'] ?? '').toString(),
+        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['invitationExpiresAt'] ?? '').toString(),
+      );
+    }
+    return TenantMemberSummary(
+      id: memberId,
+      userId: '',
+      username: 'unknown',
+      role: 'member',
+      status: status,
+      createdAtLabel: '刚刚更新',
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> resendTenantMemberInvite({
+    required String tenantCode,
+    required String memberId,
+  }) async {
+    final object = await _client.postObject(
+      '/tenant-members/$memberId/resend-invite',
+      headers: <String, String>{'x-tenant-code': tenantCode},
+    );
+    final member = object['membership'];
+    if (member is Map<String, dynamic>) {
+      return TenantMemberSummary(
+        id: (member['id'] ?? memberId).toString(),
+        userId: (member['userId'] ?? '').toString(),
+        username: (member['username'] ?? 'unknown').toString(),
+        role: (member['role'] ?? 'member').toString(),
+        status: (member['status'] ?? 'invited').toString(),
+        createdAtLabel: '刚刚邀请',
+        updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['updatedAt'] ?? '').toString(),
+        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['invitationExpiresAt'] ?? '').toString(),
+      );
+    }
+    return TenantMemberSummary(
+      id: memberId,
+      userId: '',
+      username: 'unknown',
+      role: 'member',
+      status: 'invited',
+      createdAtLabel: '刚刚邀请',
+    );
+  }
+
+  @override
+  Future<void> removeTenantMember({
+    required String tenantCode,
+    required String memberId,
+  }) async {
+    await _client.deleteObject('/tenant-members/$memberId');
+  }
+
+  @override
+  Future<List<TenantMemberAuditEvent>> listTenantMemberAuditEvents({
+    required String tenantCode,
+    required String userId,
+    int limit = 5,
+  }) async {
+    final items = await _client.getList(
+      '/audit-logs',
+      query: <String, String>{
+        'userId': userId,
+        'limit': '$limit',
+      },
+      headers: <String, String>{'x-tenant-code': tenantCode},
+      listKey: 'logs',
+    );
+    return items.whereType<Map<String, dynamic>>().map((log) {
+      final action = (log['action'] ?? 'unknown').toString();
+      final targetType = (log['targetType'] ?? 'unknown').toString();
+      final targetId = (log['targetId'] ?? '').toString();
+      final at = (log['at'] ?? '').toString();
+      return TenantMemberAuditEvent(
+        id: (log['id'] ?? '').toString(),
+        atLabel: at.isEmpty ? '-' : at,
+        action: action,
+        targetType: targetType,
+        detail: targetId.isEmpty ? '$action · $targetType' : '$action · $targetType · $targetId',
+      );
+    }).toList();
   }
 }

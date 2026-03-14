@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../core/models/document_detail_args.dart';
+import '../core/models/documents_page_args.dart';
+import '../core/models/export_detail_args.dart';
+import '../core/models/export_job_summary.dart';
+import '../core/models/exports_page_args.dart';
 import '../features/auth/login_page.dart';
 import '../features/basket/question_basket_page.dart';
 import '../features/documents/document_detail_page.dart';
 import '../features/documents/documents_page.dart';
+import '../features/exports/export_detail_page.dart';
 import '../features/exports/exports_page.dart';
+import '../features/exports/export_result_page.dart';
 import '../features/home/home_page.dart';
 import '../features/library/library_page.dart';
 import '../features/library/question_detail_page.dart';
 import '../features/tenants/tenant_switch_page.dart';
+import '../features/tenants/tenant_members_page.dart';
 import '../core/models/question_detail_args.dart';
 
 class AppRouter {
@@ -17,17 +24,55 @@ class AppRouter {
   static const library = '/library';
   static const login = '/login';
   static const tenantSwitch = '/tenants';
+  static const tenantMembers = '/tenants/members';
   static const questionDetail = '/questions/detail';
   static const basket = '/basket';
   static const documents = '/documents';
   static const documentDetail = '/documents/detail';
   static const exports = '/exports';
+  static const exportDetail = '/exports/detail';
+  static const exportResult = '/exports/result';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case exports:
+        final args = settings.arguments as ExportsPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const ExportsPage(),
+          builder: (_) => ExportsPage(args: args),
+          settings: settings,
+        );
+      case exportDetail:
+        final args = settings.arguments as ExportDetailArgs?;
+        return MaterialPageRoute<void>(
+          builder: (_) => ExportDetailPage(
+            args: args ??
+                const ExportDetailArgs(
+                  job: ExportJobSummary(
+                    id: 'job-1',
+                    documentName: '九上相似专题讲义',
+                    format: 'pdf',
+                    status: 'succeeded',
+                    updatedAtLabel: '刚刚',
+                  ),
+                ),
+          ),
+          settings: settings,
+        );
+      case exportResult:
+        final args = settings.arguments as ExportDetailArgs?;
+        return MaterialPageRoute<void>(
+          builder: (_) => ExportResultPage(
+            args: args ??
+                const ExportDetailArgs(
+                  job: ExportJobSummary(
+                    id: 'job-1',
+                    documentName: '九上相似专题讲义',
+                    format: 'pdf',
+                    status: 'succeeded',
+                    updatedAtLabel: '刚刚',
+                  ),
+                ),
+          ),
           settings: settings,
         );
       case documentDetail:
@@ -44,8 +89,9 @@ class AppRouter {
           settings: settings,
         );
       case documents:
+        final args = settings.arguments as DocumentsPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const DocumentsPage(),
+          builder: (_) => DocumentsPage(args: args),
           settings: settings,
         );
       case questionDetail:
@@ -64,6 +110,11 @@ class AppRouter {
       case tenantSwitch:
         return MaterialPageRoute<void>(
           builder: (_) => const TenantSwitchPage(),
+          settings: settings,
+        );
+      case tenantMembers:
+        return MaterialPageRoute<void>(
+          builder: (_) => const TenantMembersPage(),
           settings: settings,
         );
       case library:

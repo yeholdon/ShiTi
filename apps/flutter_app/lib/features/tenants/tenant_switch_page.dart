@@ -4,6 +4,7 @@ import '../../core/config/app_config.dart';
 import '../../core/models/tenant_summary.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 
 class TenantSwitchPage extends StatefulWidget {
@@ -116,6 +117,12 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
               tenant: _resolvedTenant!,
               actionLabel: '进入当前租户',
               onEnter: () => _enterTenant(_resolvedTenant!),
+              onManageMembers: _resolvedTenant!.role == 'owner' || _resolvedTenant!.role == 'admin'
+                  ? () {
+                      AppServices.instance.setActiveTenant(_resolvedTenant!);
+                      Navigator.of(context).pushNamed(AppRouter.tenantMembers);
+                    }
+                  : null,
             ),
             const SizedBox(height: 20),
           ],
@@ -137,8 +144,11 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                   child: Padding(
                     padding: EdgeInsets.all(20),
                     child: Text(
-                      'REMOTE 模式下暂不提供“我所属的租户列表”，请直接输入租户代码进行解析。',
-                      style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+                      '当前账号还没有已加入的租户。你可以直接输入租户代码解析，或先创建一个新的租户工作区。',
+                      style: TextStyle(
+                        height: 1.5,
+                        color: TelegramPalette.textMuted,
+                      ),
                     ),
                   ),
                 );
@@ -151,6 +161,12 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                         child: _TenantCard(
                           tenant: tenant,
                           onEnter: () => _enterTenant(tenant),
+                          onManageMembers: tenant.role == 'owner' || tenant.role == 'admin'
+                              ? () {
+                                  AppServices.instance.setActiveTenant(tenant);
+                                  Navigator.of(context).pushNamed(AppRouter.tenantMembers);
+                                }
+                              : null,
                         ),
                       ),
                     )
@@ -196,8 +212,8 @@ class _TenantSwitcherHeader extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppConfig.useMockData
-                    ? const Color(0xFFFFF7ED)
-                    : const Color(0xFFECFDF5),
+                    ? TelegramPalette.warningSurface
+                    : TelegramPalette.surfaceAccent,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -206,8 +222,8 @@ class _TenantSwitcherHeader extends StatelessWidget {
                     : 'REMOTE 模式：按租户代码解析真实后端',
                 style: TextStyle(
                   color: AppConfig.useMockData
-                      ? const Color(0xFF9A3412)
-                      : const Color(0xFF065F46),
+                      ? TelegramPalette.warningText
+                      : TelegramPalette.accentDark,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -218,19 +234,25 @@ class _TenantSwitcherHeader extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
+                  color: TelegramPalette.errorSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFDA4AF)),
+                  border: Border.all(color: TelegramPalette.errorBorder),
                 ),
                 child: Text(
                   errorMessage!,
-                  style: const TextStyle(color: Color(0xFF9F1239), height: 1.4),
+                  style: const TextStyle(
+                    color: TelegramPalette.errorText,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
             const Text(
               '题库、讲义、试卷和审计记录都按租户隔离。用户端这里先做进入哪个工作区的选择页，后面再接真实会话状态与持久化。',
-              style: TextStyle(height: 1.5, color: Color(0xFF4C6964)),
+              style: TextStyle(
+                height: 1.5,
+                color: TelegramPalette.textMuted,
+              ),
             ),
             const SizedBox(height: 18),
             TextField(
@@ -331,7 +353,10 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
             if (_errorMessage != null) ...[
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Color(0xFF9F1239), height: 1.4),
+                style: const TextStyle(
+                  color: TelegramPalette.errorText,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -371,11 +396,13 @@ class _TenantCard extends StatelessWidget {
   const _TenantCard({
     required this.tenant,
     required this.onEnter,
+    this.onManageMembers,
     this.actionLabel = '进入',
   });
 
   final TenantSummary tenant;
   final VoidCallback onEnter;
+  final VoidCallback? onManageMembers;
   final String actionLabel;
 
   @override
@@ -389,10 +416,13 @@ class _TenantCard extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: const Color(0xFFE7F2EE),
+                color: TelegramPalette.surfaceAccent,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.domain_outlined, color: Color(0xFF0F766E)),
+              child: const Icon(
+                Icons.domain_outlined,
+                color: TelegramPalette.accentDark,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -406,14 +436,26 @@ class _TenantCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${tenant.code} · ${tenant.role}',
-                    style: const TextStyle(color: Color(0xFF53706B)),
+                    style: const TextStyle(color: TelegramPalette.textSoft),
                   ),
                 ],
               ),
             ),
-            FilledButton.tonal(
-              onPressed: onEnter,
-              child: Text(actionLabel),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FilledButton.tonal(
+                  onPressed: onEnter,
+                  child: Text(actionLabel),
+                ),
+                if (onManageMembers != null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: onManageMembers,
+                    child: const Text('成员管理'),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

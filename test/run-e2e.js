@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
+const { Queue } = require('bullmq');
 
 const jestBin = path.join(__dirname, '..', 'node_modules', '.bin', process.platform === 'win32' ? 'jest.cmd' : 'jest');
 
@@ -39,6 +40,16 @@ function withDefaultTestEnv(env) {
   };
 }
 
+function parseRedisUrl(urlString) {
+  const url = new URL(urlString);
+  return {
+    host: url.hostname,
+    port: url.port ? Number(url.port) : 6379,
+    password: url.password || undefined,
+    db: url.pathname && url.pathname !== '/' ? Number(url.pathname.slice(1)) : undefined,
+  };
+}
+
 async function waitForServer(url, timeoutMs = 60000) {
   const http = await import('node:http');
   const start = Date.now();
@@ -69,6 +80,12 @@ async function main() {
 
   const cwd = path.join(__dirname, '..');
   const baseEnv = withDefaultTestEnv(sanitizeNodeOptions({ ...process.env }));
+
+  const exportQueue = new Queue('export_jobs', {
+    connection: parseRedisUrl(baseEnv.REDIS_URL),
+  });
+  await exportQueue.resume().catch(() => undefined);
+  await exportQueue.close().catch(() => undefined);
 
   // Ensure tenant isolation policies exist in the test database.
   // (RLS is a DB concern; without it, isolation relies purely on app code and is easier to regress.)
@@ -129,8 +146,9 @@ async function main() {
 
   try {
     await waitForServer(baseUrl + '/health');
+    await sleep(1500);
 
-    const jestProc = spawn(jestBin, ['--config', 'test/jest-e2e.json'], {
+    const jestProc = spawn(jestBin, ['--config', 'test/jest-e2e.json', '--runInBand'], {
       cwd: path.join(__dirname, '..'),
       env: {
         ...baseEnv,

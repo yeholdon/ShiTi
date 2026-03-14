@@ -11,4 +11,15 @@ export class JoinTenantDto {
   @IsString({ message: 'Invalid role' })
   @IsIn(['member', 'admin', 'owner'], { message: 'Invalid role' })
   role?: 'member' | 'admin' | 'owner';
+
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Invalid username' })
+  @IsNotEmpty({ message: 'Invalid username' })
+  username?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid status' })
+  @IsIn(['active', 'invited'], { message: 'Invalid status' })
+  status?: 'active' | 'invited';
 }
