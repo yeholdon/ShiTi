@@ -99,6 +99,19 @@ When work status changes, update this file in the same change.
   - question-detail now also supports a first local “add to default document” flow, and documents workspace now supports local document creation
   - document-detail now supports a first local layout-element insertion flow, so handout composition is no longer limited to question items
   - repository interfaces plus fake/remote adapters now exist in the Flutter app, but `AppConfig.useMockData` still defaults to local fake data until Flutter runtime verification is available
+  - Flutter workspace home now pulls a real cross-page snapshot from questions/documents/exports/basket, so the hero panel, summary cards, and recent-task list no longer rely on hardcoded placeholder copy
+  - Flutter library filters now load real subject/stage/textbook taxonomy options and pass selected ids through the remote question query, so the dropdowns no longer stay on hardcoded placeholder choices in remote mode
+  - Flutter document workspace now supports renaming and deleting documents through the same fake/remote repository boundary, so document cards are no longer limited to create/open/export only
+  - Flutter exports page now supports canceling active export jobs through the same fake/remote repository boundary, so export management is no longer limited to passive status watching and failed-job retry
+  - Flutter export detail page now supports canceling pending/running jobs and retrying failed/canceled jobs, so a single export task can be managed without bouncing back to the export list first
+  - Flutter document detail page now also supports renaming and deleting the current document, so users no longer have to back out to the workspace just to manage the document itself
+  - Flutter export detail/result pages now support refreshing the current export job through a new repository-level `getExportJob` flow, so export monitoring no longer stays stuck on stale route snapshots
+  - Flutter home page now lets users create a document directly from the workspace entry strip and jump straight into detail, so this main flow no longer requires detouring through the documents list first
+  - Flutter home page recent tasks are now tappable resume-entry points for exports, document detail, and basket flows, so the workspace snapshot can take users straight back into the interrupted task instead of only showing static text
+  - Flutter home summary cards are now tappable quick entries into library/documents/exports, so the workspace dashboard no longer stops at passive counts and can route directly into the matching module
+  - Flutter home hero focus metrics are now tappable quick entries into basket/documents/exports, so the top panel no longer stops at displaying counts and ages and can resume work directly
+  - Flutter documents workspace cards now support direct export creation and route straight into export monitoring, so document-level export no longer requires opening detail first
+  - Flutter exports list now opens the in-app export result page instead of launching the browser directly, so result review stays inside the main product flow
   - remote document adapters now better match the current backend API shapes for create, reorder, and remove item flows
   - AppServices now holds the active auth session and selected tenant, and the remote HTTP client can inject `Authorization` and `x-tenant-code` headers from that state
   - tenant selection now supports resolving a tenant by code, matching the current backend `GET /tenants/resolve` capability better than the earlier placeholder list-only flow
@@ -218,6 +231,15 @@ When work status changes, update this file in the same change.
   - tenant-member details now merge the local governance timeline and backend audit summary into a single governance activity feed, ordered by time and tagged with `本地 / 审计`, so member management history no longer reads like two disconnected sections
 - tenant-member invitation lifecycle now also supports `重新发送邀请`: backend exposes `POST /tenant-members/:id/resend-invite` for invited memberships only, records audit, and the Flutter tenant-members governance drawer can trigger resend with local list focus and recent-action feedback
 - tenant-member invitation lifecycle now also tracks invite freshness: `TenantMember` stores `updatedAt`, invited-member payloads expose `updatedAt / invitationExpiresAt`, Flutter members UI distinguishes `邀请仍有效 / 邀请已过期`, and resending an invite refreshes that validity window instead of only replaying the same invited state
+- `/admin` password-reset email observability now also includes a fixed “最近一次投递后建议” summary, so operators can see the next action directly from the latest successful delivery, current smoke target, and recent failure context instead of inferring it from multiple cards
+- `/admin` password-reset email observability now also includes a fixed “最近一次失败后建议” summary, so SMTP self-check failures, delivery failures, and nonstandard exceptions each surface an immediate remediation path instead of leaving the operator with only a raw failure detail
+- `/admin` password-reset email observability now also includes a fixed “最近一次失败目标核对” summary, so failure events can be compared against the current smoke target just like successful deliveries instead of leaving target verification one-sided
+- `/admin` password-reset email observability now also includes a fixed “最近一次链路活跃度” summary, so operators can immediately tell whether the password-reset mail path is fresh, stale, or currently quiet without inferring recency from the raw event list
+- `/admin` password-reset email observability now also includes a fixed “当前链路结论” summary, so config risk, recent self-checks, recent deliveries, and latest failures are compressed into one actionable verdict instead of being spread across separate cards only
+- `/admin` password-reset email observability now also includes a fixed “当前最该做的一步” summary, so operators can jump from a chain verdict directly to the next click instead of reinterpreting the verdict into an action themselves
+- `/admin` password-reset email observability now also highlights the recommended runbook button based on the current mail-chain state, so the next-best action is both described and directly pointed to in the UI
+- `/admin` password-reset email observability now also shows a fixed “推荐原因”, so the highlighted next-best action is explained in-place instead of relying only on button emphasis
+- `/admin` password-reset email observability now also highlights the smoke-target input when the recommended next step is a smoke test, so the operator is guided to the required prerequisite field instead of only seeing a highlighted button
 - tenant-member invitation governance now also treats expired invites as a first-class cohort in Flutter: the members page shows an `已过期邀请` quick view, dedicated scope filter, and top-level expired-invite count so stale invitations can be managed without manually scanning all invited members
 - tenant-member invitation governance now also splits the list itself into `待加入` and `已过期邀请` sections, so valid and expired invites are managed as separate queues instead of one mixed invited group with only card-level badges
 - tenant-member invitation governance now also surfaces `已重发邀请` as a local-session management cohort in Flutter, with its own quick view, scope filter, and top-level count so recently resent invites can be reviewed as a distinct follow-up queue
@@ -239,6 +261,37 @@ When work status changes, update this file in the same change.
   - tenant-member cards now also avoid repeating invitation-lifecycle detail in both the status summary and the recommendation box, so the list view reads like one compact governance surface instead of two overlapping invite hints
   - tenant-member details now also keep `当前可执行动作` strictly positive and leave blocked cases to the dedicated lock-reason block, so the drawer no longer repeats the same “不能做什么” guidance twice
   - tenant-member details now also rely on the shared queue summary text directly, so the drawer no longer repeats the same priority/next-target queue context beneath that summary
+  - tenant-member cards and the details drawer now also use the same `当前处理队列` heading as the section cards, so queue containers no longer drift between `队列上下文` and `当前处理队列`
+  - tenant-member top queue panel now also uses the same `当前处理队列` heading as the section cards, cards, and details drawer, so the queue-management surface now reads as one consistent template end to end
+- remote document previews now also preserve nested `blocks/items/children` structures in the repository layer, so document cards and document items fall back to one plain text block less often
+- remote question details now also normalize legacy explanation fields like `overviewLatex/commentaryLatex` into block content before flattening to text, so the Flutter block/LaTeX renderer can keep using structured content more consistently
+- remote document item and layout preview mapping now also recognizes `previewBlocks / summaryBlocks / preview` wrappers before degrading to text, so workspace cards and target-document pickers keep block previews across more backend payload shapes
+- question summaries now also carry `previewBlocks`, so the library list and basket can render structured block/LaTeX previews instead of only a flat `stemPreview` string
+- document summaries now prefer content-like preview blocks in both the workspace and target-document picker, instead of falling back to generic title/count text too early
+- question details now also render structured `referenceAnswerBlocks` and scoring-point content from `solutionAnswer`, instead of only consuming explanation blocks
+- question detail normalization now also covers `sourceBlocks` and broader legacy field aliases (`contentBlocks`, `analysisBlocks`, `solutionBlocks`, `*Latex`, `*Text`) before falling back to plain strings
+- document workspace cards and target-document picker now share the same `block-first + lightweight meta` preview widget instead of maintaining two separate preview templates
+- document summary previews now explicitly distinguish real structured previews from repository-generated fallback summaries, so workspace cards and target-document pickers use one shared `内容预览 / 编排摘要` template instead of treating both as the same content block
+- library cards and basket cards now also share the same `QuestionSummaryPreview` widget, so question summaries use one `block-first + lightweight meta` template instead of maintaining separate preview layouts
+- document summaries and question summaries now also share one lower-level `BlockPreviewPanel`, so block-first preview containers no longer duplicate the same label/container/renderer template in multiple widgets
+- document-detail item previews and layout-element picker previews now also use the shared `BlockPreviewPanel`, so document-side content sections no longer bypass the common block-first preview container
+- question-detail content sections now also use the shared `BlockPreviewPanel`, so stem/source/analysis/solution/reference/scoring/commentary blocks all follow the same block-first container template instead of mixing direct renderer wrappers
+- table blocks in the shared Flutter renderer now render lightweight real tables when rows/cells exist, and mock question data now includes actual table rows so list/detail previews no longer stop at a generic placeholder card
+- image blocks in the shared Flutter renderer now render as structured preview cards with caption/size metadata when available, and mock question details now include a real labeled figure block instead of only an asset-id placeholder
+- table cells in the shared Flutter renderer now also support inline math rendering, so formulas inside row/column data no longer fall back to plain strings inside otherwise structured tables
+- question/document repositories now also normalize more legacy wrapper fields such as `content/stem/overview/analysis/steps/solution/referenceAnswer/commentary`, and document fallback previews now keep a clearer `编排摘要 / 导出摘要` block-first structure instead of collapsing immediately to one flat text summary
+- question/document repositories now also recognize more media/table wrapper shapes such as `image/media/figure/asset/table/src/url/headers/bodyRows`, so legacy structured payloads are more likely to stay as real image/table blocks instead of degrading to plain text
+- question detail sections and document-item preview sections now also share a higher-level `ContentSection` wrapper on top of `BlockPreviewPanel`, so block-first detail areas no longer keep repeating the same heading/spacing/panel template
+- layout-element picker previews inside document details now also use the shared `ContentSection`, so document-side content previews no longer mix two different block-first section templates
+- `group` blocks in the shared Flutter renderer now render as real structured group cards with labels and nested content, so document-side fallback sections like `编排摘要 / 导出摘要` no longer flatten into plain text blocks
+- repository normalization now also recognizes legacy `quote / callout / note / list / bullets` wrappers, and the shared Flutter renderer now gives those blocks dedicated quote/callout/list presentations instead of routing them all through the default text path
+- repository normalization now also recognizes legacy `code / snippet / language` wrappers, and the shared Flutter renderer now gives code blocks a dedicated monospace preview card instead of collapsing them into plain text
+- image blocks in the shared Flutter renderer now also attempt a real preview when `src/url` is available, instead of always showing an asset placeholder card
+- repository normalization now also recognizes legacy `embed / video / audio / mediaUrl` wrappers, and the shared Flutter renderer now gives those blocks a dedicated media card instead of collapsing them into plain text
+- repository normalization now also recognizes legacy `heading / title / divider / separator / level` wrappers, and the shared Flutter renderer now gives those blocks dedicated heading/divider treatments instead of routing them through generic text
+- repository normalization now also recognizes legacy `step / steps / index` wrappers, and the shared Flutter renderer now gives those blocks a dedicated step card instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `link / href` wrappers, and the shared Flutter renderer now gives those blocks a dedicated link card instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `columns / column` wrappers, and the shared Flutter renderer now gives those blocks a dedicated multi-column panel instead of collapsing them into generic text
 
 ## Backend completion notes
 
@@ -255,3 +308,542 @@ When work status changes, update this file in the same change.
 - `[x]` Observability now includes request IDs, structured request logs, Prometheus-style `/metrics`, health/readiness probes, and an operations runbook
 - `[x]` Startup and shutdown lifecycle logging now emits structured `bootstrap_start`, `bootstrap_ready`, `bootstrap_failed`, `uncaught_exception`, `unhandled_rejection`, and `process_shutdown` events
 - `[x]` Test depth now covers concurrency smoke tests plus degraded Redis, MinIO, queue, worker, and export-result failure paths
+- repository normalization now also recognizes legacy `checklist / tasks / checked` wrappers, and the shared Flutter renderer now gives those blocks a dedicated checklist panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `qa / faq / question / answer` wrappers, and the shared Flutter renderer now gives those blocks a dedicated Q&A panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `timeline / events / entries / date / time` wrappers, and the shared Flutter renderer now gives those blocks a dedicated timeline panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `stats / metrics / value` wrappers, and the shared Flutter renderer now gives those blocks a dedicated metrics panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `tabs / sections / tab` wrappers, and the shared Flutter renderer now gives those blocks a dedicated sectioned panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `accordion / details / summary` wrappers, and the shared Flutter renderer now gives those blocks a dedicated expandable panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `comparison / before / after` wrappers, and the shared Flutter renderer now gives those blocks a dedicated before/after comparison panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `matrix / grid` wrappers, and the shared Flutter renderer now gives those blocks a dedicated matrix panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `flow / process` wrappers, and the shared Flutter renderer now gives those blocks a dedicated flow panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `rubric / criteria` wrappers, and the shared Flutter renderer now gives those blocks a dedicated rubric panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `decision / branches` wrappers, and the shared Flutter renderer now gives those blocks a dedicated decision panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `legend / key` wrappers, and the shared Flutter renderer now gives those blocks a dedicated legend panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `pairs / attributes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated key-value panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `schema / map` wrappers, and the shared Flutter renderer now gives those blocks a dedicated schema panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `milestones / checkpoints` wrappers, and the shared Flutter renderer now gives those blocks a dedicated milestones panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `badges / chips` wrappers, and the shared Flutter renderer now gives those blocks a dedicated badges panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `references / footnotes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated references panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `chart / series / points` wrappers, and the shared Flutter renderer now gives those blocks a dedicated chart panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `highlights / annotations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated highlights panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `outline / syllabus` wrappers, and the shared Flutter renderer now gives those blocks a dedicated outline panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `warnings / alerts` wrappers, and the shared Flutter renderer now gives those blocks a dedicated warnings panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `glossary / terms` wrappers, and the shared Flutter renderer now gives those blocks a dedicated glossary panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `examples / samples` wrappers, and the shared Flutter renderer now gives those blocks a dedicated examples panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `tips / hints` wrappers, and the shared Flutter renderer now gives those blocks a dedicated tips panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `objectives / goals` wrappers, and the shared Flutter renderer now gives those blocks a dedicated objectives panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `prerequisites / requirements` wrappers, and the shared Flutter renderer now gives those blocks a dedicated prerequisites panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `materials / resources` wrappers, and the shared Flutter renderer now gives those blocks a dedicated materials panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notes / remarks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `takeaways / insights` wrappers, and the shared Flutter renderer now gives those blocks a dedicated takeaways panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `activities / drills` wrappers, and the shared Flutter renderer now gives those blocks a dedicated activities panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `constraints / rules` wrappers, and the shared Flutter renderer now gives those blocks a dedicated constraints panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `pitfalls / misconceptions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated pitfalls panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `strategies / approaches` wrappers, and the shared Flutter renderer now gives those blocks a dedicated strategies panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `checks / validations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated checks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `heuristics / rulesOfThumb` wrappers, and the shared Flutter renderer now gives those blocks a dedicated heuristics panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `signals / indicators` wrappers, and the shared Flutter renderer now gives those blocks a dedicated signals panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `evidence / proofs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated evidence panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `counterexamples / nonExamples` wrappers, and the shared Flutter renderer now gives those blocks a dedicated counterexamples panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `patterns / motifs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated patterns panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `variations / scenarios` wrappers, and the shared Flutter renderer now gives those blocks a dedicated variations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `prompts / cues` wrappers, and the shared Flutter renderer now gives those blocks a dedicated prompts panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `outcomes / results` wrappers, and the shared Flutter renderer now gives those blocks a dedicated outcomes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `corrections / missteps` wrappers, and the shared Flutter renderer now gives those blocks a dedicated corrections panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `facets / dimensions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated facets panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `dialogue / discussion` wrappers, and the shared Flutter renderer now gives those blocks a dedicated dialogue panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `observations / findings` wrappers, and the shared Flutter renderer now gives those blocks a dedicated observations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `actions / moves` wrappers, and the shared Flutter renderer now gives those blocks a dedicated actions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `transitions / handoffs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated transitions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `principles / guidelines` wrappers, and the shared Flutter renderer now gives those blocks a dedicated principles panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `phases / segments` wrappers, and the shared Flutter renderer now gives those blocks a dedicated phases panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `anchors / checkpoints` wrappers, and the shared Flutter renderer now gives those blocks a dedicated anchors panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `priorities / focuses` wrappers, and the shared Flutter renderer now gives those blocks a dedicated priorities panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `roles / responsibilities` wrappers, and the shared Flutter renderer now gives those blocks a dedicated roles panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `agenda / schedule` wrappers, and the shared Flutter renderer now gives those blocks a dedicated agenda panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `assumptions / assumptionsList` wrappers, and the shared Flutter renderer now gives those blocks a dedicated assumptions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `dependencies / dependenciesList` wrappers, and the shared Flutter renderer now gives those blocks a dedicated dependencies panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `tradeoffs / prosAndCons` wrappers, and the shared Flutter renderer now gives those blocks a dedicated tradeoffs panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `alternatives / options` wrappers, and the shared Flutter renderer now gives those blocks a dedicated alternatives panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `recommendations / nextSteps` wrappers, and the shared Flutter renderer now gives those blocks a dedicated recommendations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `risks / mitigations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated risks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `triggers / conditions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated triggers panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `thresholds / tolerances` wrappers, and the shared Flutter renderer now gives those blocks a dedicated thresholds panel instead of collapsing them into generic text
+- local Flutter test execution in this environment also needs `all_proxy / ALL_PROXY` unset; `scripts/local-up.sh` and the Flutter README now document/use the full unset set
+- repository normalization now also recognizes legacy `edgeCases / exceptions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated edge-cases panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `flags` wrappers, and the shared Flutter renderer now gives those blocks a dedicated flags panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `reviewPoints / reviewChecklist` wrappers, and the shared Flutter renderer now gives those blocks a dedicated review-points panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `antiPatterns / badPractices` wrappers, and the shared Flutter renderer now gives those blocks a dedicated anti-patterns panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `dosAndDonts / guardrails` wrappers, and the shared Flutter renderer now gives those blocks a dedicated dos-and-donts panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `watchFors / cuesToMonitor` wrappers, and the shared Flutter renderer now gives those blocks a dedicated watch-fors panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `successCriteria / exitCriteria` wrappers, and the shared Flutter renderer now gives those blocks a dedicated success-criteria panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `failureModes / preMortem` wrappers, and the shared Flutter renderer now gives those blocks a dedicated failure-modes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `decisionCriteria / selectionCriteria` wrappers, and the shared Flutter renderer now gives those blocks a dedicated decision-criteria panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `goNoGo / readinessSignals / goNoGoChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated go-no-go panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `alignment / consistencyChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated alignment panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `stakeholders / participants` wrappers, and the shared Flutter renderer now gives those blocks a dedicated stakeholders panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `owners / ownership` wrappers, and the shared Flutter renderer now gives those blocks a dedicated owners panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `coverage / scope` wrappers, and the shared Flutter renderer now gives those blocks a dedicated coverage panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `inputs / outputs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated inputs-outputs panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `preconditions / postconditions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated conditions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `artifacts / deliverables` wrappers, and the shared Flutter renderer now gives those blocks a dedicated artifacts panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `handoverNotes / operatorNotes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated handover-notes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `acceptance / signoff` wrappers, and the shared Flutter renderer now gives those blocks a dedicated acceptance panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `followUpOwners / actionOwners` wrappers, and the shared Flutter renderer now gives those blocks a dedicated follow-up-owners panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `verification / auditChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated verification panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `serviceLevels / responseExpectations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated service-levels panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `escalations / escalationPaths` wrappers, and the shared Flutter renderer now gives those blocks a dedicated escalations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `escalationContacts / escalationOwners` wrappers, and the shared Flutter renderer now gives those blocks a dedicated escalation-contacts panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `reviewCadence / syncCadence` wrappers, and the shared Flutter renderer now gives those blocks a dedicated review-cadence panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPaths / alertsRouting` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-paths panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notifyTriggers / alertTriggers` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notify-triggers panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `responsePriorities / triagePriorities` wrappers, and the shared Flutter renderer now gives those blocks a dedicated response-priorities panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `responseWindows / escalationWindows` wrappers, and the shared Flutter renderer now gives those blocks a dedicated response-windows panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationWindows / alertWindows` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-windows panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationRecipients / alertRecipients` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-recipients panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPayloads / alertPayloads` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-payloads panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationOutcomes / alertOutcomes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-outcomes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationFailures / alertFailures` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-failures panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationChecks / alertChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-checks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationDependencies / alertDependencies` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-dependencies panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationDecisions / alertDecisions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-decisions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationSummaries / alertSummaries` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-summaries panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationMetrics / alertMetrics` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-metrics panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationAudits / alertAudits` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-audits panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPolicies / alertPolicies` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-policies panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationChannels / alertChannels` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-channels panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationOwners / alertOwners` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-owners panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationEscalations / alertEscalations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-escalations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationTemplates / alertTemplates` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-templates panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationApprovals / alertApprovals` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-approvals panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationStates / alertStates` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-states panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationHistory / alertHistory` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-history panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationRetries / alertRetries` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-retries panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationFallbacks / alertFallbacks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-fallbacks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationExceptions / alertExceptions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-exceptions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationOverrides / alertOverrides` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-overrides panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationGuardrails / alertGuardrails` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-guardrails panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPrereqs / alertPrereqs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-prereqs panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationAudienceRules / alertAudienceRules` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-audience-rules panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationVariants / alertVariants` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-variants panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationCadences / alertCadences` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-cadences panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationScopes / alertScopes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-scopes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationBundles / alertBundles` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-bundles panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationExclusions / alertExclusions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-exclusions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationThresholds / alertThresholds` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-thresholds panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationMatrices / alertMatrices` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-matrices panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationSequences / alertSequences` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-sequences panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPoliciesets / alertPoliciesets` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-policiesets panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationPlaybooks / alertPlaybooks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-playbooks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationBundlesets / alertBundlesets` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-bundlesets panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationCheckpoints / alertCheckpoints` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-checkpoints panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationHandshakes / alertHandshakes` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-handshakes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationAcknowledgements / alertAcknowledgements` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-acknowledgements panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationEvidence / alertEvidence` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-evidence panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationRisks / alertRisks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-risks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationRecoveries / alertRecoveries` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-recoveries panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationImpacts / alertImpacts` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-impacts panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationDependenciesMap / alertDependenciesMap` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-dependencies-map panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationOwnersMap / alertOwnersMap` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-owners-map panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationDecisionsLog / alertDecisionsLog` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-decisions-log panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationStateChanges / alertStateChanges` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-state-changes panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationReadiness / alertReadiness` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-readiness panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationCoverageChecks / alertCoverageChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-coverage-checks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationConfirmations / alertConfirmations` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-confirmations panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationClosures / alertClosures` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-closures panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationExceptionsLog / alertExceptionsLog` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-exceptions-log panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationEscalationChecks / alertEscalationChecks` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-escalation-checks panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationRoutingDecisions / alertRoutingDecisions` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-routing-decisions panel instead of collapsing them into generic text
+- repository normalization now also recognizes legacy `notificationDeliveryProofs / alertDeliveryProofs` wrappers, and the shared Flutter renderer now gives those blocks a dedicated notification-delivery-proofs panel instead of collapsing them into generic text
+- repository normalization now also folds untyped `notification* / alert*` wrapper payloads into generic structured group blocks, so leftover notification-governance payloads stop falling straight back to plain text
+- repository normalization now also folds previously untyped unknown wrapper payloads into generic structured group blocks, reducing the remaining plain-text fallback surface beyond just notification/alert-specific payloads
+- the shared Flutter block renderer now treats unknown block types that still carry structured nested blocks as generic groups instead of flattening them into plain text, cutting one more default-fallback path
+- the shared Flutter block renderer now also scans unknown typed blocks for extra structured list/map payloads before falling back, so explicit-but-unhandled block types with embedded structures no longer collapse straight into text
+- backend auth now stores real bcrypt password hashes, `/auth/login` verifies passwords instead of accepting username-only placeholder logins, and Flutter remote-mode login copy now reflects that password checks are real
+- auth session flow now persists `AuthSession` and active tenant locally, restores them on app startup, and clears persisted state automatically on remote `401`, so login / logout / tenant switch form a complete recoverable session loop
+- expired remote sessions now also trigger a global jump back to `/login` through a shared Flutter `navigatorKey`, so `401` is handled as a real session-expiry flow instead of only clearing local state
+- auth now also supports password-reset flow: `/auth/request-password-reset` issues a one-time reset token preview, `/auth/reset-password` consumes it and invalidates old sessions, and Flutter login page includes a “forgot password” dialog wired to that flow
+- password-reset requests now enforce a short cooldown and return a masked preview hint when a recent unconsumed token already exists, so repeated requests stop minting fresh tokens on every click
+- password-reset requests now support explicit `preview` / `console` delivery modes, return structured delivery metadata (`deliveryMode` / `requestId` / masked `previewHint`), and the Flutter forgot-password dialog now lets users choose the reset-code delivery path
+- password-reset delivery is now routed through a dedicated backend delivery service instead of controller-level logging, and newly created reset requests now return stable database-backed `requestId` values instead of token hashes
+- password-reset delivery now uses explicit backend adapters for `preview` and `console`, so future mail/SMS channels can be added behind the same service without reopening auth controller flow
+- password-reset flow now also supports an `email` dry-run channel end-to-end, including backend adapter selection, email-style username validation, and a Flutter forgot-password UI entry for email delivery rehearsal
+- password-reset email delivery now has a dedicated message builder and gateway layer, so the current console transport already uses a real email payload shape and can be upgraded to SMTP/provider delivery without reshaping adapter contracts
+- password-reset email gateway now supports a file-backed local outbox transport, so development-mode email requests can be inspected from stable JSONL artifacts instead of only transient console logs
+- password-reset requests now also return concrete delivery transport and masked target hints, and the Flutter forgot-password dialog reuses those fields so preview / console / email flows explain where reset codes actually went
+- password-reset email gateway now also supports a real `smtp` transport with native Node sockets, so reset-email delivery can move beyond `console/file` rehearsal without introducing a third-party mail dependency
+- the repo now also includes SMTP env docs and a `scripts/test-password-reset-email.sh` verifier, so password-reset email delivery can be configured and smoke-tested without reading auth gateway internals
+- the repo now also ships a root `.env.example` with password-reset email settings, and `local:up` can load that sample config automatically when no `.env` file exists
+- password-reset email delivery now also has a dedicated SMTP self-check path (`npm run auth:check-smtp`), so relay connectivity, STARTTLS, and login can be verified without sending a real reset email
+- password-reset email delivery and SMTP self-checks now append structured JSONL events, so recent success/failure signals can be inspected from disk instead of only reading transient console output
+- password-reset email observability now also has a direct operator read path (`npm run auth:show-email-events`), so recent deliveries and SMTP self-checks can be inspected without opening raw JSONL files
+- password-reset email events now also have a protected backend read endpoint, so `/admin` or other ops tooling can consume recent delivery/self-check records without shell access
+- `/admin` now also includes a dedicated password-reset email observability card that reads `GET /auth/password-reset-email-events`, so SMTP self-checks and reset-mail delivery failures no longer require shell scripts or raw JSONL inspection
+- `/admin` now also includes a protected SMTP self-check action wired to `POST /auth/password-reset-email-check`, so operators can actively test the relay from the same observability card instead of leaving the browser for a shell script
+- `/admin` password-reset email observability now also supports quick filters (`全部 / 仅失败 / 仅自检 / 仅投递`) plus a runbook-style next-step hint, so operators can narrow the event stream and decide what to do next without manually reading the raw list top to bottom
+- `/admin` password-reset email observability now also pins the latest successful SMTP self-check and latest successful delivery as fixed summaries, so operators can read the most recent healthy signals alongside the existing failure summary without scanning the event list
+- `/admin` password-reset email observability now also exposes runbook shortcut actions for immediate SMTP self-check, failure-only filtering, and a password-reset smoke-test command hint, so operators can move from anomaly summary to the next concrete action without leaving the card
+- `/admin` password-reset email observability now also supports a browser-triggered password-reset smoke test against an email-style account, so operators can fire a controlled reset-email rehearsal from the card itself instead of copying a shell command back to the terminal
+- `/admin` password-reset email observability now also pins the latest manual smoke-test result as a fixed summary, so recent test target, time, transport, and failure text stay visible even after the event list moves on or the page reloads
+- `/admin` password-reset email observability now also derives a dedicated post-smoke-test follow-up hint, so the card can tell operators whether to run SMTP self-check, inspect failure events, or verify the latest successful delivery after a manual rehearsal
+- `/admin` password-reset email observability now also pins the latest SMTP self-check detail summary, so host / port / TLS / STARTTLS / auth state can be read directly from the card without opening the raw event list
+- `/admin` password-reset email observability now also pins the latest SMTP capability summary, so recent EHLO capabilities no longer require opening the raw self-check event payload
+- protected password-reset email observability now also returns a config snapshot, and `/admin` pins transport / from / events-file plus SMTP or outbox context as a fixed environment summary
+- `/admin` password-reset email observability now also derives a fixed config-risk hint, so obvious issues like console/file rehearsal mode, missing SMTP auth, or plaintext-only SMTP are surfaced without manual config reading
+- `/admin` password-reset email observability now also includes a fixed preflight checklist that reacts to the current config snapshot, latest failures, and smoke-test target input before operators trigger a reset-email smoke test
+- `/admin` password-reset email observability now also pins a cooldown-window summary for the latest smoke-test target, so operators can see whether they are still inside the 60-second reset-request cooldown before firing another test
+- `/admin` password-reset email observability now also pins a latest-delivery target check, so operators can compare the newest successful recipient hint against the current smoke target without opening raw events
+- `/admin` password-reset email observability now also pins a recommended-action completion summary, so operators know what evidence closes the currently highlighted next step instead of only seeing which button to click
+- `/admin` password-reset email observability now also pins a recommended-action gap summary, so operators can see what is still missing before the highlighted next step is truly closed
+- `/admin` password-reset email observability now also pins a recommended-action status summary, so operators can tell whether the highlighted step is still blocked, pending, or already satisfied
+- `/admin` password-reset email observability now also pins a recommended-action basis summary, so operators can see which recent event or config fact the current runbook judgment is actually based on
+- `/admin` password-reset email observability now also pins a recommended-action confidence summary, so operators can tell whether the current runbook judgment is based on fresh complete evidence or only partial/stale signals
+- `/admin` password-reset email observability now also color-codes recommended status and confidence, so operators can distinguish blocked / pending / satisfied states at a glance instead of reading every sentence first
+- `/admin` password-reset email observability now also pins a recommended-action freshness summary and will promote refresh/self-check when the current judgment is mainly based on stale events
+- `/admin` password-reset email observability now also pins a recommended refresh plan, so operators can tell whether they should refresh before acting, after acting, or not yet
+- `/admin` password-reset email observability now also pins a preferred refresh source, so operators can tell whether the next refresh should come from SMTP self-check or a real forgot-password smoke test
+- `/admin` password-reset email observability now also pins a preferred refresh-source reason, so operators can see why the runbook is steering them toward self-check or smoke test
+- `/admin` password-reset email observability now also pins a preferred refresh impact summary, so operators can tell whether the next refresh only touches connection checks or will trigger a real reset-email delivery
+- `/admin` password-reset email observability now also pins a preferred refresh prerequisite summary, so operators can tell whether the chosen refresh path still needs SMTP fixes, a smoke target, or a cooldown check first
+- `/admin` password-reset email observability now also pins a preferred refresh cost summary, so operators can tell whether the next refresh is a cheap self-check, an environment-adjustment step, or a real delivery-path smoke test that consumes cooldown
+- `/admin` password-reset email observability now also pins a preferred refresh follow-up summary, so operators can tell what to verify immediately after the chosen refresh path completes
+- `/admin` password-reset email observability now also pins a preferred refresh fallback summary, so operators can tell where to retreat when a self-check or smoke test still does not produce a fresh usable signal
+- `/admin` password-reset email observability now also pins a preferred refresh skip summary, so operators can tell when the current chain is fresh enough that they should stop refreshing and move to verification instead
+- `/admin` password-reset email observability now also pins a preferred refresh urgency summary, so operators can tell whether they must refresh now or can pause for manual verification first
+- `/admin` password-reset email observability now also pins a preferred refresh benefit summary, so operators can tell what new fact they gain if the next self-check or smoke test succeeds
+- `/admin` password-reset email observability now also pins a preferred refresh blocker summary, so operators can tell what is most likely to make the next refresh ineffective before they run it
+- `/admin` password-reset email observability now also pins a preferred refresh readiness summary, so operators can tell whether the next refresh can be executed now or still lacks prerequisites
+- `/admin` password-reset email observability now also pins a preferred refresh verification summary, so operators can tell which field or event should be checked first after the next refresh completes
+- `/admin` password-reset email observability now also pins a preferred refresh success summary, so operators can tell what concrete signal means the latest self-check or smoke test actually moved the chain forward
+- `/admin` password-reset email observability now also pins a preferred refresh failure summary, so operators can tell what concrete signal means the latest self-check or smoke test still failed to move the chain forward
+- `/admin` password-reset email observability now also pins a preferred refresh outcome summary, so operators can read one final conclusion instead of reconciling separate success and failure signal blocks by hand
+- `/admin` password-reset email observability now also pins a preferred refresh retry summary, so operators can tell whether the next move is to immediately retry, pause for fixes, or stop retrying and verify results
+- `/admin` password-reset email observability now also pins a preferred target-switch summary, so operators can tell whether the next retry should keep the current smoke target or explicitly switch to another email before rerunning
+- `/admin` password-reset email observability now also pins a preferred cooldown summary, so operators can tell whether the next retry should wait for the password-reset cooldown window or can be rerun immediately
+- `/admin` password-reset email observability now also pins a preferred failure-view summary, so operators can tell whether the next retry should pause on the failure filter first or can proceed without rechecking the latest failure event
+- `/admin` password-reset email observability now also pins a preferred success-view summary, so operators can tell whether the next retry should first verify the latest successful delivery instead of rerunning a chain that may already be healthy
+- `/admin` password-reset email observability now also pins a preferred data-freshness summary, so operators can tell whether the card should be refreshed before the next retry or whether the current event set is fresh enough to act on directly
+- `/admin` password-reset email observability now also pins a preferred transport-check summary, so operators can tell whether the next retry should first verify the active delivery transport instead of rerunning on a stale or rehearsal channel
+- `/admin` password-reset email observability now also pins a preferred self-check-view summary, so operators can tell whether the next retry should first inspect the latest SMTP self-check or whether the connection layer is already clear enough to move on
+- `/admin` password-reset email observability now also pins a preferred config-view summary, so operators can tell whether the next retry should first inspect the current SMTP config snapshot or whether the problem is already clear from events
+- `/admin` password-reset email observability now also pins a preferred target-format summary, so operators can tell whether the next retry is blocked by an invalid smoke-test email before rechecking transport or events
+- `/admin` password-reset email observability now also pins a preferred activity-log summary, so operators can tell whether the next retry should first confirm the latest manual actions from the runbook log or move straight to the next operation
+- `/admin` password-reset email observability now also pins a preferred requested-target summary, so operators can tell whether the current input target still matches the most recent reset request before rerunning a smoke test
+- `/admin` password-reset email observability now groups the runbook into current judgment / refresh strategy / post-refresh / pre-retry sections, adds a light recent-trend summary, and weakens already-satisfied items so the remaining blockers stand out
+- `/admin` password-reset email observability now also supports exporting the current ops snapshot, so operators can hand off the latest config picture, event stream, smoke summary, and runbook verdict as one JSON artifact
+- `/admin` password-reset email observability now also supports copying a plain-text handoff summary, so operators can paste the current chain verdict, risk, latest successes/failures, and next step directly into chat or tickets without rewriting the card by hand
+- authenticated auth ops now also expose `GET /auth/password-reset-email-snapshot`, so scripts or external panels can fetch config, recent events, latest check/delivery/failure, and a compact summary in one protected API response instead of reconstructing them client-side
+- password-reset email ops verification is back to green after the snapshot route work: `npm run build`, `apps/api/auth/auth.controller.spec.ts`, and e2e all passed, with the unified e2e runner now reporting `33 suites / 89 tests passed`
+- authenticated auth ops now also expose `GET /auth/password-reset-email-handoff`, so scripts or external panels can fetch a ready-to-paste plain-text operator summary together with the protected snapshot instead of rebuilding a handoff note client-side
+- password-reset email ops verification remains green after the handoff route work: `npm run build`, `apps/api/auth/auth.controller.spec.ts`, and unified e2e all passed, now reporting `33 suites / 90 tests passed`
+- auth ops now also include `npm run auth:fetch-email-ops`, so operators can pull the protected password-reset email handoff or snapshot from the shell without hand-writing curl and bearer headers each time
+- auth ops now also include `npm run auth:check-email-ops`, so CI or on-call shell checks can evaluate the protected password-reset email snapshot and fail fast when the chain is still on rehearsal transport, missing self-check, or blocked by latest self-check/delivery failure
+- auth ops now also include `npm run auth:status-email-ops`, so CI, bots, or ticketing hooks can consume the same protected email-ops verdict as machine-readable JSON instead of scraping plain text
+- auth ops now also include `npm run auth:metrics-email-ops`, so monitoring collectors can consume Prometheus-style gauges derived from the protected email-ops snapshot instead of having to parse the runbook summary
+- auth ops now also include `npm run auth:write-email-ops-metrics`, so textfile collectors can refresh a `.prom` artifact atomically instead of shell-redirection logic having to handle partial writes on failure
+- auth ops now also include `npm run auth:record-email-ops-status`, so cron jobs can append one machine-readable health verdict per run into JSONL history without partial-file writes on failure
+- auth ops now also include `npm run auth:show-email-ops-status-history`, so operators can read back the JSONL history as a compact healthy/unhealthy trend summary instead of tailing raw JSON lines
+- auth ops now also include `npm run auth:summarize-email-ops-history`, so operators can turn recent JSONL巡检历史 into a compact handoff summary with current streak and latest healthy/unhealthy timestamps
+- auth ops now also include `npm run auth:alert-email-ops-history`, so cron/on-call can raise a direct alert when recent status history is stale or remains unhealthy across a configured streak
+- auth ops now also include `npm run auth:alert-email-ops-payload`, so webhook/bot/ticket integrations can consume the same history-based alert judgment as structured JSON
+- Flutter 导出记录页现在支持按状态筛选和按关键词搜索任务，导出监控不再只能在长列表里手工翻找目标 job
+- Flutter 选题篮现在支持直接新建文档并批量加入题目，主链路不再要求先绕进“选择目标文档”对话框里的新建入口
+- Flutter 题目详情现在支持直接新建文档并加入当前题目，单题入文档不再强制先选现有文档
+- Flutter 题库列表现在支持直接把单题加入文档，找题后不再必须先进入题目详情
+- Flutter 文档详情空文档状态现在提供真实继续动作，用户可以直接去题库、去选题篮或插入排版元素
+- Flutter 文档详情的编排提示卡现在也提供真实入口，非空文档状态下可以直接去题库、去选题篮或继续插入排版元素
+- Flutter 目标文档选择对话框现在支持搜索，题库/题目详情/选题篮这几条“加入文档”主链都不再只能手工翻长列表
+- Flutter 文档工作区现在支持搜索和类型筛选，文档一多时不再只能手工翻列表
+- Flutter 选题篮现在支持关键词搜索，选题数量变多后不再只能全量翻题
+- Flutter 题库现在能区分“无题可看”和“筛选无结果”，筛选主链不再在空态上断掉
+- Flutter 文档详情现在支持文档项搜索和类型筛选，长文档编排时不再只能全量翻项
+- Flutter 文档详情现在提供常用排版元素快捷插入，编排动作不再只剩一个总入口
+- Flutter 文档详情现在支持复制已有排版项，重复搭建讲义骨架时不再每次都回到排版元素选择器
+- Flutter 文档详情现在支持从题目项直接回看原题，文档编排和题目研读之间开始形成真实回流
+- Flutter 导出结果页现在支持继续编辑文档和基于当前文档重新导出，导出完成后的主链不再只停在看结果链接
+- Flutter 文档详情里的文档项操作现在带提交态，移动/删除/复制/查看原题时不再容易重复触发
+- Flutter test 现在已恢复可跑；根因是本地代理变量会干扰 flutter_tester，同时首页 widget test 还需要覆盖完整 mock 异步加载时长
+- Flutter 文档工作区卡片现在支持直接打开最近一次导出详情和结果，文档列表不再只能先进入导出记录页
+- Flutter 题库和选题篮里的单题操作现在带提交态，加入/移出选题篮、加入文档时不再容易重复触发
+- Flutter 题库列表和选题篮里的单题现在支持直接新建文档并加入，单题落文档不再只依赖已有文档选择
+- Flutter 题目详情里的单题操作现在带提交态和失败反馈，单题主链三处入口已经基本对齐
+- Flutter 选题篮的批量操作现在带确认、提交态和失败反馈，批量加入/清空不再是裸操作
+- Flutter 文档详情里的排版元素选择器现在支持搜索，编排元素变多后不再只能手翻列表
+- Flutter 文档详情里的文档项移动现在带边界感知，首项/末项不再显示无效移动动作
+- Flutter 选题篮里的单题卡现在支持直接查看题目详情，选题和回看原题之间不再断链
+- Flutter 首页 hero 区现在会正确展示工作台快照加载失败，不再把 401/403 等远程错误伪装成“正在同步工作台快照...”
+- Flutter 租户切换页现在会在创建租户后自动把当前用户加入为 owner，创建租户后可直接进入工作区验收，不再需要手工补租户成员权限
+- 后端 `POST /tenants` 现在也会在带登录态时自动把创建者写成 owner，租户创建链已经从前后端两边兜住
+- 租户创建链新增 session body 兜底：前端 `createTenant` 现在会把当前 session 的 `userId/username` 一起提交，后端在 bearer 未命中时也会据此把创建者写成 owner，避免继续创建出没有成员的空租户
+- `scripts/local-restart.sh` 现在会先执行 `local-down.sh` 停掉 API / worker / Flutter 进程，再重建容器并重新启动本地环境，避免“restart 后仍跑旧代码”
+- `prisma/seed.ts` 现在会生成真实模式 demo 工作区：默认账号 `teacher_demo / demo-password`、租户 `math-studio`、3 道样题、2 份文档、3 个排版元素、3 条导出任务，以及 1 份本地 PDF 导出结果文件，远程模式验收不再是空库
+- Flutter 真实模式现在会从 layout blocks 自动提取排版元素名称和摘要，排版元素列表与文档里的 layout item 不再整屏退成“未命名”
+- Flutter 文档详情现在支持新建自定义排版元素并立即插入当前文档，编排主链不再只依赖预置模板
+- Flutter 文档详情现在支持直接编辑已有排版元素，layout item 的标题、摘要和预览会在当前文档里同步回流
+- Flutter 排版元素选择器现在支持直接删除未被引用的模板，模板管理闭环不再只能新增和编辑
+- Flutter 题库现在支持批量选择当前列表结果并一键加入选题篮，找题主链不再只能逐题加入
+- Flutter 题库现在支持批量把当前所选题目加入已有文档或新建文档并加入，批量选题后不再必须先绕选题篮
+- Flutter 选题篮现在支持只处理已选子集：可对部分题目批量加入文档、新建文档并加入或移出选题篮，不再只能整篮全量操作
+- Flutter 文档工作区现在支持选择部分文档后批量导出或批量删除，文档管理不再只能逐卡片处理
+- Flutter 导出记录现在支持选择部分任务后批量取消或批量重试，导出监控不再只能逐条处理异常任务
+- Flutter 文档详情现在支持选择部分文档项后批量移除，长文档编排不再只能逐项删除
+- Flutter 题库批量选题现在支持把已选题从选题篮中批量移出，选题链已经具备加入/移出的完整闭环
+- Flutter 选题篮对子集批量加入文档后现在也支持顺手移出这批题，部分选题流已经接近整篮批量流的完整度
+- Flutter 文档详情现在支持对已选文档项批量上移和下移，长文档重排不再只能逐项挪动
+- Flutter 从文档详情进入题库/题目详情时现在会自动带上当前文档上下文，继续挑题时不再反复重选目标文档
+- Flutter 从文档详情进入选题篮时现在也会自动带上当前文档上下文，选题篮里的单题、已选子集和整篮加入动作都能直接落回当前文档
+- Flutter 文档工作区卡片现在可以直接带当前文档上下文进入题库或选题篮，为这份文档加题不再必须先打开文档详情
+- Flutter 导出详情页和导出结果页现在也可以直接带当前文档上下文进入题库或选题篮，导出后继续补题不再必须先回文档详情
+- Flutter 文档详情现在支持复制题目项和批量复制已选文档项，长文档编排不再只能复制排版元素或逐项重建内容
+- Flutter 文档详情现在支持把单个题目项或已选题目项批量加入选题篮，文档与选题池之间已经形成双向回流
+- Flutter 文档详情里的题目项回流到选题篮时现在也支持“加入但保留 / 加入并移出”，文档与选题池的双向流已经对称
+- Flutter 文档详情现在支持在当前选中项后插入新的排版元素或复制出的文档项，长文档编排不再默认只能把新内容追加到末尾
+- Flutter 从文档详情带插入锚点进入题库或题目详情时，新加入的题现在会优先插到当前选中项后，而不再默认只追加到文档末尾
+- Flutter 从文档详情带插入锚点进入选题篮时，单题、已选子集和整篮加入当前文档现在也会优先插到当前选中项后
+- Flutter 文档详情里的批量复制现在会把复制结果作为连续块插到已选区后面，并自动选中新复制出的区块
+- Flutter 文档详情里的插入锚点现在支持已选区块末尾，去题库、选题篮加题或插入排版元素时都不再只在单选时生效
+- Flutter 文档详情现在支持把已选文档项直接复制到一份新文档，长文档可以从编排台内直接分流成新文档
+- Flutter 文档详情里的“新建文档承接”现在也支持承接后从当前文档移出，长文档拆分不再只能复制
+- Flutter 文档详情现在支持把已选文档项承接到已有文档，文档拆分和合并都可以直接在编排台完成
+- Flutter 文档详情现在支持把已选区块直接置顶或置底，长文档重排不再只能逐步上移下移
+- Flutter 文档工作区现在支持把已选文档直接合并为一份新文档，工作区批量流不再只停在导出和删除
+- Flutter 文档工作区现在支持把已选文档直接合并到已有文档，工作区批量流已经具备新建合并和目标合并两条主链
+- Flutter 文档工作区里的两条批量合并链现在也支持合并后移出源文档，工作区文档重组不再只能复制合并
+- Flutter 文档工作区卡片现在支持直接复制文档，并且新建文档对话框支持预填默认名称和类型
+- Flutter 的“新建文档承接 / 合并为新文档 / 复制文档”入口现在都会预填更合理的默认名称和类型
+- Flutter 的“题目详情 / 题库 / 选题篮”里的新建文档并加入入口现在都会预填更合理的默认名称和类型
+- Flutter 文档工作区现在支持批量复制文档，已选文档可以一键生成对应副本并继续处理
+- Flutter 文档详情页现在支持直接复制当前文档，不必退回工作区再做分支
+- Flutter 导出详情页和导出结果页现在也支持直接复制当前文档，导出后分支改稿不必先回文档详情
+- Flutter 导出记录页现在也支持直接复制当前文档，导出链的分支改稿入口已经覆盖列表、详情和结果页
+- Flutter 文档详情页现在支持按类型快速全选题目项或排版项，长文档批量处理不必再手工框选
+- Flutter 文档详情页现在支持“只看已选”，选中区块后可以先收窄视图再做批量处理
+- Flutter 导出记录页现在支持批量复制源文档，已选任务可按源文档去重后直接生成一批副本
+- Flutter 题库页现在支持“只看已选题”，多选后可以先收窄结果再批量进篮或落文档
+- Flutter 选题篮现在也支持“只看已选题”，选中子集后可以先聚焦再做批量处理
+- Flutter 文档工作区现在也支持“只看已选文档”，多选后可以先聚焦这批文档再做批量导出、合并或复制
+- Flutter 导出记录页现在也支持“只看已选任务”，多选后可以先聚焦这批任务再做批量重试、取消或复制源文档
+- Flutter 导出记录页现在支持按状态一键选中失败任务或进行中任务，批量重试和批量取消不必再手工框选
+- Flutter 题库页现在支持按选题篮关系一键选中“已在篮中 / 未入篮”题目，批量进篮和批量移出不必再手工框选
+- Flutter 文档工作区现在支持按类型一键选中讲义或试卷，批量导出、复制和合并不必再手工框选
+- Flutter 导出记录页现在支持“只看当前文档”，从文档上下文进入时可以直接聚焦这份文档的任务
+- Flutter 文档详情页现在会直接标出“已在选题篮”的题目项，并支持一键选中这批题目项做回流处理
+- Flutter 文档详情页现在也支持一键选中“未在选题篮”的题目项，批量回流到选题篮不必再手工框选
+- Flutter 文档详情页现在支持按“已在选题篮 / 未在选题篮”过滤题目项，回流到选题池前可以先收窄视图
+- Flutter 文档详情页现在也支持单题和批量“移出选题篮”，文档里的题和选题篮之间已经形成双向操作
+- Flutter 题库筛选栏现在支持按“已在选题篮 / 未在选题篮”过滤题目，整理选题池前可以先收窄视图
+- Flutter 文档工作区现在支持按导出状态筛选文档，定位未导出、失败或进行中的文档不再只靠搜索
+- Flutter 选择目标文档对话框现在支持按文档类型和导出状态筛选，多个“加入文档”入口定位目标文档更快
+- Flutter 选择目标文档对话框现在会自动排除当前文档或源文档，文档承接和文档合并时不再先选中无效目标再报错
+- Flutter 文档工作区现在支持按导出状态一键选中未导出、处理中或失败文档，批量导出和失败回收不必再手工框选
+- Flutter 导出记录页现在也支持一键选中已完成或已取消任务，导出任务池按结果状态的批量操作已经补齐
+- Flutter 文档工作区现在也支持一键选中已完成或已取消文档，按导出结果状态的批量处理已经补齐
+- Flutter 从文档上下文进入导出记录页时，现在会默认打开“只看当前文档”，不必再手动切一次筛选
+- Flutter 导出记录页的“已完成”状态筛选现在已修正为真实 `succeeded` 状态，导出结果回看不再因为错误状态值而失效
+- Flutter 导出记录页现在支持按导出格式筛选任务，不再只靠搜索框碰 `pdf/docx`
+- Flutter 导出记录页现在也支持按格式一键选中 PDF 或 DOCX 任务，按导出格式批量处理不必再手工框选
+- Flutter 题库页现在支持“反选当前结果”，大批量勾选题目时不必来回手工补选和取消
+- Flutter 选题篮现在也支持“反选当前结果”，对子集批量处理前不必来回手工补选和取消
+- Flutter 文档工作区现在也支持“反选当前结果”，批量导出、复制、合并前不必来回手工补选和取消
+- Flutter 导出记录页现在也支持“反选当前结果”，导出任务池里的批量回看和整理不必来回手工补选和取消
+- Flutter 文档编排台现在也支持“反选当前结果”，长文档区块处理前不必来回手工补选和取消
+- Flutter 导出记录页现在也允许对已取消任务重试，列表页、批量重试和导出详情页的重试语义已经对齐
+- Flutter 导出记录页现在把“选中失败任务”改成“选中可重试”，和失败/已取消都可重试的真实语义一致
+- Flutter 文档工作区现在支持按工作区顺序、名称、题目数、排版项数和导出状态排序，筛选后定位目标文档不再只靠搜索
+- Flutter 导出记录页现在支持按任务池顺序、文档名、状态和格式排序，回看导出任务不再只靠筛选和搜索
+- Flutter 题库页现在支持按结果顺序、题目标题和选题篮状态排序，筛题和整理选题池不再只靠筛选与搜索
+- Flutter 选题篮现在支持按选题篮顺序、题目标题、学科和教材排序，整理大篮子不再只靠搜索与多选
+- Flutter 选择目标文档对话框现在支持按列表顺序、名称、类型和导出状态排序，高频承接/加入文档链定位目标更快
+- Flutter 首页最近任务现在支持按文档、导出和选题篮过滤，首页回流入口不再只能混在一组任务里看
+- Flutter 题库页和选题篮现在会显式显示当前目标文档与插入位置，跨页面加题链不再只靠按钮文案暗示上下文
+- Flutter 文档详情页现在会显式显示当前插入位置，跨页面加题和插入排版元素不再只靠记住当前选中区块
+- Flutter 题目详情页现在会显式显示当前目标文档与插入位置，单题入口和题库/选题篮的上下文表达已经对齐
+- Flutter 题库页、选题篮和题目详情里的当前目标文档提示卡现在都支持直接打开文档，跨页面加题链可以随时回看目标文档
+- Flutter 导出记录页现在会显式显示当前文档上下文，并支持直接打开当前文档，导出链的上下文表达更完整
+- Flutter 文档详情页现在会显式显示已选题目项和排版项数量，批量承接/复制前能先确认当前选区结构
+- Flutter 题库页现在会显式显示已选在篮/未入篮数量，批量进篮或移出前能先确认当前选区分布
+- Flutter 文档工作区现在会显式显示已选讲义和试卷数量，批量导出/复制/合并前能先确认当前选区分布
+- Flutter 导出记录页现在会显式显示已选可重试、进行中、已完成和已取消任务数量，批量重试/取消/回看前能先确认当前选区状态分布
+- Flutter 文档详情页现在支持按文档顺序、标题、类型和选题篮状态排序文档项，长文档编排时定位区块不再只靠搜索和筛选
+- Flutter 首页最近任务现在支持按最近顺序、标题和任务类型排序，首页回流入口不再只能按固定生成顺序查看
+- Flutter 选题篮现在支持按学科和教材筛选题目，整理大篮子时不再只靠搜索和排序
+- Flutter 文档详情页现在支持按学科和教材筛选题目项，长文档里定位某一册教材或某一学科的题目更快
+- Flutter 文档详情页现在支持按章节筛选题目项，长文档里按知识点区块整理内容更快
+- Flutter 选题篮现在支持按章节筛选题目，按知识点整理大篮子时不再只靠搜索和排序
+- Flutter 题库页现在支持按章节筛选题目，题库、选题篮和文档编排台的知识点筛选已经对齐
+- Flutter 文档详情页现在支持按学科和章节排序文档项，长文档里按元信息整理区块更快
+- Flutter 选题篮现在支持按章节排序题目，按知识点整理题池时不再只靠搜索和筛选
+- Flutter 题库页现在支持按章节排序题目，题库、选题篮和文档编排台的知识点排序进一步对齐
+- Flutter 题库页现在支持按学科和教材排序题目，题库和选题篮的元信息整理视角进一步对齐
+- Flutter 文档详情页现在支持按教材排序文档项，长文档里按册别整理题目区块更快
+- Flutter 题库页现在支持按年级筛选题目，题库筛选维度更接近真实教研场景
+- Flutter 选题篮现在支持按年级筛选题目，题库和选题篮的筛选维度继续对齐
+- Flutter 题库页现在支持按年级排序题目，按年级整理题目时不再只靠筛选
+- Flutter 选题篮现在支持按年级排序题目，题库和选题篮的年级整理能力继续对齐
+- Flutter 文档详情页现在支持按年级筛选题目项，文档编排台的题目元信息筛选继续补齐
+- Flutter 文档详情页现在支持按学段筛选题目项，文档编排台的题目元信息筛选继续补齐
+- Flutter 文档详情页现在支持按学段排序文档项，长文档里按阶段整理题目区块更快
+- Flutter 选题篮现在支持按学段排序题目，按阶段整理题池时不再只靠筛选
+- Flutter 选题篮现在支持按学段筛选题目，按阶段整理题池时不再只靠搜索和排序
+- Flutter 文档详情页现在支持按年级排序文档项，长文档里按年级整理题目区块更快
+- Flutter 选题篮现在会显式显示已选题涉及多少个学段和年级，批量落文档或整理前能先确认当前选区跨度
+- Flutter 题库页现在会显式显示已选题涉及多少个学段和年级，批量进篮或落文档前能先确认当前选区跨度
+- Flutter 文档详情页现在会显式显示已选题目项涉及多少个学段和年级，批量承接/复制/回流前能先确认当前选区跨度
+- Flutter 文档工作区现在会显式显示已选文档包含的题目总数和排版项总数，批量导出/复制/合并前能先确认当前选区体量
+- Flutter 导出记录页现在会显式显示已选任务涉及多少份源文档和多少种格式，批量重试/复制前能先确认当前选区跨度
+- Flutter 选题篮现在会显式显示已选题涉及多少个学科和教材，批量落文档或整理前能先确认当前选区跨度
+- Flutter 题库页现在会显式显示已选题涉及多少个学科和教材，批量进篮或落文档前能先确认当前选区跨度
+- Flutter 文档详情页现在会显式显示已选题目项涉及多少个学科和教材，批量承接/复制/回流前能先确认当前选区跨度
+- Flutter 选题篮现在会显式显示已选题涉及多少个章节，批量落文档或整理前能先确认当前选区跨度
+- Flutter 题库页现在会显式显示已选题涉及多少个章节，批量进篮或落文档前能先确认当前选区跨度
+- [x] Flutter 文档详情页现在会显式显示已选题目项涉及多少个章节，批量承接/复制/回流前能先确认当前选区跨度
+- [x] Flutter 选择目标文档对话框现在支持按题目数和排版项数排序，高频承接/合并链定位复杂文档更快
+- [x] Flutter 选择目标文档对话框现在会显式显示当前结果的文档数、题目总数和排版项总数，高频承接/合并前能先确认目标池体量
+- 后端 `withTenant()` 现在接受 seed 里固定 demo UUID，`teacher_demo / math-studio` 的租户列表和题库接口不再因 `Invalid tenantId` 直接 500
+- [x] 补一个不重置数据库的本地应用进程重启脚本，避免只想让 API/worker/Flutter 生效时误走全量 local:restart。
+- [x] 修掉选题篮页在窄宽度下的 `overflow by 1.5 pixels`，把顶部说明卡和上下文卡改成响应式布局。
+- [x] 修掉选题篮筛选区固定 `220` 宽下拉框在临界宽度下的溢出，把整组筛选控件改成按可用宽度自适应。
+- [x] 文档详情页补上当前筛选结果摘要，长文档筛完后能直接看到当前结果里的文档项、题目项和排版项数量。
+- [x] 按同一套响应式规范把题库、文档详情、目标文档选择器、文档工作区、导出记录页的高频下拉统一补上 `isExpanded` 和长文本省略，避免同类筛选控件继续溢出。
+- [x] 文档工作区和导出记录页补上当前筛选结果摘要，筛完后能直接看到当前结果里的文档/题目/排版项/任务体量。
+- [x] 题库页和选题篮也补上当前筛选结果摘要，让四条主工作台的头部过滤反馈对齐。
+- [x] 题库页和选题篮补上当前筛选摘要，筛完后能直接看到当前启用了哪些条件，不再只靠下拉框自己记忆状态。
+- [x] 文档工作区和导出记录页也补上当前筛选摘要，让四条主工作台的过滤状态表达完全对齐。
+
+- [x] 选择目标文档对话框补上当前筛选摘要，让高频承接/合并链不只看结果体量，也能直接看到当前启用了哪些条件。
+- [x] 首页最近任务补上结果摘要和当前筛选摘要，让首页入口区也和各工作台保持同一套过滤反馈。
+- [x] 首页最近任务补上按类型分布的结果摘要，让入口区不只看总任务数，也能直接看到文档/导出/选题篮分布。
+- [x] 文档工作区补上当前结果导出状态分布，让筛完后能直接看到处理中/已完成/失败文档数。
+- [x] 导出记录页补上当前结果状态分布，让筛完后能直接看到处理中/已完成/可重试任务数。
+- [x] 题库页补上当前结果的选题篮分布，让筛完后能直接看到已在篮/未入篮题目数。
+- [x] 题库页补上当前结果的选题篮分布，让筛完后能直接看到已在篮/未入篮题目数。
+- [x] 选择目标文档对话框补上讲义/试卷分布，让承接/合并前能直接看到当前结果的类型结构。
+- [x] 文档工作区补上当前结果的讲义/试卷分布，让筛完后能直接看到结果池的文档类型结构。
+- [x] 选择目标文档对话框补上导出状态分布，让承接/合并前能直接看到当前结果里处理中/已完成/失败文档数。
+- [x] 文档详情页补上当前结果的选题篮分布，让筛完后能直接看到已在篮/未入篮题目项数。
+- [x] 选题篮头部摘要补上学段/年级覆盖，让筛完后能直接看到当前结果的阶段跨度。
+- [x] 题库头部摘要补上学段/年级覆盖，让筛完后能直接看到当前结果的阶段跨度。
+- [x] 首页最近任务空态补上恢复默认视图动作，筛空后可一键回到全部+最近优先。
+- [x] 文档详情页工具栏补上当前筛选摘要，让编排台的过滤反馈和其他工作台完全对齐。
+- [x] 文档详情页头部摘要补上学科/学段/年级覆盖，让筛完后能直接看到当前结果的题目跨度。
+- [x] 首页最近任务面板补成响应式布局，窄宽度下排序控件不再靠固定宽度硬撑。
+- [x] 选择目标文档对话框补成响应式筛选布局，窄宽度下不再靠固定宽度硬撑。
+- [x] 选择目标文档对话框容器改成响应式宽度，窄窗口下不再固定 460 宽。
+- [x] 新建文档对话框改成响应式宽度，窄窗口下不再固定 420 宽。
+- [x] 重命名文档对话框改成响应式宽度，窄窗口下不再固定 420 宽。
+- [x] 创建租户对话框改成响应式宽度，窄窗口下不再固定 420 宽。
+- [x] 文档详情页编排提示卡和新建排版元素对话框改成响应式宽度，窄窗口下不再固定 420/440 宽。
+- [x] 文档详情页的高频确认弹层统一补上响应式边距，窄窗口下不再贴边硬撑。
+- [x] 选题篮页的高频确认弹层统一补上响应式边距，窄窗口下不再贴边硬撑。
+- [x] 文档工作区的高频确认弹层统一补上响应式边距，窄窗口下不再贴边硬撑。
+- [x] 登录页的修改密码和忘记密码弹层改成响应式容器，窄窗口下不再贴边硬撑。
+- [x] 租户成员页的移除成员和添加成员弹层改成响应式容器，窄窗口下不再贴边硬撑。
+- [x] 首页工作区入口条的说明区改成响应式宽度，窄窗口下不再固定 420 宽。
+- [x] 登录页忘记密码弹层的投递方式选择改成可换行 chips，窄窗口下不再靠单排分段按钮硬撑。
+- [x] 题库页筛选区改成自适应宽度，窄窗口下不再固定一组 220 宽下拉。
+- [x] 首页工作台侧栏改成约束式宽度，窄窗口布局不再被固定 260 宽卡死。
+- [x] 首页工作区入口条文案和登录入口标签同步到当前完成度，不再停留在早期原型表述。
+- [x] 首页、文档工作区和文档详情里的早期原型说明文案同步到当前完成度，不再用“原型/骨架/预览”表达主工作区。
+- [x] 导出结果页非 Web 平台说明文案同步到当前能力，不再写成“后续再补”的过渡态提示。
+- [x] 导出记录页和排版元素选择器的过渡态说明文案同步到当前能力，不再写成“后续接入”的表述。
+- [x] 导出结果 Web 预览改成自适应高度，小窗口下不再固定 520 高 iframe。
+- [x] 登录页和跨页面上下文提示统一改成“接下来/当前动作”语气，不再使用 roadmap 式“后续”表达。
+- [x] 租户成员页的邀请 runbook 和提示文案统一改成当前操作语气，不再使用 roadmap 式“后续”表达。
+- [x] Flutter: 租户成员页补当前筛选摘要与当前结果分布，和其他工作台的头部反馈对齐。
+- [x] Flutter: 租户成员页补当前结果里的过期邀请、已重发邀请、有效邀请分布，成员治理头部反馈继续做深。
+- [x] Flutter: 租户成员页筛空时补恢复默认视图入口，成员治理工作台的空态恢复路径收口。
+- [x] Flutter: 租户成员页把全局成员状态概览改成中文 chips，并把当前处理队列焦点并进头部反馈。
+- [x] Flutter: 租户成员页状态筛选 chips 改成中文，成员治理页筛选文案继续收口。
+- [x] Flutter: 租户成员页在空成员状态下补“添加第一位成员”入口，成员治理空态闭环收口。
+- [x] Flutter: 租户切换页补租户搜索、当前结果摘要与筛空恢复入口，租户列表不再只能手翻。
+- [x] Flutter: 租户切换页补按角色过滤，租户列表支持只看 owner/admin/member。
+- [x] Flutter: 租户切换页补当前活跃租户卡片，切回当前工作区和进入成员治理的入口更显式。
+- [x] Flutter: 租户切换页补排序（列表顺序/按名称/按角色），租户工作区列表支持整理。
+- [x] Flutter: 租户成员页补排序（列表顺序/按用户名/按角色/按状态），成员治理工作台支持整理当前结果。
+- [x] Flutter: 租户切换页补“仅看可管理”范围过滤，owner/admin 工作区可以单独收窄查看。
+- [x] Flutter: 租户切换页补“仅看可管理”范围过滤，并在空租户状态下补创建第一个租户入口。
+- [x] Flutter: 租户切换页列表中的当前活跃租户补“当前工作区”标识，当前上下文更显式。
+- [x] Flutter: 租户切换页结果摘要补总租户数和“当前工作区已包含/已隐藏”提示，筛选时不会再猜当前工作区是不是被自己筛掉。
+- [x] Flutter: 租户成员列表中的当前登录账号补“当前账号”标识，成员治理页上下文更显式。
+- [x] Flutter: 租户成员页页头补当前账号摘要，成员治理页当前操作者上下文继续收口。
+- [x] Flutter: 租户成员页补“仅看当前账号”范围过滤和“当前账号已包含/已隐藏”摘要，成员治理筛选时不会再把自己这条关系筛没了还不自知。
+- [x] Flutter: 租户成员页补“定位当前账号”入口，筛选或滚动后可以一键把自己这条成员关系找回来。
+- [x] Flutter: 租户成员页 quick view 补“当前账号”，成员治理页可以一键切回本人成员关系。
+- [x] Flutter: 题目详情页接入统一 workspace shell，题目主信息卡与当前目标文档上下文卡的视觉层级和主工作台对齐。
+- [x] Flutter: 文档详情页接入统一 workspace shell，编排台的页首信息和上下文卡与主工作台对齐。
+- [x] Flutter: 导出详情页和导出结果页接入统一 workspace shell，导出链的头部状态表达与主工作台对齐。
+- [x] Flutter: 选题篮页接入统一 workspace shell，页首摘要、当前目标文档上下文和批量处理区与主工作台对齐。
+- [x] Flutter: 租户切换页接入统一 workspace shell，租户解析入口、结果摘要和工作区卡片层级与主工作台对齐。
+- [x] Flutter: 按信息架构补上 `Me` 账号页，当前会话、当前租户、切换租户和退出登录入口不再混在首页主叙事里。
+- [x] Flutter: 首页移动端导航补齐为工作台 / 题库 / 文档 / 导出 / 我的，和 Flutter 信息架构里的主导航对齐。
+- [x] Flutter: 抽出共享移动端主导航，并接入首页 / 题库 / 文档 / 导出 / 我的这五个一级页面，一级工作流入口保持一致。
+- [x] Flutter: 导出记录页拆分一级入口模式和带文档上下文返回模式，主导航不会干扰从文档链进入的回看流。
+- [x] Flutter: 题目详情页和选题篮页补齐 Questions 模块一级导航，但在带目标文档上下文进入时继续保持二级工作流模式。
+- [x] Flutter: 题库 / 题目详情 / 选题篮抽出共享 Questions 上下文卡，当前目标文档与插入位置提示改成同一套表达。
+- [x] Flutter: 题库和题目详情页补齐 `当前模式` 指标，Questions 模块的一级浏览与带文档上下文模式反馈对齐。
+- [x] Flutter: 题库 / 题目详情 / 选题篮的 hero 行动提示统一改成同一套任务语气，Questions 模块顶部叙事进一步收口。
+- [x] Flutter: Documents Workspace / Document Detail / Exports 主链补齐 `当前模式` 指标，总览、回看和编排台语义开始对齐。
+- [x] Flutter: 导出详情页和导出结果页也补上 `当前模式` 指标，导出主链的层级表达继续收口。
+- [x] Flutter: 工作台模式展示改成“样例数据 / 真实工作区”，首页、账号页等主入口不再直接暴露 `MOCK / REMOTE` 技术术语。
+- [x] Flutter: 首页 / 我的 / 文档 / 导出页继续清理“接入指引 / 教研生产线 / 工作台资产”一类内部实现口吻，统一改成教学任务语言。
+- [x] Flutter: 登录页继续清理 `JWT / REMOTE / MOCK` 一类技术口吻，入口页模式提示和动作文案改成用户可理解表述。
+- [x] Flutter: 租户切换页、导出详情页和导出结果页继续去掉“真实后端 / MOCK 模式”直白表述，工作区和导出反馈统一改成任务语言。
+- [x] Flutter: 题库页空态、文档详情页页首说明、成员与权限页页头/摘要/动作区继续清理后台口吻，统一收成用户任务语言。
+- [x] Flutter: 题目详情页、选题篮页、导出记录页继续去掉“回流 / 中间工作台 / 带文档上下文”一类开发视角表达，改成更直接的补题与导出反馈语言。
+- [x] Flutter: 题目详情 / 文档详情 / 导出详情 / 导出结果页顶部统一成“当前在看什么 + 下一步能做什么”模板，`当前模式` 指标也改成动作化表达。
+- [x] Flutter: 一级主导航切换改成重置到目标一级页，避免系统返回键在首页 / 题库 / 文档 / 导出 / 我的之间穿回旧页面，移动端更接近 tab 语义。
+- [x] Flutter: 首页 / 登录页 / 题库页 / 文档页 / 成员页 / 导出结果页继续清理“工作链路 / 真实题库 / 回流 / 治理 / 真实文件”等剩余实现口吻，收最后一批高可见文案。
+- [x] Flutter: 首页里的一级页入口按钮和摘要卡也统一接到主导航 helper，避免首页再额外往栈里 push 新的一级页，tab 语义保持一致。
+- [x] Flutter: Questions 模块里跳往题库 / 文档一级页的剩余入口也统一接到主导航 helper，一级页切换不再混用 `pushNamed` 和 tab 语义。
+- [x] Flutter: 首页 / 题库 / 文档 / 导出 / 我的五个一级页补共享滚动位置记忆，tab 切换后不会每次都回到页面顶部。
+- [x] Flutter: 题库 / 文档 / 导出三页补跨 tab 的筛选、排序和局部开关记忆，一级页切换后不会把当前视图条件全部丢掉。
+- [x] Flutter: 文档页 / 导出页在“带焦点返回”时跳过已记住的筛选条件恢复，避免刚编辑的文档或刚查看的导出任务被旧筛选直接隐藏。
+- [x] Flutter: 题库页在“为当前文档挑题”上下文里也跳过已记住的筛选恢复，避免旧筛选把可选题目列表直接筛空。
+- [x] Flutter: 题库 / 文档 / 导出三页在带上下文进入时也跳过已记住的滚动位置，保证首屏先看到当前文档或当前任务相关内容。
+- [x] Flutter: 导出页在带任务或文档上下文进入时补自动定位，高亮任务不再只变色而不滚动到可见区域。
+- [x] Flutter: 首页 / 题库 / 文档 / 导出 / 我的五个一级页外层内容边距改成响应式，窄屏下不再统一沿用 24px 固定留白。
+- [x] Flutter: 题库 / 文档 / 导出三页的 hero、筛选头、状态卡和错误卡改成共享响应式 panel padding，窄屏下头部区块不再过厚。
+- [x] Flutter: 题库 / 文档 / 导出三页的批量操作条在窄屏下改用更短文案和更紧 spacing，减少按钮区撑高。
+- [x] Flutter: 题库 / 文档 / 导出三页的筛选区改成更细的响应式分档，超窄屏单列、中等宽度两列，并同步收紧 active filter spacing 与按钮文案。
+- [x] Flutter: 文档卡和导出任务卡在窄屏下改成更紧的 card padding 与更短按钮文案，主列表卡片区不再被按钮组过度撑高。
+- [x] Flutter: 题库题目卡和“我的”页卡片/动作区也补窄屏 compact 规则，剩余主入口卡片的固定桌面密度继续减少。
+- [x] Flutter: 题库 / 文档 / 导出页的空态卡、提醒条和当前上下文卡也补 compact 规则，窄屏下高频反馈区留白继续收紧。
+- [x] Flutter: 首页的 hero、入口条、最近任务/选题篮等高频卡片也接入共享响应式 padding，首页和主工作流页的移动端密度开始一致。
+- [x] Flutter: 首页剩余的高频入口按钮和最近任务恢复动作也补 compact 文案，一级入口在窄屏下进一步减短。
+- [x] Flutter: 首页、文档页、导出页最后一批高频按钮文案继续补 compact 分支，批量操作和首页探测/同步动作在窄屏下进一步减短。
+- [x] Flutter: 一级导航 helper 在目标路由已是当前页时直接返回，避免重复跳转把当前一级页状态无意义重建一遍。
+- [x] Flutter: 为一级导航 helper 补 widget test，锁住“同页重复导航无副作用、跨一级页导航仍正常”这条回归行为。
+- [x] Flutter: 为题库 / 文档 / 导出三页补“带上下文进入时跳过旧筛选恢复”的 widget test，锁住一级页状态记忆与上下文返回不互相覆盖这条回归行为。
+- [x] Flutter: 为题库 / 文档 / 导出三页补“无上下文时正常恢复已记住筛选”的 widget test，把一级页状态记忆的正向恢复行为也锁住。
+- [x] Flutter: 为题库 / 文档 / 导出三页补滚动位置记忆的 widget test，锁住“无上下文时恢复、带上下文时重置到顶部”这条回归行为。
+- [x] Flutter: 文档页 / 导出页的焦点定位补离屏兜底滚动；当目标卡片还没建出来时，按目标索引估算滚动位置，不再因为拿不到 `currentContext` 而完全不滚。
+- [x] Flutter: 题库 / 文档 / 导出三页补 Web 宽屏内容宽度约束，并把 hero 与状态区改成桌面双栏，桌面端筛选与列表层级更聚焦。
+- [x] Flutter: 首页 / 我的页也接入 Web 宽屏内容宽度约束，并为题库 / 文档 / 导出三页的筛选头补宽屏分档，桌面端表单区不再整排等密度拥挤。
+- [x] Flutter: 题库 / 文档 / 导出三页的筛选头补“结果摘要 / 已启用条件 / 继续筛选”桌面分区，其中文档页和导出页把搜索主区从次级筛选里拆开，宽屏下层级更清楚。
+- [x] Flutter: 文档卡和导出任务卡补桌面副信息区，并把主操作 / 次级操作拆成两段，Web 端列表层级不再只靠按钮堆叠区分。
+- [x] Flutter: 首页摘要卡、最近任务区、选题篮区继续补“摘要 / 条件 / 列表 / 下一步”层级语义，首页桌面端开始和主工作流页统一表达节奏。
+- [x] Flutter: 题目详情 / 文档详情 / 导出详情 / 导出结果页接入 Web 宽屏内容宽度约束，detail 页桌面端列宽与主工作流页对齐。
+- [x] Flutter: 文档详情 / 导出详情 / 导出结果页的主操作区改成桌面双栏，把摘要说明和高频动作拆到侧边 rail，宽屏下不再单列堆叠按钮与信息。
+- [x] Flutter: 题目详情页补桌面双栏，把题干/题解内容和“当前文档上下文 + 高频动作”拆开，宽屏下阅读与操作不再挤在同一列。
+- [x] Flutter: 选题篮 / 租户切换 / 成员页接入统一 Web 宽屏内容约束和共享页边距，辅助页在桌面端不再整页无限拉宽。
+- [x] Flutter: 成员页接入 WorkspaceBackdrop，并把顶部租户信息卡替换为统一 WorkspacePanel，租户治理页开始和主工作流页使用同一套壳层语言。
+- [x] Flutter: 成员页顶部主控制面板改成 WorkspacePanel，并把“快速视图”与“邀请处理建议 / 队列”拆成桌面双栏，治理页宽屏层级不再是一整条长列。
+- [x] Flutter: 成员列表卡从旧 Card 迁到 WorkspacePanel，聚焦态背景与边框语义接入统一壳层体系，治理页列表开始和主工作流卡片共用同一套视觉语言。
+- [x] Flutter: 首页的连通性探测卡、真实工作区引导卡、工作台加载卡、工作台加载告警卡从旧 Card 迁到 WorkspacePanel，首页高频反馈区与统一壳层语言对齐。
+- [x] Flutter: 题库页的空态卡、批量操作条、题目卡外壳从旧 Card 迁到 WorkspacePanel，题库页高频反馈和列表卡开始与统一壳层体系对齐。
+- [x] Flutter: 文档页 / 导出页的空态卡、筛选后空态卡、批量操作条、主列表卡外壳从旧 Card 迁到 WorkspacePanel，主工作流页高频反馈区继续向统一壳层语言收口。
+- [x] Flutter: 文档详情页里的空态卡、批量操作条、定位提示卡、编排提示卡、筛选工具条、排版元素选择卡、文档项卡外壳从旧 Card 迁到 WorkspacePanel，detail 页壳层语言继续向主工作流页对齐。
+- [x] Flutter: 选择目标文档弹层的文档列表卡从旧 Card 迁到 WorkspacePanel，题库/选题篮/导出链路复用的高频弹层开始和统一壳层语言对齐。
+- [x] Flutter: 新建文档 / 重命名文档弹层从 AlertDialog 切到 Dialog + WorkspacePanel，文档链路的高频表单弹层开始和主工作流页共用同一套壳层语言。
+- [x] Flutter: 选择目标文档弹层本体从 AlertDialog 切到 Dialog + WorkspacePanel，并保留筛选、摘要、列表与底部操作区的现有逻辑，文档链路高频选择弹层进一步对齐统一壳层语言。
+- [x] Flutter: documents_page 里的删除文档、批量删除文档、批量合并文档确认弹层收成统一 Dialog + WorkspacePanel，并抽出复用确认 helper，文档工作区的高频确认链路开始和统一壳层语言对齐。
+- [x] Flutter: document_detail_page 里的批量移除文档项、文档承接模式、加入选题篮后续动作、删除文档确认弹层收成统一 Dialog + WorkspacePanel，并补复用确认 helper，编排台高频确认链路继续向统一壳层语言收口。
+- [x] Flutter: document_detail_page 里的新建排版元素弹层和删除排版元素确认弹层从 AlertDialog 切到 Dialog + WorkspacePanel，编排台剩余排版元素弹层也接到统一壳层语言。
+- [x] Flutter: 创建租户、添加租户成员、移除成员确认弹层从 AlertDialog 切到 Dialog + WorkspacePanel，租户链路的高频表单/确认弹层也接到统一壳层语言。
+- [x] Flutter: login_page 里的修改密码 / 重置密码弹层从 AlertDialog 切到 Dialog + WorkspacePanel，登录链路的高频密码弹层也接到统一壳层语言。
+- [x] Flutter: 选题篮页里的批量加入文档后续动作、批量加入已选题后续动作、清空选题篮、移出已选题确认弹层收成统一 Dialog + WorkspacePanel，并补复用确认 helper；至此 features 目录下已无 AlertDialog 残留。
+- [x] Flutter: 题库 / 文档 / 导出三个一级页的 hero 区补“返回工作区”入口，桌面端不再只依赖移动导航切回工作台；并补 widget test 锁住题库/导出页的独立总览入口可见性。
+- [x] Flutter: Web 端补本地中文字体资源并接到全局主题，避免 canvaskit 在无法访问 fonts.gstatic.com 时出现“有布局无文字”的渲染问题；经本地 release build + Edge 截图验证文字已恢复。
+- [x] Flutter: 首页主动打开题库 / 文档 / 导出 / 我的时，先把一级页滚动位置重置到顶部，避免恢复旧滚动后把 hero 顶部入口（如“返回工作区”）滚出首屏；并补主导航 reset-scroll widget test 锁住行为。
+- [x] Flutter: 首页“最近任务”筛选按钮改为自定义 pill 组件，避开当前 Web 渲染链路里 `ChoiceChip` 只显示轮廓和勾选、不显示文字标签的问题；经 Edge 截图复验文字已恢复。
