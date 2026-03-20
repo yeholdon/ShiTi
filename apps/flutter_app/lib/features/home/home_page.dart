@@ -1304,17 +1304,55 @@ class _WorkspaceEntryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
+    final primaryActions = <Widget>[
+      FilledButton.tonalIcon(
+        onPressed: onCreateDocument,
+        icon: const Icon(Icons.note_add_outlined),
+        label: Text(compact ? '新建' : '新建文档'),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: onOpenBasket,
+        icon: const Icon(Icons.collections_bookmark_outlined),
+        label: const Text('选题篮'),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: onOpenDocuments,
+        icon: const Icon(Icons.description_outlined),
+        label: Text(compact ? '文档' : '文档工作区'),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: onOpenExports,
+        icon: const Icon(Icons.cloud_outlined),
+        label: Text(compact ? '导出' : '导出记录'),
+      ),
+    ];
+    final secondaryActions = <Widget>[
+      FilledButton.tonalIcon(
+        onPressed: () {
+          PrimaryNavigationBar.navigateToSection(
+            context,
+            PrimaryAppSection.account,
+            resetScrollOffset: true,
+          );
+        },
+        icon: const Icon(Icons.person_outline),
+        label: Text(compact ? '我的' : '我的账号'),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: () {
+          Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
+        },
+        icon: const Icon(Icons.apartment_outlined),
+        label: Text(compact ? '租户' : '租户切换'),
+      ),
+    ];
     return WorkspacePanel(
       padding:
           workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        runAlignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: compact ? 10 : 16,
-        runSpacing: compact ? 10 : 16,
-        children: [
-          ConstrainedBox(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wideDesktop = constraints.maxWidth >= 1100;
+          final summary = ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1333,52 +1371,72 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          Wrap(
-            spacing: compact ? 8 : 12,
-            runSpacing: compact ? 8 : 12,
+          );
+          final desktopActions = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FilledButton.tonalIcon(
-                onPressed: onCreateDocument,
-                icon: const Icon(Icons.note_add_outlined),
-                label: Text(compact ? '新建' : '新建文档'),
+              const Text(
+                '继续工作',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                  color: TelegramPalette.textMuted,
+                ),
               ),
-              FilledButton.tonalIcon(
-                onPressed: () {
-                  PrimaryNavigationBar.navigateToSection(
-                    context,
-                    PrimaryAppSection.account,
-                    resetScrollOffset: true,
-                  );
-                },
-                icon: const Icon(Icons.person_outline),
-                label: Text(compact ? '我的' : '我的账号'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: primaryActions,
               ),
-              FilledButton.tonalIcon(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
-                },
-                icon: const Icon(Icons.apartment_outlined),
-                label: Text(compact ? '租户' : '租户切换'),
+              const SizedBox(height: 14),
+              const Text(
+                '工作区设置',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                  color: TelegramPalette.textMuted,
+                ),
               ),
-              FilledButton.tonalIcon(
-                onPressed: onOpenBasket,
-                icon: const Icon(Icons.collections_bookmark_outlined),
-                label: const Text('选题篮'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: onOpenDocuments,
-                icon: const Icon(Icons.description_outlined),
-                label: Text(compact ? '文档' : '文档工作区'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: onOpenExports,
-                icon: const Icon(Icons.cloud_outlined),
-                label: Text(compact ? '导出' : '导出记录'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: secondaryActions,
               ),
             ],
-          ),
-        ],
+          );
+          if (!wideDesktop) {
+            return Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runAlignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: compact ? 10 : 16,
+              runSpacing: compact ? 10 : 16,
+              children: [
+                summary,
+                Wrap(
+                  spacing: compact ? 8 : 12,
+                  runSpacing: compact ? 8 : 12,
+                  children: [
+                    ...primaryActions,
+                    ...secondaryActions,
+                  ],
+                ),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 4, child: summary),
+              const SizedBox(width: 24),
+              Expanded(flex: 5, child: desktopActions),
+            ],
+          );
+        },
       ),
     );
   }
