@@ -120,6 +120,7 @@ When work status changes, update this file in the same change.
   - home, documents, and exports pages now also surface current mode/session/tenant context and explicit remote-mode failure/empty states
   - document detail hero now maps latest export status into user-facing Chinese labels, so Web desktop screenshots no longer expose raw backend values like `succeeded`
   - the real Edge capture helper now retries when a deep-linked page still renders as an almost blank first frame, so desktop screenshot regression can reliably cover detail pages too
+  - question detail hero and add-to-document context card now use Chinese workspace labels, so high-visibility Web desktop screenshots no longer mix English panel titles into the main reading flow
   - adding a question now goes through a shared “choose target document” picker instead of always forcing the default local handout
   - document detail now surfaces current mode/session/tenant context and explicit remote-mode load/action failures for reorder, remove, layout insertion, and export creation
   - home, library, and documents pages now expose direct “登录 / 选择租户” guidance actions in remote mode instead of only passive status text

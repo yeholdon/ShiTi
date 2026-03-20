@@ -576,7 +576,7 @@ class _QuestionHeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Question Detail',
+            label: '题目详情',
             icon: Icons.auto_stories_outlined,
           ),
           const SizedBox(height: 14),
