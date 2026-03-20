@@ -902,6 +902,7 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `capture-edge-window.sh` 增加轻量独占锁，避免并行抓图时多个进程互相抢占 Edge 前台窗口，导致不同页面截图错误落成同一首屏；经并行抓取 `library / exports` 真实 Edge 图复验，两张图已稳定落到各自页面。
 - [x] Tooling: `capture-edge-window.sh` 现在会为 HTTP/HTTPS 抓图 URL 自动附加一次性 `codex_capture_ts` 参数，同时保留原有 hash 路由，尽量减少被旧入口 HTML 或 service worker 缓存误导的概率；经真实 Edge 地址栏复验，参数与路由都已正确拼接。
 - [x] Tooling: 新增 `scripts/serve-flutter-web-build.sh`，固定用无代理本地静态服务挂起 `apps/flutter_app/build/web`，便于后续真实 Edge 桌面回归直接复用独立端口；经 `7362` 本地服务和 `curl 200 OK` 复验通过。
+- [x] Tooling: 新增 `scripts/capture-edge-desktop.sh`，把桌面回归常用的 Edge 窗口宽高和加载等待参数固化下来，避免后续每次手动带 `CAPTURE_WINDOW_*` 环境变量；经首页桌面截图复验通过。
 - [x] Flutter: 文档页“当前结果”摘要在桌面端从两行 pill wrap 收成更紧的双列小摘要卡，进一步压低结果摘要区高度，并让筛选区在真实 Edge 首屏里再多露出一截。
 - [x] Flutter: 导出页“任务范围 / 处理状态”在桌面端从“标题在上、指标在下”的堆叠改成内联摘要行，进一步压低结果摘要区高度，并让筛选区在真实 Edge 首屏里再多露出一截。
 - [x] Flutter: 题库页“结果摘要 / 已启用条件”在桌面端从“标题在上、指标在下”的堆叠改成内联摘要行，进一步压低筛选面板摘要区高度，并让“继续筛选”控件在真实 Edge 首屏里再多露出一截。
