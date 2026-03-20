@@ -631,52 +631,99 @@ class _ExportDetailHeroCard extends StatelessWidget {
       'failed' || 'canceled' => '当前正在查看这次导出的任务详情。接下来可以重试，或回到文档调整内容后再导出。',
       _ => '当前正在查看这次导出的任务详情。接下来可以刷新状态，或先回到文档继续编辑。',
     };
+    final summaryMetrics = Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        WorkspaceMetricPill(
+          label: '状态',
+          value: _statusLabel(job.status),
+          highlight: true,
+        ),
+        WorkspaceMetricPill(label: '格式', value: job.format.toUpperCase()),
+        WorkspaceMetricPill(label: '最近更新', value: job.updatedAtLabel),
+        const WorkspaceMetricPill(
+          label: '当前模式',
+          value: '查看任务详情',
+        ),
+      ],
+    );
     return WorkspacePanel(
       padding: const EdgeInsets.all(24),
       borderRadius: 28,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WorkspaceEyebrow(
-            label: '导出详情',
-            icon: Icons.cloud_done_outlined,
-          ),
-          const SizedBox(height: 14),
-          Text(
-            job.documentName,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              height: 1.12,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            detail,
-            style: const TextStyle(
-              height: 1.55,
-              color: TelegramPalette.textMuted,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useDesktopHero = constraints.maxWidth >= 960;
+          final leadingContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WorkspaceMetricPill(
-                label: '状态',
-                value: _statusLabel(job.status),
-                highlight: true,
+              const WorkspaceEyebrow(
+                label: '导出详情',
+                icon: Icons.cloud_done_outlined,
               ),
-              WorkspaceMetricPill(label: '格式', value: job.format.toUpperCase()),
-              WorkspaceMetricPill(label: '最近更新', value: job.updatedAtLabel),
-              const WorkspaceMetricPill(
-                label: '当前模式',
-                value: '查看任务详情',
+              const SizedBox(height: 14),
+              Text(
+                job.documentName,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  height: 1.12,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: useDesktopHero ? 560 : double.infinity,
+                ),
+                child: Text(
+                  detail,
+                  style: const TextStyle(
+                    height: 1.55,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+              ),
+              if (!useDesktopHero) ...[
+                const SizedBox(height: 16),
+                summaryMetrics,
+              ],
+            ],
+          );
+
+          if (!useDesktopHero) {
+            return leadingContent;
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: leadingContent),
+              const SizedBox(width: 28),
+              SizedBox(
+                width: 340,
+                child: WorkspacePanel(
+                  padding: const EdgeInsets.all(18),
+                  backgroundColor: TelegramPalette.surfaceRaised,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '当前摘要',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      summaryMetrics,
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
