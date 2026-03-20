@@ -851,3 +851,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 题库页独立总览模式下将左上角返回箭头从默认 `AppBar` 路由栈推断改成显式 leading，避免从工作台首页进入题库时只有刷新后才出现返回箭头；经题库页 Web 截图复验左右两侧返回入口均稳定可见。
 - [x] Flutter: 登录页、租户页、成员页、题库页、文档页、文档详情页、导出页、选题篮页里残留的默认 `ChoiceChip` / `FilterChip` 全部收成共享 `WorkspaceFilterPill`，统一避开 Web 下默认 chip 文案丢失问题；经登录/租户/成员/题库/文档/导出/选题篮直达截图复验，相关筛选和切换 pill 文案已正常显示。
 - [x] Flutter: 全局按钮主题补显式 disabled 态前景色、背景色和边框色，收紧题库 / 文档 / 导出 / 选题篮批量条里禁用态按钮“文字接近不可见”的问题，避免 Web 桌面端把低对比禁用按钮误读成“没有文字”。
+- [x] Flutter: 抽共享 `WorkspaceMessageBanner`，并把登录页错误条、成员页权限提示、文档新建/重命名弹层错误提示接到统一反馈壳层，继续收 Secondary feedback 区在 Web 桌面端的层级一致性。

@@ -387,6 +387,100 @@ class WorkspaceFilterPill extends StatelessWidget {
   }
 }
 
+class WorkspaceMessageBanner extends StatelessWidget {
+  const WorkspaceMessageBanner({
+    required this.icon,
+    required this.foregroundColor,
+    required this.backgroundColor,
+    required this.borderColor,
+    this.title,
+    this.message,
+    this.child,
+    this.padding = const EdgeInsets.all(14),
+    super.key,
+  }) : assert(
+         message != null || child != null,
+         'WorkspaceMessageBanner requires a message or child.',
+       );
+
+  const WorkspaceMessageBanner.error({
+    required this.message,
+    this.title,
+    this.child,
+    this.padding = const EdgeInsets.all(14),
+    super.key,
+  }) : icon = Icons.error_outline,
+       foregroundColor = TelegramPalette.errorText,
+       backgroundColor = TelegramPalette.errorSurface,
+       borderColor = TelegramPalette.errorBorder;
+
+  const WorkspaceMessageBanner.info({
+    required this.child,
+    this.title,
+    this.message,
+    this.padding = const EdgeInsets.all(14),
+    super.key,
+  }) : icon = Icons.info_outline,
+       foregroundColor = TelegramPalette.textStrong,
+       backgroundColor = TelegramPalette.surfaceAccent,
+       borderColor = TelegramPalette.border;
+
+  final IconData icon;
+  final Color foregroundColor;
+  final Color backgroundColor;
+  final Color borderColor;
+  final String? title;
+  final String? message;
+  final Widget? child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return WorkspacePanel(
+      padding: padding,
+      borderRadius: 16,
+      backgroundColor: backgroundColor,
+      borderColor: borderColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 18, color: foregroundColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title != null) ...[
+                  Text(
+                    title!,
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                if (message != null)
+                  Text(
+                    message!,
+                    style: TextStyle(
+                      color: foregroundColor,
+                      height: 1.4,
+                    ),
+                  ),
+                if (child != null) child!,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WorkspaceBulletPoint extends StatelessWidget {
   const WorkspaceBulletPoint({
     required this.text,

@@ -1803,38 +1803,24 @@ class _PermissionHintBanner extends StatelessWidget {
         '你当前不能调整成员状态。',
       if (canRemoveMembers) '你可以移除普通成员；只有所有者可以移除管理员 / 所有者。' else '你当前不能移除成员。',
     ];
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: TelegramPalette.surfaceAccent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TelegramPalette.border),
-      ),
+    return WorkspaceMessageBanner.info(
+      title: '当前租户角色：${activeRoleMeta.label}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '当前租户角色：${activeRoleMeta.label}',
-            style: const TextStyle(
-              color: TelegramPalette.textStrong,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...hintLines.map(
-            (line) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                line,
-                style: const TextStyle(
-                  color: TelegramPalette.textMuted,
-                  height: 1.4,
+        children: hintLines
+            .map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    color: TelegramPalette.textMuted,
+                    height: 1.4,
+                  ),
                 ),
               ),
-            ),
-          ),
-        ],
+            )
+            .toList(),
       ),
     );
   }

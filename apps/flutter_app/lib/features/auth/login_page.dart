@@ -909,25 +909,9 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: TelegramPalette.errorSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TelegramPalette.errorBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10A33A4A),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Text(
-        message,
-        style: const TextStyle(color: TelegramPalette.errorText, height: 1.4),
-      ),
+    return WorkspaceMessageBanner.error(
+      message: message,
+      title: '暂时无法完成当前操作',
     );
   }
 }
