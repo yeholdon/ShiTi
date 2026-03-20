@@ -385,6 +385,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('独立浏览'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back_outlined), findsOneWidget);
     expect(find.text('返回工作区'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox.shrink());

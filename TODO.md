@@ -848,3 +848,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页主动打开题库 / 文档 / 导出 / 我的时，先把一级页滚动位置重置到顶部，避免恢复旧滚动后把 hero 顶部入口（如“返回工作区”）滚出首屏；并补主导航 reset-scroll widget test 锁住行为。
 - [x] Flutter: 首页“最近任务”筛选按钮改为自定义 pill 组件，避开当前 Web 渲染链路里 `ChoiceChip` 只显示轮廓和勾选、不显示文字标签的问题；经 Edge 截图复验文字已恢复。
 - [x] Flutter: 题库页为独立总览模式补顶栏“返回工作区”入口，并把首页主动打开一级页时的 scroll reset 升级成一次性强制回顶请求，避免从首页进入题库时把返回入口滚出首屏；经题库页 Web 截图复验返回入口稳定可见。
+- [x] Flutter: 题库页独立总览模式下将左上角返回箭头从默认 `AppBar` 路由栈推断改成显式 leading，避免从工作台首页进入题库时只有刷新后才出现返回箭头；经题库页 Web 截图复验左右两侧返回入口均稳定可见。

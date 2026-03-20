@@ -725,6 +725,14 @@ class _LibraryPageState extends State<LibraryPage> {
         (_insertAfterItemTitle ?? '').isEmpty;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !showPrimaryNavigation,
+        leading: showPrimaryNavigation
+            ? IconButton(
+                tooltip: '返回工作区',
+                onPressed: _openWorkspace,
+                icon: const Icon(Icons.arrow_back_outlined),
+              )
+            : null,
         title: const Text('题库检索'),
         actions: [
           if (showPrimaryNavigation)
