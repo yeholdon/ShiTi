@@ -996,7 +996,7 @@ class _WorkspaceContextStrip extends StatelessWidget {
     final entries = [
       ('模式', AppConfig.dataModeLabel),
       ('会话', AppServices.instance.session?.username ?? '未登录'),
-      ('租户', AppServices.instance.activeTenant?.code ?? '未选择租户'),
+      ('租户', AppServices.instance.activeTenant?.code ?? '未选择'),
     ];
     return WorkspacePanel(
       padding:
