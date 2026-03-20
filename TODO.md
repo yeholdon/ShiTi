@@ -853,3 +853,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 全局按钮主题补显式 disabled 态前景色、背景色和边框色，收紧题库 / 文档 / 导出 / 选题篮批量条里禁用态按钮“文字接近不可见”的问题，避免 Web 桌面端把低对比禁用按钮误读成“没有文字”。
 - [x] Flutter: 抽共享 `WorkspaceMessageBanner`，并把登录页错误条、成员页权限提示、文档新建/重命名弹层错误提示接到统一反馈壳层，继续收 Secondary feedback 区在 Web 桌面端的层级一致性。
 - [x] Flutter: 导出详情页样例流程提醒、导出结果页“结果未准备好”提示、选题篮页当前模式说明统一接到 `WorkspaceMessageBanner` 的 info / warning 反馈层，继续收次级说明区在 Web 桌面端的表达一致性。
+- [x] Flutter: 选择目标文档弹层里的加载失败 / 空态提示、导出结果预览 stub、租户解析区和创建租户弹层里的错误提示统一接到共享反馈壳层，并把弹层摘要 `Chip` 收成 `WorkspaceInfoPill`，继续清理 Web 下残留的原生组件风险点。

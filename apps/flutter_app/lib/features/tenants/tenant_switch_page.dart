@@ -652,21 +652,9 @@ class _TenantSwitcherHeader extends StatelessWidget {
           ),
           if (errorMessage != null) ...[
             const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: TelegramPalette.errorSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: TelegramPalette.errorBorder),
-              ),
-              child: Text(
-                errorMessage!,
-                style: const TextStyle(
-                  color: TelegramPalette.errorText,
-                  height: 1.4,
-                ),
-              ),
+            WorkspaceMessageBanner.error(
+              title: '当前还不能进入工作区',
+              message: errorMessage!,
             ),
           ],
           const SizedBox(height: 12),
@@ -814,21 +802,10 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
+                WorkspaceMessageBanner.error(
+                  title: '还不能创建租户',
+                  message: _errorMessage!,
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: TelegramPalette.errorSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: TelegramPalette.errorBorder),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(
-                      color: TelegramPalette.errorText,
-                      height: 1.4,
-                    ),
-                  ),
                 ),
               ],
               const SizedBox(height: 16),

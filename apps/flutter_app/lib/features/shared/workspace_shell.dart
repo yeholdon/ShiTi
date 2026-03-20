@@ -310,6 +310,56 @@ class WorkspaceMetricPill extends StatelessWidget {
   }
 }
 
+class WorkspaceInfoPill extends StatelessWidget {
+  const WorkspaceInfoPill({
+    required this.label,
+    required this.value,
+    this.icon,
+    this.highlight = false,
+    super.key,
+  });
+
+  final String label;
+  final String value;
+  final IconData? icon;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor =
+        highlight ? TelegramPalette.accentDark : TelegramPalette.textStrong;
+    final backgroundColor =
+        highlight ? TelegramPalette.warningSurface : TelegramPalette.surfaceAccent;
+    final borderColor =
+        highlight ? TelegramPalette.warningBorder : TelegramPalette.border;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: foregroundColor),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            '$label：$value',
+            style: TextStyle(
+              color: foregroundColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WorkspaceFilterPill extends StatelessWidget {
   const WorkspaceFilterPill({
     required this.label,
