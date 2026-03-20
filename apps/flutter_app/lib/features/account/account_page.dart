@@ -274,7 +274,7 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        '这里用来确认当前是谁、正在哪个工作区，以及是否需要切换账号或切换租户。',
+                        '这里用来确认当前是谁、正在哪个工作区，以及是否需要切换账号或切换机构。',
                         style: TextStyle(
                           height: 1.5,
                           color: TelegramPalette.textMuted,
@@ -314,12 +314,12 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                         const SizedBox(height: 14),
                         _AccountInfoCard(
-                          title: '当前租户',
+                          title: '当前机构',
                           icon: Icons.apartment_outlined,
-                          emptyMessage: '当前还没有选择租户。先解析或创建租户，再进入题库和文档工作区。',
+                          emptyMessage: '当前还没有选择机构。先解析或创建机构，再进入题库和文档工作区。',
                           items: [
-                            if (activeTenant != null) ('租户名称', activeTenant.name),
-                            if (activeTenant != null) ('租户代码', activeTenant.code),
+                            if (activeTenant != null) ('机构名称', activeTenant.name),
+                            if (activeTenant != null) ('机构代码', activeTenant.code),
                             if (activeTenant != null) ('当前角色', activeTenant.role),
                           ],
                         ),
@@ -344,15 +344,15 @@ class _AccountPageState extends State<AccountPage> {
                             const SizedBox(width: 14),
                             Expanded(
                               child: _AccountInfoCard(
-                                title: '当前租户',
+                                title: '当前机构',
                                 icon: Icons.apartment_outlined,
                                 emptyMessage:
-                                    '当前还没有选择租户。先解析或创建租户，再进入题库和文档工作区。',
+                                    '当前还没有选择机构。先解析或创建机构，再进入题库和文档工作区。',
                                 items: [
                                   if (activeTenant != null)
-                                    ('租户名称', activeTenant.name),
+                                    ('机构名称', activeTenant.name),
                                   if (activeTenant != null)
-                                    ('租户代码', activeTenant.code),
+                                    ('机构代码', activeTenant.code),
                                   if (activeTenant != null)
                                     ('当前角色', activeTenant.role),
                                 ],
@@ -397,8 +397,8 @@ class _AccountPageState extends State<AccountPage> {
                             icon: const Icon(Icons.swap_horiz_outlined),
                             label: Text(
                               activeTenant == null
-                                  ? '选择租户'
-                                  : (compact ? '切租户' : '切换租户'),
+                                  ? '选择机构'
+                                  : (compact ? '切机构' : '切换机构'),
                             ),
                           ),
                           FilledButton.tonalIcon(
@@ -558,7 +558,7 @@ class _AccountHeroSection extends StatelessWidget {
           value: username ?? '未登录',
         ),
         WorkspaceMetricPill(
-          label: '当前租户',
+          label: '当前机构',
           value: tenantName ?? '未选择',
         ),
         WorkspaceMetricPill(
@@ -582,7 +582,7 @@ class _AccountHeroSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                '先确认当前身份和租户，再回到教学工作台继续处理内容。',
+                '先确认当前身份和机构，再回到教学工作台继续处理内容。',
                 style: TextStyle(
                   fontSize: headlineSize,
                   fontWeight: FontWeight.w800,

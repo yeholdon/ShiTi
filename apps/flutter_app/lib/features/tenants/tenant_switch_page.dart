@@ -85,7 +85,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
         _resolvedTenant = tenant;
         _resolving = false;
         if (tenant == null) {
-          _errorMessage = '未找到租户代码 $tenantCode';
+          _errorMessage = '未找到机构代码 $tenantCode';
         }
       });
     } on HttpJsonException catch (error) {
@@ -94,7 +94,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
       }
       setState(() {
         _resolving = false;
-        _errorMessage = '租户解析失败：${error.message}（HTTP ${error.statusCode}）';
+        _errorMessage = '机构解析失败：${error.message}（HTTP ${error.statusCode}）';
       });
     } catch (error) {
       if (!mounted) {
@@ -102,7 +102,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
       }
       setState(() {
         _resolving = false;
-        _errorMessage = '租户解析失败：$error';
+        _errorMessage = '机构解析失败：$error';
       });
     }
   }
@@ -141,7 +141,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
     return Scaffold(
-      appBar: AppBar(title: const Text('选择租户工作区')),
+      appBar: AppBar(title: const Text('选择机构工作区')),
       body: WorkspaceBackdrop(
         child: SafeArea(
           child: workspaceConstrainedContent(
@@ -168,7 +168,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                   _TenantCard(
                     tenant: activeTenant,
                     isActive: true,
-                    actionLabel: '回到当前租户',
+                    actionLabel: '回到当前机构',
                     onEnter: () => _enterTenant(activeTenant),
                     onManageMembers: activeTenant.role == 'owner' ||
                             activeTenant.role == 'admin'
@@ -186,7 +186,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                   _TenantCard(
                     tenant: _resolvedTenant!,
                     isActive: _resolvedTenant!.id == activeTenant?.id,
-                    actionLabel: '进入当前租户',
+                    actionLabel: '进入当前机构',
                     onEnter: () => _enterTenant(_resolvedTenant!),
                     onManageMembers: _resolvedTenant!.role == 'owner' ||
                             _resolvedTenant!.role == 'admin'
@@ -224,7 +224,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '当前账号还没有已加入的租户。你可以直接输入租户代码解析，或先创建一个新的租户工作区。',
+                              '当前账号还没有已加入的机构。你可以直接输入机构代码解析，或先创建一个新的机构工作区。',
                               style: TextStyle(
                                 height: 1.5,
                                 color: TelegramPalette.textMuted,
@@ -234,7 +234,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                             FilledButton.tonalIcon(
                               onPressed: _createTenant,
                               icon: const Icon(Icons.add_business_outlined),
-                              label: const Text('创建第一个租户'),
+                              label: const Text('创建第一个机构'),
                             ),
                           ],
                         ),
@@ -246,7 +246,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '当前还没有可显示的租户工作区。',
+                              '当前还没有可显示的机构工作区。',
                               style: TextStyle(
                                 height: 1.5,
                                 color: TelegramPalette.textMuted,
@@ -256,7 +256,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                             FilledButton.tonalIcon(
                               onPressed: _createTenant,
                               icon: const Icon(Icons.add_business_outlined),
-                              label: const Text('创建第一个租户'),
+                              label: const Text('创建第一个机构'),
                             ),
                           ],
                         ),
@@ -269,7 +269,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const WorkspaceEyebrow(
-                            label: '租户目录',
+                            label: '机构目录',
                             icon: Icons.apartment_outlined,
                           ),
                           const SizedBox(height: 14),
@@ -294,7 +294,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                             controller: _tenantSearchController,
                             onChanged: (_) => setState(() {}),
                             decoration: const InputDecoration(
-                              labelText: '搜索租户',
+                              labelText: '搜索机构',
                               hintText: '按名称、代码或角色筛选',
                               prefixIcon: Icon(Icons.search),
                             ),
@@ -336,7 +336,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                             runSpacing: 10,
                             children: [
                               _TenantFilterChip(
-                                label: '全部租户',
+                                label: '全部机构',
                                 selected: _scopeFilter == 'all',
                                 onTap: () =>
                                     setState(() => _scopeFilter = 'all'),
@@ -379,7 +379,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                             runSpacing: 12,
                             children: [
                               WorkspaceMetricPill(
-                                label: '总租户',
+                                label: '总机构',
                                 value: '${tenants.length}',
                                 highlight: true,
                               ),
@@ -464,7 +464,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  '没有符合当前搜索或范围条件的租户。',
+                                  '没有符合当前搜索或范围条件的机构。',
                                   style: TextStyle(
                                     color: TelegramPalette.textMuted,
                                   ),
@@ -550,7 +550,7 @@ class _TenantHeroSection extends StatelessWidget {
           highlight: true,
         ),
         WorkspaceMetricPill(
-          label: '活跃租户',
+          label: '活跃机构',
           value: hasActiveTenant ? (activeTenantName ?? '已选择') : '未选择',
         ),
         WorkspaceMetricPill(
@@ -569,12 +569,12 @@ class _TenantHeroSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const WorkspaceEyebrow(
-                label: '租户工作区',
+                label: '机构工作区',
                 icon: Icons.domain_verification_outlined,
               ),
               const SizedBox(height: 14),
               const Text(
-                '先确认工作区边界，再进入当前租户继续处理题库和文档。',
+                '先确认工作区边界，再进入当前机构继续处理题库和文档。',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -588,8 +588,8 @@ class _TenantHeroSection extends StatelessWidget {
                 ),
                 child: Text(
                   useMockData
-                      ? '当前使用样例数据，工作区列表和页面反馈都来自本地演示数据。'
-                      : '当前连接真实工作区，租户解析结果和成员权限都会按真实工作区数据返回。',
+                      ? '当前使用样例数据，机构列表和页面反馈都来自本地演示数据。机构可以是学校，也可以是教培机构。'
+                      : '当前连接真实工作区，机构解析结果和成员权限都会按真实工作区数据返回。机构可以是学校，也可以是教培机构。',
                   style: const TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -666,12 +666,12 @@ class _TenantSwitcherHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: '租户解析',
+            label: '机构解析',
             icon: Icons.travel_explore_outlined,
           ),
           const SizedBox(height: 14),
           const Text(
-            '解析租户代码，或直接创建新的教研工作区。',
+            '解析机构代码，或直接创建新的学校或教培机构工作区。',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -690,7 +690,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
             child: Text(
               AppConfig.useMockData
                   ? '样例数据：列表来自本地演示数据'
-                  : '真实工作区：按代码读取工作区列表',
+                  : '真实工作区：按代码读取机构列表',
               style: TextStyle(
                 color: AppConfig.useMockData
                     ? TelegramPalette.warningText
@@ -718,7 +718,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
           TextField(
             controller: tenantCodeController,
             decoration: const InputDecoration(
-              labelText: '租户代码',
+              labelText: '机构代码',
               hintText: '例如 math-studio',
               border: OutlineInputBorder(),
             ),
@@ -733,13 +733,13 @@ class _TenantSwitcherHeader extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.travel_explore_outlined),
-            label: Text(resolving ? '解析中...' : '按租户代码解析'),
+            label: Text(resolving ? '解析中...' : '按机构代码解析'),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: onCreateTenant,
             icon: const Icon(Icons.add_business_outlined),
-            label: const Text('创建新租户'),
+            label: const Text('创建新机构'),
           ),
         ],
       ),
@@ -807,7 +807,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
       }
       setState(() {
         _submitting = false;
-        _errorMessage = '创建租户失败：${error.message}（HTTP ${error.statusCode}）';
+        _errorMessage = '创建机构失败：${error.message}（HTTP ${error.statusCode}）';
       });
     } catch (error) {
       if (!mounted) {
@@ -815,7 +815,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
       }
       setState(() {
         _submitting = false;
-        _errorMessage = '创建租户失败：$error';
+        _errorMessage = '创建机构失败：$error';
       });
     }
   }
@@ -836,14 +836,14 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '创建租户',
+                '创建机构',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
               const SizedBox(height: 8),
               const Text(
-                '填写租户代码和名称，创建后会直接进入该工作区。',
+                '填写机构代码和名称，创建后会直接进入该工作区。',
                 style: TextStyle(
                   height: 1.5,
                   color: TelegramPalette.textMuted,
@@ -852,7 +852,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 WorkspaceMessageBanner.error(
-                  title: '还不能创建租户',
+                  title: '还不能创建机构',
                   message: _errorMessage!,
                   padding: const EdgeInsets.all(12),
                 ),
@@ -861,7 +861,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
               TextField(
                 controller: _codeController,
                 decoration: const InputDecoration(
-                  labelText: '租户代码',
+                  labelText: '机构代码',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -869,7 +869,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: '租户名称',
+                  labelText: '机构名称',
                   border: OutlineInputBorder(),
                 ),
               ),

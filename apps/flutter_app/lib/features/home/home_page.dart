@@ -206,17 +206,17 @@ class _HomePageState extends State<HomePage> {
     final nextStepLabel = !hasSession
         ? '登录'
         : !hasTenant
-            ? '选择租户'
+            ? '选择机构'
             : '进入工作区';
     final nextStepDetail = !hasSession
         ? '先建立账号会话，再继续加载真实题库、文档和导出数据。'
         : !hasTenant
-            ? '当前会话已存在，接下来只需要选择一个租户工作区。'
+            ? '当前会话已存在，接下来只需要选择一个机构工作区。'
             : '工作区上下文已经完整，可以继续进入内容流。';
     final focusTitle = !hasSession
         ? '先登录，再进入真实工作区'
         : !hasTenant
-            ? '先选择租户，再加载工作台快照'
+            ? '先选择机构，再加载工作台快照'
             : '工作区上下文已经就绪';
     final tenantLabel =
         hasTenant ? (activeTenant?.code ?? activeTenant?.name ?? '已选择') : '未选择';
@@ -231,11 +231,11 @@ class _HomePageState extends State<HomePage> {
               : '先建立登录会话后，首页才会加载真实工作区数据。',
         ),
         _SummaryCardData(
-          title: '租户上下文',
+          title: '机构上下文',
           value: tenantLabel,
           detail: hasTenant
               ? '当前工作区：${activeTenant?.name ?? tenantLabel}'
-              : '还没有选择租户，题库、文档和导出数据暂不加载。',
+              : '还没有选择机构，题库、文档和导出数据暂不加载。',
         ),
         _SummaryCardData(
           title: '下一步',
@@ -795,7 +795,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  '当前还没有完整的工作区上下文。先登录并选择租户后，这里会显示题库和文档工作区的真实数据概览。',
+                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里会显示题库和文档工作区的真实数据概览。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -839,7 +839,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                       onPressed: () => Navigator.of(context)
                           .pushNamed(AppRouter.tenantSwitch),
                       icon: const Icon(Icons.apartment_outlined),
-                      label: Text(compact ? '租户' : '切换租户'),
+                      label: Text(compact ? '机构' : '切换机构'),
                     ),
                   ],
                 ),
@@ -976,7 +976,7 @@ class _RemoteModeGuideCard extends StatelessWidget {
                 onPressed: () =>
                     Navigator.of(context).pushNamed(AppRouter.tenantSwitch),
                 icon: const Icon(Icons.apartment_outlined),
-                label: Text(hasTenant ? '切换租户' : '选择租户'),
+                label: Text(hasTenant ? '切换机构' : '选择机构'),
               ),
             ],
           ),
@@ -996,7 +996,7 @@ class _WorkspaceContextStrip extends StatelessWidget {
     final entries = [
       ('模式', AppConfig.dataModeLabel),
       ('会话', AppServices.instance.session?.username ?? '未登录'),
-      ('租户', AppServices.instance.activeTenant?.code ?? '未选择'),
+      ('机构', AppServices.instance.activeTenant?.code ?? '未选择'),
     ];
     return WorkspacePanel(
       padding:
@@ -1483,7 +1483,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
           Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
         },
         icon: const Icon(Icons.apartment_outlined),
-        label: Text(compact ? '租户' : '租户切换'),
+        label: Text(compact ? '机构' : '机构切换'),
       ),
     ];
     return WorkspacePanel(
@@ -1701,7 +1701,7 @@ class _HeroPanel extends StatelessWidget {
                     Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
                   },
                   icon: const Icon(Icons.apartment_outlined),
-                  label: Text(compact ? '租户' : '切换租户'),
+                  label: Text(compact ? '机构' : '切换机构'),
                 ),
               ],
             ),
@@ -1734,7 +1734,7 @@ String _workspaceLoadMessage(Object? error) {
       return '当前会话已经失效。请重新登录后再同步工作台快照。';
     }
     if (error.statusCode == 403) {
-      return '当前租户下没有足够权限读取题库或文档。请切换到有权限的租户，或先补齐成员权限。';
+      return '当前机构下没有足够权限读取题库或文档。请切换到有权限的机构，或先补齐成员权限。';
     }
     return '工作台快照加载失败：${error.message}（HTTP ${error.statusCode}）';
   }
@@ -2476,7 +2476,7 @@ class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  '当前还没有完整的工作区上下文。先登录并选择租户后，这里才会同步真实选题篮状态。',
+                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里才会同步真实选题篮状态。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -2498,7 +2498,7 @@ class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
                       onPressed: () => Navigator.of(context)
                           .pushNamed(AppRouter.tenantSwitch),
                       icon: const Icon(Icons.apartment_outlined),
-                      label: Text(compact ? '租户' : '选择租户'),
+                      label: Text(compact ? '机构' : '选择机构'),
                     ),
                   ],
                 ),

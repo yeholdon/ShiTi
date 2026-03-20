@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _registerMode ? '注册成功，继续选择租户工作区' : '登录成功，继续选择租户工作区',
+            _registerMode ? '注册成功，继续选择机构工作区' : '登录成功，继续选择机构工作区',
           ),
         ),
       );
@@ -688,7 +688,7 @@ class _LoginPageState extends State<LoginPage> {
                 _submitting
                     ? '正在建立会话...'
                     : _registerMode
-                        ? '注册并进入租户选择'
+                        ? '注册并进入机构选择'
                         : '登录并进入工作区选择',
               ),
             ),
@@ -723,7 +723,7 @@ class _LoginPageState extends State<LoginPage> {
                               .pushNamed(AppRouter.tenantSwitch);
                         },
                         icon: const Icon(Icons.apartment_outlined),
-                        label: const Text('进入租户选择'),
+                        label: const Text('进入机构选择'),
                       ),
                       FilledButton.tonalIcon(
                         onPressed:
@@ -781,7 +781,7 @@ class _LoginHeroPanel extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '题库检索、选题篮、文档编排和导出结果已经连成一条连续流程。这一页现在负责把会话、租户和常用动作清楚地接起来。',
+            '题库检索、选题篮、文档编排和导出结果已经连成一条连续流程。这一页现在负责把会话、机构和常用动作清楚地接起来。',
             style: TextStyle(
               color: Color(0xD6FFFFFF),
               fontSize: 16,
@@ -799,7 +799,7 @@ class _LoginHeroPanel extends StatelessWidget {
                 highlight: hasSession,
               ),
               WorkspaceMetricPill(
-                label: '租户上下文',
+                label: '机构上下文',
                 value: hasTenant ? '已选择' : '未选择',
                 highlight: hasTenant,
               ),
@@ -817,7 +817,7 @@ class _LoginHeroPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const WorkspaceBulletPoint(
-            text: '完成登录后直接衔接租户工作区，不再让用户在入口页失去方向。',
+            text: '完成登录后直接衔接机构工作区，不再让用户在入口页失去方向。',
             color: Color(0xFF8BD0FF),
           ),
           const SizedBox(height: 12),

@@ -640,7 +640,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
           _TenantMemberRecentAction(
             title: member.status == 'invited' ? '邀请已发送' : '成员已加入',
             detail: member.status == 'invited'
-                ? '已邀请 ${member.username} 以 ${member.role} 身份加入当前租户'
+                ? '已邀请 ${member.username} 以 ${member.role} 身份加入当前机构'
                 : '已将 ${member.username} 添加为 ${member.role}',
             changeType: member.status == 'invited'
                 ? _TenantMemberRecentActionType.invitation
@@ -814,7 +814,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '确认将 ${member.username} 从当前租户移除吗？该操作会删除其成员关系。',
+                  '确认将 ${member.username} 从当前机构移除吗？该操作会删除其成员关系。',
                   style: const TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -1001,8 +1001,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                     builder: (context, constraints) {
                       final contextChips = [
                         _InfoChip(
-                          label: '租户',
-                          value: activeTenant?.name ?? '未选择租户',
+                          label: '机构',
+                          value: activeTenant?.name ?? '未选择机构',
                         ),
                         _InfoChip(label: '代码', value: activeTenant?.code ?? '-'),
                         _InfoChip(label: '当前角色', value: activeRoleMeta.label),
@@ -1029,7 +1029,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: const [
                                 Text(
-                                  '当前租户上下文',
+                                  '当前机构上下文',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -1038,7 +1038,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  '先确认当前租户、身份和代码，再继续查看成员与权限变更。',
+                                  '先确认当前机构、身份和代码，再继续查看成员与权限变更。',
                                   style: TextStyle(
                                     height: 1.5,
                                     color: TelegramPalette.textMuted,
@@ -1077,7 +1077,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                       const SizedBox(height: 10),
                       Text(
                         _canManageRoles
-                            ? '你当前是${activeRoleMeta.label}，可以查看并调整租户成员角色。'
+                            ? '你当前是${activeRoleMeta.label}，可以查看并调整机构成员角色。'
                             : '你当前是${activeRoleMeta.label}。可以查看成员，但不能修改角色。',
                         style: const TextStyle(
                           height: 1.5,
@@ -1632,7 +1632,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                           _TenantMemberSummaryCard(
                             label: _roleMeta('admin').shortLabel,
                             value: _countByRole('admin').toString(),
-                            detail: '租户维护',
+                            detail: '机构维护',
                             color: TelegramPalette.accent,
                           ),
                           _TenantMemberSummaryCard(
@@ -1692,7 +1692,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '当前租户还没有可显示的成员。',
+                              '当前机构还没有可显示的成员。',
                               style:
                                   TextStyle(color: TelegramPalette.textMuted),
                             ),
@@ -1777,7 +1777,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                         onPressed: () => Navigator.of(context)
                             .pushNamed(AppRouter.tenantSwitch),
                         icon: const Icon(Icons.apartment_outlined),
-                        label: const Text('返回租户切换'),
+                        label: const Text('返回机构切换'),
                       ),
                     ],
                   ),
@@ -1810,7 +1810,7 @@ class _PermissionHintBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeRoleMeta = _roleMeta(activeRole);
     final hintLines = <String>[
-      if (canAddMembers) '你可以把已有账号加入当前租户。' else '你当前不能添加成员。',
+      if (canAddMembers) '你可以把已有账号加入当前机构。' else '你当前不能添加成员。',
       if (canAddMembers) '你也可以先发送邀请，让对方自行完成加入。' else '邀请成员同样需要管理员或所有者权限。',
       if (canManageRoles) '你可以把成员调整为成员 / 管理员 / 所有者。' else '只有所有者可以调整成员角色。',
       if (canManageStatuses)
@@ -1820,7 +1820,7 @@ class _PermissionHintBanner extends StatelessWidget {
       if (canRemoveMembers) '你可以移除普通成员；只有所有者可以移除管理员 / 所有者。' else '你当前不能移除成员。',
     ];
     return WorkspaceMessageBanner.info(
-      title: '当前租户角色：${activeRoleMeta.label}',
+      title: '当前机构角色：${activeRoleMeta.label}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: hintLines
@@ -2214,14 +2214,14 @@ class _AddTenantMemberDialogState extends State<_AddTenantMemberDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '添加租户成员',
+                '添加机构成员',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
               const SizedBox(height: 8),
               const Text(
-                '输入系统里已存在的用户名，把该账号加入当前租户。',
+                '输入系统里已存在的用户名，把该账号加入当前机构。',
                 style: TextStyle(
                   height: 1.5,
                   color: TelegramPalette.textMuted,
@@ -2556,9 +2556,9 @@ String _tenantMemberStatusNarrative({
             ? '该成员当前仍处于邀请态，但这次邀请已经过期。你可以重新发送邀请，直接激活成员关系，或撤销当前邀请。'
             : '该成员当前仍处于邀请态。你可以直接激活成员关系，重新发送邀请，或撤销当前邀请。',
     'disabled' =>
-      concise ? '该账号当前无法访问当前租户，可恢复或移除。' : '该成员当前已被停用。恢复后会重新获得当前租户访问权限。',
+      concise ? '该账号当前无法访问当前机构，可恢复或移除。' : '该成员当前已被停用。恢复后会重新获得当前机构访问权限。',
     _ =>
-      concise ? '该账号当前处于活跃状态，可继续参与当前租户。' : '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出租户。',
+      concise ? '该账号当前处于活跃状态，可继续参与当前机构。' : '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出机构。',
   };
   if (invitationResolution != null) {
     return '$base ${invitationResolution.detail}';
@@ -3330,13 +3330,13 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
     );
     final removeLabel = member.status == 'invited' ? '撤销邀请' : '移除成员';
     final primaryActionDetail = switch (member.status) {
-      'invited' => '把待加入成员直接转为当前租户可用账号。',
-      'disabled' => '恢复该成员在当前租户中的访问权限。',
-      _ => '暂停该成员继续访问当前租户。',
+      'invited' => '把待加入成员直接转为当前机构可用账号。',
+      'disabled' => '恢复该成员在当前机构中的访问权限。',
+      _ => '暂停该成员继续访问当前机构。',
     };
     final removeDetail = switch (member.status) {
       'invited' => '撤销这次尚未完成的邀请，不再保留待加入关系。',
-      _ => '把该成员从当前租户彻底移除。',
+      _ => '把该成员从当前机构彻底移除。',
     };
     final resendDetail = member.isInvitationExpired
         ? '这次邀请已经过期。重新发送后会刷新邀请时效。'
@@ -3360,7 +3360,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
       if (canManageStatuses)
         member.status == 'active' ? '你可以停用此成员。' : '你可以更新此成员的可用状态。',
       if (canRemoveMembers)
-        member.status == 'invited' ? '你可以撤销这次邀请。' : '你可以将此成员移出租户。',
+        member.status == 'invited' ? '你可以撤销这次邀请。' : '你可以将此成员移出机构。',
     ];
     final lockedReasonLines = _tenantMemberLockedReasons(
       member: member,
@@ -4115,7 +4115,7 @@ _TenantMemberRoleMeta _roleMeta(String role) {
     _ => const _TenantMemberRoleMeta(
         label: '成员',
         shortLabel: 'Member',
-        description: '成员，参与当前租户的日常协作',
+        description: '成员，参与当前机构的日常协作',
       ),
   };
 }

@@ -783,7 +783,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               AppServices.instance.session?.username ?? '未登录',
                           tenantLabel:
                               AppServices.instance.activeTenant?.code ??
-                                  '未选择租户',
+                                  '未选择机构',
                         ),
                       ),
                     ],
@@ -803,7 +803,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     sessionLabel:
                         AppServices.instance.session?.username ?? '未登录',
                     tenantLabel:
-                        AppServices.instance.activeTenant?.code ?? '未选择租户',
+                        AppServices.instance.activeTenant?.code ?? '未选择机构',
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -1193,7 +1193,7 @@ class _LibraryStatusCard extends StatelessWidget {
           const SizedBox(height: 8),
           _StatusRow(label: '会话', value: sessionLabel),
           const SizedBox(height: 8),
-          _StatusRow(label: '租户', value: tenantLabel),
+          _StatusRow(label: '机构', value: tenantLabel),
         ],
       ),
     );
@@ -1331,7 +1331,7 @@ class _LibraryErrorCard extends StatelessWidget {
                     onPressed: () =>
                         Navigator.of(context).pushNamed(AppRouter.tenantSwitch),
                     icon: const Icon(Icons.apartment_outlined),
-                    label: const Text('选择租户'),
+                    label: const Text('选择机构'),
                   ),
               ],
             ),

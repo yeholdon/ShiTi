@@ -88,7 +88,7 @@ class _ExportDetailPageState extends State<ExportDetailPage> {
                   modeLabel: AppConfig.dataModeLabel,
                   sessionLabel: AppServices.instance.session?.username ?? '未登录',
                   tenantLabel:
-                      AppServices.instance.activeTenant?.code ?? '未选择租户',
+                      AppServices.instance.activeTenant?.code ?? '未选择机构',
                 ),
                 const SizedBox(height: 18),
                 WorkspacePanel(
@@ -750,7 +750,7 @@ class _ContextCard extends StatelessWidget {
         children: [
           _InfoPill(label: '模式', value: modeLabel),
           _InfoPill(label: '会话', value: sessionLabel),
-          _InfoPill(label: '租户', value: tenantLabel),
+          _InfoPill(label: '机构', value: tenantLabel),
         ],
       ),
     );

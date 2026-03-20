@@ -2570,7 +2570,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                         sessionLabel:
                             AppServices.instance.session?.username ?? '未登录',
                         tenantLabel:
-                            AppServices.instance.activeTenant?.code ?? '未选择租户',
+                            AppServices.instance.activeTenant?.code ?? '未选择机构',
                       ),
                       const SizedBox(height: 18),
                       WorkspacePanel(
@@ -4464,7 +4464,7 @@ class _DocumentContextCard extends StatelessWidget {
         children: [
           _ContextChip(label: '模式', value: modeLabel),
           _ContextChip(label: '会话', value: sessionLabel),
-          _ContextChip(label: '租户', value: tenantLabel),
+          _ContextChip(label: '机构', value: tenantLabel),
         ],
       ),
     );

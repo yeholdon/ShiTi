@@ -784,7 +784,7 @@ class _ExportsPageState extends State<ExportsPage> {
                     sessionLabel:
                         AppServices.instance.session?.username ?? '未登录',
                     tenantLabel:
-                        AppServices.instance.activeTenant?.code ?? '未选择租户',
+                        AppServices.instance.activeTenant?.code ?? '未选择机构',
                     onRefresh: _reload,
                   ),
                 ),
@@ -801,7 +801,7 @@ class _ExportsPageState extends State<ExportsPage> {
             _ExportsStatusCard(
               modeLabel: AppConfig.dataModeLabel,
               sessionLabel: AppServices.instance.session?.username ?? '未登录',
-              tenantLabel: AppServices.instance.activeTenant?.code ?? '未选择租户',
+              tenantLabel: AppServices.instance.activeTenant?.code ?? '未选择机构',
               onRefresh: _reload,
             ),
           ],
@@ -1747,7 +1747,7 @@ class _ExportsStatusCard extends StatelessWidget {
           const SizedBox(height: 8),
           _StatusRow(label: '会话', value: sessionLabel),
           const SizedBox(height: 8),
-          _StatusRow(label: '租户', value: tenantLabel),
+          _StatusRow(label: '机构', value: tenantLabel),
           const SizedBox(height: 8),
           const _StatusRow(label: '刷新', value: '每 8 秒自动同步'),
         ],

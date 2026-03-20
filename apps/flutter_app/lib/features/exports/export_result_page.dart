@@ -84,9 +84,9 @@ class _ExportResultPageState extends State<ExportResultPage> {
                         value: AppServices.instance.session?.username ?? '未登录',
                       ),
                       _InfoPill(
-                        label: '租户',
+                        label: '机构',
                         value:
-                            AppServices.instance.activeTenant?.code ?? '未选择租户',
+                            AppServices.instance.activeTenant?.code ?? '未选择机构',
                       ),
                     ],
                   ),
