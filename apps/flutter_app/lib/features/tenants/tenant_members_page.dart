@@ -5,6 +5,7 @@ import '../../core/models/tenant_member_audit_event.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
+import '../shared/workspace_shell.dart';
 
 class TenantMembersPage extends StatefulWidget {
   const TenantMembersPage({super.key});
@@ -33,6 +34,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
   String _roleFilter = 'all';
   String _statusFilter = 'all';
   String _scopeFilter = 'all';
+  String _sortMode = 'list';
 
   bool get _canManageRoles =>
       (AppServices.instance.activeTenant?.role ?? '') == 'owner';
@@ -60,13 +62,50 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
   int get _manageableCount => _members.where(_isManageable).length;
 
+  int get _visibleManageableCount =>
+      _visibleMembers.where(_isManageable).length;
+
+  int get _visibleExpiredInviteCount => _visibleMembers
+      .where(
+          (member) => member.status == 'invited' && member.isInvitationExpired)
+      .length;
+
+  int get _visibleResentInviteCount => _visibleMembers
+      .where(
+        (member) =>
+            member.status == 'invited' &&
+            _recentActions[member.id]?.title == '邀请已重发',
+      )
+      .length;
+
+  int get _visibleFreshInviteCount =>
+      _visibleCountByStatus('invited') - _visibleExpiredInviteCount;
+
+  bool get _visibleIncludesActiveUser =>
+      _visibleMembers.any((member) => member.userId == _activeUserId);
+
+  TenantMemberSummary? get _activeUserMember =>
+      _members.cast<TenantMemberSummary?>().firstWhere(
+            (member) => member?.userId == _activeUserId,
+            orElse: () => null,
+          );
+
   int _countByStatus(String status) =>
       _members.where((member) => member.status == status).length;
 
-  int _countByRole(String role) => _members.where((member) => member.role == role).length;
+  int _countByRole(String role) =>
+      _members.where((member) => member.role == role).length;
 
-  int get _expiredInviteCount =>
-      _members.where((member) => member.status == 'invited' && member.isInvitationExpired).length;
+  int _visibleCountByStatus(String status) =>
+      _visibleMembers.where((member) => member.status == status).length;
+
+  int _visibleCountByRole(String role) =>
+      _visibleMembers.where((member) => member.role == role).length;
+
+  int get _expiredInviteCount => _members
+      .where(
+          (member) => member.status == 'invited' && member.isInvitationExpired)
+      .length;
 
   int get _resentInviteCount => _members
       .where(
@@ -104,9 +143,52 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       lines.add('再跟进 $freshInvites 个仍在有效期内的待加入成员。');
     }
     if (_resentInviteCount > 0) {
-      lines.add('本轮已重发 $_resentInviteCount 个邀请，适合回看后续是否完成加入。');
+      lines.add('本轮已重发 $_resentInviteCount 个邀请，适合回看这批成员是否已经完成加入。');
     }
     return lines;
+  }
+
+  List<String> get _activeFilterLabels {
+    final labels = <String>[];
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      labels.add('搜索：$query');
+    }
+    if (_roleFilter != 'all') {
+      labels.add('角色：${_roleMeta(_roleFilter).label}');
+    }
+    if (_statusFilter != 'all') {
+      labels.add(
+        switch (_statusFilter) {
+          'active' => '状态：活跃',
+          'invited' => '状态：待加入',
+          _ => '状态：已停用',
+        },
+      );
+    }
+    if (_scopeFilter != 'all') {
+      labels.add(
+        switch (_scopeFilter) {
+          'manageable' => '范围：仅看可操作',
+          'current_user' => '范围：仅看当前账号',
+          'expired_invites' => '范围：仅看过期邀请',
+          'resent_invites' => '范围：仅看已重发邀请',
+          'manageable_expired_invites' => '范围：可操作的过期邀请',
+          _ => '范围：全部对象',
+        },
+      );
+    }
+    if (_sortMode != 'list') {
+      labels.add(
+        switch (_sortMode) {
+          'username' => '排序：按用户名',
+          'role' => '排序：按角色',
+          'status' => '排序：按状态',
+          _ => '排序：列表顺序',
+        },
+      );
+    }
+    return labels;
   }
 
   String _queuePreview(
@@ -117,7 +199,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
     if (names.isEmpty) {
       return emptyLabel;
     }
-    final suffix = members.length > names.length ? ' 等 ${members.length} 位' : '';
+    final suffix =
+        members.length > names.length ? ' 等 ${members.length} 位' : '';
     return '当前优先对象：${names.join('、')}$suffix';
   }
 
@@ -137,6 +220,20 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       if (roleFilter != null) {
         _roleFilter = roleFilter;
       }
+    });
+  }
+
+  void _resetFilters() {
+    _searchController.clear();
+    setState(() {
+      _roleFilter = 'all';
+      _statusFilter = 'all';
+      _scopeFilter = 'all';
+      _activeQueueKind = null;
+      _activeQueueSectionKey = null;
+      _activeQueueTitle = null;
+      _activeQueuePriorityMemberId = null;
+      _activeQueueCompletionMessage = null;
     });
   }
 
@@ -160,7 +257,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       _activeQueueSectionKey = queueSectionKey;
       _activeQueueTitle = queueTitle;
       _activeQueuePriorityMemberId = target?.id;
-      _activeQueueCompletionMessage = target == null ? '$queueTitle 已清空。' : null;
+      _activeQueueCompletionMessage =
+          target == null ? '$queueTitle 已清空。' : null;
     });
     if (target != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -177,8 +275,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
   void _focusMember(TenantMemberSummary member) {
     final searchQuery = _searchController.text.trim().toLowerCase();
-    final hiddenBySearch =
-        searchQuery.isNotEmpty && !member.username.toLowerCase().contains(searchQuery);
+    final hiddenBySearch = searchQuery.isNotEmpty &&
+        !member.username.toLowerCase().contains(searchQuery);
     setState(() {
       if (_roleFilter != 'all' && _roleFilter != member.role) {
         _roleFilter = 'all';
@@ -209,7 +307,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
   void _recordRecentAction(String memberId, _TenantMemberRecentAction action) {
     _recentActions[memberId] = action;
-    final existing = _actionHistory[memberId] ?? const <_TenantMemberRecentAction>[];
+    final existing =
+        _actionHistory[memberId] ?? const <_TenantMemberRecentAction>[];
     _actionHistory[memberId] = <_TenantMemberRecentAction>[
       action,
       ...existing,
@@ -272,7 +371,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
     });
 
     try {
-      final members = await AppServices.instance.sessionRepository.listTenantMembers(
+      final members =
+          await AppServices.instance.sessionRepository.listTenantMembers(
         tenantCode: tenantCode,
       );
       if (!mounted) {
@@ -295,11 +395,12 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
   List<TenantMemberSummary> get _visibleMembers {
     final query = _searchController.text.trim().toLowerCase();
-    return _members.where((member) {
+    final filtered = _members.where((member) {
       final roleMatches = _roleFilter == 'all' || member.role == _roleFilter;
-      final statusMatches = _statusFilter == 'all' || member.status == _statusFilter;
-      final scopeMatches =
-          _scopeFilter == 'all' ||
+      final statusMatches =
+          _statusFilter == 'all' || member.status == _statusFilter;
+      final scopeMatches = _scopeFilter == 'all' ||
+          (_scopeFilter == 'current_user' && member.userId == _activeUserId) ||
           (_scopeFilter == 'manageable' && _isManageable(member)) ||
           (_scopeFilter == 'manageable_expired_invites' &&
               _isManageable(member) &&
@@ -311,9 +412,34 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
           (_scopeFilter == 'expired_invites' &&
               member.status == 'invited' &&
               member.isInvitationExpired);
-      final queryMatches = query.isEmpty || member.username.toLowerCase().contains(query);
+      final queryMatches =
+          query.isEmpty || member.username.toLowerCase().contains(query);
       return roleMatches && statusMatches && scopeMatches && queryMatches;
     }).toList();
+    switch (_sortMode) {
+      case 'username':
+        filtered.sort((left, right) => left.username.compareTo(right.username));
+      case 'role':
+        filtered.sort((left, right) {
+          final rankDiff = _roleRank(left.role) - _roleRank(right.role);
+          if (rankDiff != 0) {
+            return rankDiff;
+          }
+          return left.username.compareTo(right.username);
+        });
+      case 'status':
+        filtered.sort((left, right) {
+          final rankDiff =
+              _tenantMemberStatusRank(left) - _tenantMemberStatusRank(right);
+          if (rankDiff != 0) {
+            return rankDiff;
+          }
+          return left.username.compareTo(right.username);
+        });
+      default:
+        break;
+    }
+    return filtered;
   }
 
   bool _canManageRolesForMember(TenantMemberSummary member) {
@@ -359,20 +485,26 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
     for (final member in _visibleMembers) {
       if (member.status == 'invited') {
-        final key = member.isInvitationExpired ? 'invited_expired' : 'invited_valid';
+        final key =
+            member.isInvitationExpired ? 'invited_expired' : 'invited_valid';
         grouped.putIfAbsent(key, () => <TenantMemberSummary>[]).add(member);
       } else {
-        grouped.putIfAbsent(member.status, () => <TenantMemberSummary>[]).add(member);
+        grouped
+            .putIfAbsent(member.status, () => <TenantMemberSummary>[])
+            .add(member);
       }
     }
 
     for (final members in grouped.values) {
       members.sort((left, right) {
-        final roleComparison = _roleRank(left.role).compareTo(_roleRank(right.role));
+        final roleComparison =
+            _roleRank(left.role).compareTo(_roleRank(right.role));
         if (roleComparison != 0) {
           return roleComparison;
         }
-        return left.username.toLowerCase().compareTo(right.username.toLowerCase());
+        return left.username
+            .toLowerCase()
+            .compareTo(right.username.toLowerCase());
       });
     }
 
@@ -383,7 +515,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
         filterStatus: 'active',
         filterScope: 'all',
         label: '活跃',
-        hint: '活跃成员可继续做角色调整和日常成员治理。',
+        hint: '活跃成员可以继续调整角色，或处理日常成员变更。',
         members: grouped['active'] ?? const <TenantMemberSummary>[],
       ),
       _TenantMemberSection(
@@ -413,9 +545,7 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
         hint: '这里集中查看暂时停用的账号，决定是否恢复访问。',
         members: grouped['disabled'] ?? const <TenantMemberSummary>[],
       ),
-    ]
-        .where((section) => section.members.isNotEmpty)
-        .toList();
+    ].where((section) => section.members.isNotEmpty).toList();
   }
 
   Future<void> _updateRole(TenantMemberSummary member, String nextRole) async {
@@ -423,7 +553,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       _updatingMemberId = member.id;
     });
     try {
-      final updated = await AppServices.instance.sessionRepository.updateTenantMemberRole(
+      final updated =
+          await AppServices.instance.sessionRepository.updateTenantMemberRole(
         tenantCode: _tenantCode,
         memberId: member.id,
         role: nextRole,
@@ -443,13 +574,13 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
         _recordRecentAction(
           updated.id,
           _TenantMemberRecentAction(
-          title: '角色已更新',
-          detail: '已将 ${updated.username} 调整为 ${updated.role}',
-          changeType: _TenantMemberRecentActionType.role,
-          changeLabel: '角色',
-          beforeValue: _roleMeta(member.role).label,
-          afterValue: _roleMeta(updated.role).label,
-          createdAt: DateTime.now(),
+            title: '角色已更新',
+            detail: '已将 ${updated.username} 调整为 ${updated.role}',
+            changeType: _TenantMemberRecentActionType.role,
+            changeLabel: '角色',
+            beforeValue: _roleMeta(member.role).label,
+            afterValue: _roleMeta(updated.role).label,
+            createdAt: DateTime.now(),
           ),
         );
       });
@@ -481,14 +612,16 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
 
     final created = await showDialog<_TenantMemberCreateResult>(
       context: context,
-      builder: (_) => _AddTenantMemberDialog(canGrantElevatedRoles: _canManageRoles),
+      builder: (_) =>
+          _AddTenantMemberDialog(canGrantElevatedRoles: _canManageRoles),
     );
     if (created == null || !mounted) {
       return;
     }
 
     try {
-      final member = await AppServices.instance.sessionRepository.addTenantMember(
+      final member =
+          await AppServices.instance.sessionRepository.addTenantMember(
         tenantCode: tenantCode,
         username: created.username,
         role: created.role,
@@ -505,16 +638,18 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
         _recordRecentAction(
           member.id,
           _TenantMemberRecentAction(
-          title: member.status == 'invited' ? '邀请已发送' : '成员已加入',
-          detail: member.status == 'invited'
-              ? '已邀请 ${member.username} 以 ${member.role} 身份加入当前租户'
-              : '已将 ${member.username} 添加为 ${member.role}',
-          changeType: member.status == 'invited'
-              ? _TenantMemberRecentActionType.invitation
-              : _TenantMemberRecentActionType.membership,
-          changeLabel: member.status == 'invited' ? '加入方式' : '成员加入',
-          afterValue: member.status == 'invited' ? '待加入' : _roleMeta(member.role).label,
-          createdAt: DateTime.now(),
+            title: member.status == 'invited' ? '邀请已发送' : '成员已加入',
+            detail: member.status == 'invited'
+                ? '已邀请 ${member.username} 以 ${member.role} 身份加入当前租户'
+                : '已将 ${member.username} 添加为 ${member.role}',
+            changeType: member.status == 'invited'
+                ? _TenantMemberRecentActionType.invitation
+                : _TenantMemberRecentActionType.membership,
+            changeLabel: member.status == 'invited' ? '加入方式' : '成员加入',
+            afterValue: member.status == 'invited'
+                ? '待加入'
+                : _roleMeta(member.role).label,
+            createdAt: DateTime.now(),
           ),
         );
       });
@@ -538,12 +673,14 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
     }
   }
 
-  Future<void> _updateStatus(TenantMemberSummary member, String nextStatus) async {
+  Future<void> _updateStatus(
+      TenantMemberSummary member, String nextStatus) async {
     setState(() {
       _updatingMemberId = member.id;
     });
     try {
-      final updated = await AppServices.instance.sessionRepository.updateTenantMemberStatus(
+      final updated =
+          await AppServices.instance.sessionRepository.updateTenantMemberStatus(
         tenantCode: _tenantCode,
         memberId: member.id,
         status: nextStatus,
@@ -564,13 +701,14 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
         _recordRecentAction(
           updated.id,
           _TenantMemberRecentAction(
-          title: '状态已更新',
-          detail: '已将 ${updated.username} 标记为 ${_statusMeta(updated.status).label}',
-          changeType: _TenantMemberRecentActionType.status,
-          changeLabel: '状态',
-          beforeValue: _statusMeta(member.status).label,
-          afterValue: _statusMeta(updated.status).label,
-          createdAt: DateTime.now(),
+            title: '状态已更新',
+            detail:
+                '已将 ${updated.username} 标记为 ${_statusMeta(updated.status).label}',
+            changeType: _TenantMemberRecentActionType.status,
+            changeLabel: '状态',
+            beforeValue: _statusMeta(member.status).label,
+            afterValue: _statusMeta(updated.status).label,
+            createdAt: DateTime.now(),
           ),
         );
         nextQueueTarget = _syncActiveQueueAfterTargetMutation(updated.id);
@@ -600,7 +738,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       _updatingMemberId = member.id;
     });
     try {
-      final updated = await AppServices.instance.sessionRepository.resendTenantMemberInvite(
+      final updated =
+          await AppServices.instance.sessionRepository.resendTenantMemberInvite(
         tenantCode: _tenantCode,
         memberId: member.id,
       );
@@ -653,19 +792,56 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
   Future<void> _removeMember(TenantMemberSummary member) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('移除成员'),
-        content: Text('确认将 ${member.username} 从当前租户移除吗？该操作会删除其成员关系。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: WorkspacePanel(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '移除成员',
+                  style: Theme.of(dialogContext)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '确认将 ${member.username} 从当前租户移除吗？该操作会删除其成员关系。',
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                        child: const Text('确认移除'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认移除'),
-          ),
-        ],
+        ),
       ),
     );
     if (confirmed != true || !mounted) {
@@ -716,7 +892,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
   Future<void> _openMemberDetails(TenantMemberSummary member) async {
     List<TenantMemberAuditEvent> auditEvents = const <TenantMemberAuditEvent>[];
     try {
-      auditEvents = await AppServices.instance.sessionRepository.listTenantMemberAuditEvents(
+      auditEvents = await AppServices.instance.sessionRepository
+          .listTenantMemberAuditEvents(
         tenantCode: _tenantCode,
         userId: member.userId,
       );
@@ -727,12 +904,11 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       return;
     }
     final activeQueueMembers = _membersForActiveQueue().toList();
-    final queueMemberIndex = activeQueueMembers.indexWhere((entry) => entry.id == member.id);
+    final queueMemberIndex =
+        activeQueueMembers.indexWhere((entry) => entry.id == member.id);
     final queuePriorityMember = _activeQueuePriorityMemberId == null
         ? null
-        : activeQueueMembers
-            .cast<TenantMemberSummary?>()
-            .firstWhere(
+        : activeQueueMembers.cast<TenantMemberSummary?>().firstWhere(
               (entry) => entry?.id == _activeQueuePriorityMemberId,
               orElse: () => null,
             );
@@ -746,7 +922,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
       builder: (_) => _TenantMemberDetailsSheet(
         member: member,
         recentAction: _recentActions[member.id],
-        history: _actionHistory[member.id] ?? const <_TenantMemberRecentAction>[],
+        history:
+            _actionHistory[member.id] ?? const <_TenantMemberRecentAction>[],
         auditEvents: auditEvents,
         activeRole: _activeRole,
         activeUserId: _activeUserId,
@@ -782,12 +959,11 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
     final visibleMembers = _visibleMembers;
     final visibleSections = _visibleSections;
     final activeRoleMeta = _roleMeta(activeTenant?.role ?? 'member');
+    final activeUserMember = _activeUserMember;
     final activeQueueMembers = _membersForActiveQueue().toList();
     final activeQueuePriorityMember = _activeQueuePriorityMemberId == null
         ? null
-        : activeQueueMembers
-            .cast<TenantMemberSummary?>()
-            .firstWhere(
+        : activeQueueMembers.cast<TenantMemberSummary?>().firstWhere(
               (entry) => entry?.id == _activeQueuePriorityMemberId,
               orElse: () => null,
             );
@@ -797,7 +973,8 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
             final priorityIndex = activeQueueMembers.indexWhere(
               (member) => member.id == activeQueuePriorityMember.id,
             );
-            if (priorityIndex >= 0 && priorityIndex + 1 < activeQueueMembers.length) {
+            if (priorityIndex >= 0 &&
+                priorityIndex + 1 < activeQueueMembers.length) {
               return activeQueueMembers[priorityIndex + 1];
             }
             return null;
@@ -810,515 +987,789 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
             nextMemberUsername: activeQueueNextMember?.username,
           );
     return Scaffold(
-      appBar: AppBar(title: const Text('租户成员管理')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _InfoChip(label: '租户', value: activeTenant?.name ?? '未选择租户'),
-                  _InfoChip(label: '代码', value: activeTenant?.code ?? '-'),
-                  _InfoChip(label: '当前角色', value: activeRoleMeta.label),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '成员与角色',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _canManageRoles
-                        ? '你当前是${activeRoleMeta.label}，可以查看并调整租户成员角色。'
-                        : '你当前是${activeRoleMeta.label}。可以查看成员，但不能修改角色。',
-                    style: const TextStyle(
-                      height: 1.5,
-                      color: TelegramPalette.textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _PermissionHintBanner(
-                    activeRole: activeTenant?.role ?? 'member',
-                    canAddMembers: _canAddMembers,
-                    canManageRoles: _canManageRoles,
-                    canManageStatuses: _canManageStatuses,
-                    canRemoveMembers: _canRemoveMembers,
-                  ),
-                  const SizedBox(height: 16),
-                  if (_canAddMembers) ...[
-                    FilledButton.tonalIcon(
-                      onPressed: _addMember,
-                      icon: const Icon(Icons.person_add_alt_1_outlined),
-                      label: const Text('添加成员'),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  const Text(
-                    '快速视图',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: TelegramPalette.textStrong,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
+      appBar: AppBar(title: const Text('成员与权限')),
+      body: WorkspaceBackdrop(
+        child: SafeArea(
+          child: workspaceConstrainedContent(
+            context,
+            child: ListView(
+              padding: workspacePagePadding(context),
+              children: [
+                WorkspacePanel(
+                  padding: workspacePanelPadding(context),
+                  child: Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _TenantMemberQuickViewCard(
-                        label: '待加入',
-                        value: _countByStatus('invited').toString(),
-                        detail: '优先处理邀请成员',
-                        icon: Icons.mark_email_unread_outlined,
-                        color: TelegramPalette.textStrong,
-                        onTap: () => _applyQuickView(
-                          statusFilter: 'invited',
-                          scopeFilter: 'all',
-                        ),
+                      _InfoChip(
+                        label: '租户',
+                        value: activeTenant?.name ?? '未选择租户',
                       ),
-                      _TenantMemberQuickViewCard(
-                        label: '已过期邀请',
-                        value: _expiredInviteCount.toString(),
-                        detail: '优先重发或撤销',
-                        icon: Icons.schedule_send_outlined,
-                        color: TelegramPalette.errorText,
-                        onTap: () => _applyQuickView(
-                          statusFilter: 'invited',
-                          scopeFilter: 'expired_invites',
+                      _InfoChip(label: '代码', value: activeTenant?.code ?? '-'),
+                      _InfoChip(label: '当前角色', value: activeRoleMeta.label),
+                      if (AppServices.instance.session?.username != null &&
+                          AppServices.instance.session!.username.isNotEmpty)
+                        _InfoChip(
+                          label: '当前账号',
+                          value: AppServices.instance.session!.username,
                         ),
-                      ),
-                      _TenantMemberQuickViewCard(
-                        label: '已重发邀请',
-                        value: _resentInviteCount.toString(),
-                        detail: '回看本轮已重发对象',
-                        icon: Icons.forward_to_inbox_outlined,
-                        color: TelegramPalette.accent,
-                        onTap: () => _applyQuickView(
-                          statusFilter: 'invited',
-                          scopeFilter: 'resent_invites',
-                        ),
-                      ),
-                      _TenantMemberQuickViewCard(
-                        label: '已停用',
-                        value: _countByStatus('disabled').toString(),
-                        detail: '查看待恢复成员',
-                        icon: Icons.pause_circle_outline,
-                        color: TelegramPalette.errorText,
-                        onTap: () => _applyQuickView(
-                          statusFilter: 'disabled',
-                          scopeFilter: 'all',
-                        ),
-                      ),
-                      _TenantMemberQuickViewCard(
-                        label: '可操作对象',
-                        value: _manageableCount.toString(),
-                        detail: '仅看当前可处理成员',
-                        icon: Icons.rule_folder_outlined,
-                        color: TelegramPalette.accent,
-                        onTap: () => _applyQuickView(
-                          statusFilter: 'all',
-                          scopeFilter: 'manageable',
-                        ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: TelegramPalette.highlight,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TelegramPalette.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '邀请治理 Runbook',
-                          style: TextStyle(
-                            color: TelegramPalette.textStrong,
-                            fontWeight: FontWeight.w700,
-                          ),
+                ),
+                const SizedBox(height: 16),
+                WorkspacePanel(
+                  padding: workspacePanelPadding(context),
+                  borderRadius: 28,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '成员与角色',
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _canManageRoles
+                            ? '你当前是${activeRoleMeta.label}，可以查看并调整租户成员角色。'
+                            : '你当前是${activeRoleMeta.label}。可以查看成员，但不能修改角色。',
+                        style: const TextStyle(
+                          height: 1.5,
+                          color: TelegramPalette.textMuted,
                         ),
-                        const SizedBox(height: 8),
-                        ..._invitationRunbookLines.map(
-                          (line) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              line,
-                              style: const TextStyle(
-                                color: TelegramPalette.textMuted,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
+                      ),
+                      const SizedBox(height: 16),
+                      _PermissionHintBanner(
+                        activeRole: activeTenant?.role ?? 'member',
+                        canAddMembers: _canAddMembers,
+                        canManageRoles: _canManageRoles,
+                        canManageStatuses: _canManageStatuses,
+                        canRemoveMembers: _canRemoveMembers,
+                      ),
+                      if (activeUserMember != null) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => _focusMember(activeUserMember),
+                          icon: const Icon(Icons.my_location_outlined),
+                          label: const Text('定位当前账号'),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: TelegramPalette.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TelegramPalette.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '邀请处理队列',
-                          style: TextStyle(
-                            color: TelegramPalette.textStrong,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      const SizedBox(height: 16),
+                      if (_canAddMembers) ...[
+                        FilledButton.tonalIcon(
+                          onPressed: _addMember,
+                          icon: const Icon(Icons.person_add_alt_1_outlined),
+                          label: const Text('添加成员'),
                         ),
-                        const SizedBox(height: 10),
-                        _TenantMemberQueueEntry(
-                          title: '优先处理已过期邀请',
-                          countLabel: '$_expiredInviteCount 位',
-                          detail: _queuePreview(
-                            _expiredInviteMembers,
-                            emptyLabel: '当前没有已过期邀请。',
-                          ),
-                          accentColor: TelegramPalette.errorText,
-                          icon: Icons.schedule_send_outlined,
-                          onTap: () => _applyQuickViewAndFocusFirst(
-                            statusFilter: 'invited',
-                            scopeFilter: 'expired_invites',
-                            queueKind: 'expired_invites',
-                            queueSectionKey: 'invited_expired',
-                            queueTitle: '优先处理已过期邀请',
-                            members: _expiredInviteMembers,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _TenantMemberQueueEntry(
-                          title: '继续跟进待加入成员',
-                          countLabel:
-                              '${_countByStatus('invited') - _expiredInviteCount} 位',
-                          detail: _queuePreview(
-                            _freshInviteMembers,
-                            emptyLabel: '当前没有仍在有效期内的待加入成员。',
-                          ),
-                          accentColor: TelegramPalette.accentDark,
-                          icon: Icons.mark_email_unread_outlined,
-                          onTap: () => _applyQuickViewAndFocusFirst(
-                            statusFilter: 'invited',
-                            scopeFilter: 'all',
-                            queueKind: 'fresh_invites',
-                            queueSectionKey: 'invited_valid',
-                            queueTitle: '继续跟进待加入成员',
-                            members: _freshInviteMembers,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _TenantMemberQueueEntry(
-                          title: '回看本轮已重发邀请',
-                          countLabel: '$_resentInviteCount 位',
-                          detail: _queuePreview(
-                            _resentInviteMembersList,
-                            emptyLabel: '当前没有本轮已重发邀请对象。',
-                          ),
-                          accentColor: TelegramPalette.accent,
-                          icon: Icons.forward_to_inbox_outlined,
-                          onTap: () => _applyQuickViewAndFocusFirst(
-                            statusFilter: 'invited',
-                            scopeFilter: 'resent_invites',
-                            queueKind: 'resent_invites',
-                            queueSectionKey: 'invited_valid',
-                            queueTitle: '回看本轮已重发邀请',
-                            members: _resentInviteMembersList,
-                          ),
-                        ),
-                        if (_activeQueueTitle != null && activeQueueSummary != null) ...[
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: TelegramPalette.surfaceAccent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: TelegramPalette.border),
-                            ),
-                            child: Column(
+                        const SizedBox(height: 16),
+                      ],
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final wideDesktop = constraints.maxWidth >= 1180;
+                          final quickViews = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '快速视图',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: TelegramPalette.textStrong,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  if (_activeUserMember != null)
+                                    _TenantMemberQuickViewCard(
+                                      label: '当前账号',
+                                      value: '1',
+                                      detail: '快速回到本人成员关系',
+                                      icon: Icons.my_location_outlined,
+                                      color: TelegramPalette.accentDark,
+                                      onTap: () {
+                                        _applyQuickView(
+                                          statusFilter: 'all',
+                                          scopeFilter: 'current_user',
+                                        );
+                                        _focusMember(_activeUserMember!);
+                                      },
+                                    ),
+                                  _TenantMemberQuickViewCard(
+                                    label: '待加入',
+                                    value: _countByStatus('invited').toString(),
+                                    detail: '优先处理邀请成员',
+                                    icon: Icons.mark_email_unread_outlined,
+                                    color: TelegramPalette.textStrong,
+                                    onTap: () => _applyQuickView(
+                                      statusFilter: 'invited',
+                                      scopeFilter: 'all',
+                                    ),
+                                  ),
+                                  _TenantMemberQuickViewCard(
+                                    label: '已过期邀请',
+                                    value: _expiredInviteCount.toString(),
+                                    detail: '优先重发或撤销',
+                                    icon: Icons.schedule_send_outlined,
+                                    color: TelegramPalette.errorText,
+                                    onTap: () => _applyQuickView(
+                                      statusFilter: 'invited',
+                                      scopeFilter: 'expired_invites',
+                                    ),
+                                  ),
+                                  _TenantMemberQuickViewCard(
+                                    label: '已重发邀请',
+                                    value: _resentInviteCount.toString(),
+                                    detail: '回看本轮已重发对象',
+                                    icon: Icons.forward_to_inbox_outlined,
+                                    color: TelegramPalette.accent,
+                                    onTap: () => _applyQuickView(
+                                      statusFilter: 'invited',
+                                      scopeFilter: 'resent_invites',
+                                    ),
+                                  ),
+                                  _TenantMemberQuickViewCard(
+                                    label: '已停用',
+                                    value:
+                                        _countByStatus('disabled').toString(),
+                                    detail: '查看待恢复成员',
+                                    icon: Icons.pause_circle_outline,
+                                    color: TelegramPalette.errorText,
+                                    onTap: () => _applyQuickView(
+                                      statusFilter: 'disabled',
+                                      scopeFilter: 'all',
+                                    ),
+                                  ),
+                                  _TenantMemberQuickViewCard(
+                                    label: '可操作对象',
+                                    value: _manageableCount.toString(),
+                                    detail: '仅看当前可处理成员',
+                                    icon: Icons.rule_folder_outlined,
+                                    color: TelegramPalette.accent,
+                                    onTap: () => _applyQuickView(
+                                      statusFilter: 'all',
+                                      scopeFilter: 'manageable',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                          final queueRail = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: TelegramPalette.highlight,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border:
+                                      Border.all(color: TelegramPalette.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '邀请处理建议',
+                                      style: TextStyle(
+                                        color: TelegramPalette.textStrong,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ..._invitationRunbookLines.map(
+                                      (line) => Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          line,
+                                          style: const TextStyle(
+                                            color: TelegramPalette.textMuted,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: TelegramPalette.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border:
+                                      Border.all(color: TelegramPalette.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '邀请处理队列',
+                                      style: TextStyle(
+                                        color: TelegramPalette.textStrong,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _TenantMemberQueueEntry(
+                                      title: '优先处理已过期邀请',
+                                      countLabel: '$_expiredInviteCount 位',
+                                      detail: _queuePreview(
+                                        _expiredInviteMembers,
+                                        emptyLabel: '当前没有已过期邀请。',
+                                      ),
+                                      accentColor: TelegramPalette.errorText,
+                                      icon: Icons.schedule_send_outlined,
+                                      onTap: () => _applyQuickViewAndFocusFirst(
+                                        statusFilter: 'invited',
+                                        scopeFilter: 'expired_invites',
+                                        queueKind: 'expired_invites',
+                                        queueSectionKey: 'invited_expired',
+                                        queueTitle: '优先处理已过期邀请',
+                                        members: _expiredInviteMembers,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _TenantMemberQueueEntry(
+                                      title: '继续跟进待加入成员',
+                                      countLabel:
+                                          '${_countByStatus('invited') - _expiredInviteCount} 位',
+                                      detail: _queuePreview(
+                                        _freshInviteMembers,
+                                        emptyLabel: '当前没有仍在有效期内的待加入成员。',
+                                      ),
+                                      accentColor: TelegramPalette.accentDark,
+                                      icon: Icons.mark_email_unread_outlined,
+                                      onTap: () => _applyQuickViewAndFocusFirst(
+                                        statusFilter: 'invited',
+                                        scopeFilter: 'all',
+                                        queueKind: 'fresh_invites',
+                                        queueSectionKey: 'invited_valid',
+                                        queueTitle: '继续跟进待加入成员',
+                                        members: _freshInviteMembers,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _TenantMemberQueueEntry(
+                                      title: '回看本轮已重发邀请',
+                                      countLabel: '$_resentInviteCount 位',
+                                      detail: _queuePreview(
+                                        _resentInviteMembersList,
+                                        emptyLabel: '当前没有本轮已重发邀请对象。',
+                                      ),
+                                      accentColor: TelegramPalette.accent,
+                                      icon: Icons.forward_to_inbox_outlined,
+                                      onTap: () => _applyQuickViewAndFocusFirst(
+                                        statusFilter: 'invited',
+                                        scopeFilter: 'resent_invites',
+                                        queueKind: 'resent_invites',
+                                        queueSectionKey: 'invited_valid',
+                                        queueTitle: '回看本轮已重发邀请',
+                                        members: _resentInviteMembersList,
+                                      ),
+                                    ),
+                                    if (_activeQueueTitle != null &&
+                                        activeQueueSummary != null) ...[
+                                      const SizedBox(height: 10),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: TelegramPalette.surfaceAccent,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: TelegramPalette.border,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '当前处理队列 · $_activeQueueTitle',
+                                              style: const TextStyle(
+                                                color:
+                                                    TelegramPalette.textStrong,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              activeQueueSummary.detail,
+                                              style: const TextStyle(
+                                                color:
+                                                    TelegramPalette.textMuted,
+                                                height: 1.35,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                          if (!wideDesktop) {
+                            return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                '当前处理队列 · $_activeQueueTitle',
-                                  style: const TextStyle(
-                                    color: TelegramPalette.textStrong,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  activeQueueSummary.detail,
-                                  style: const TextStyle(
-                                    color: TelegramPalette.textMuted,
-                                    height: 1.35,
-                                  ),
-                                ),
+                                quickViews,
+                                const SizedBox(height: 16),
+                                queueRail,
                               ],
-                            ),
+                            );
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 7, child: quickViews),
+                              const SizedBox(width: 20),
+                              Expanded(flex: 5, child: queueRail),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          labelText: '搜索成员',
+                          hintText: '按用户名筛选',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          _RoleFilterChip(
+                            label: '全部',
+                            selected: _roleFilter == 'all',
+                            onTap: () => setState(() => _roleFilter = 'all'),
+                          ),
+                          _RoleFilterChip(
+                            label: _roleMeta('owner').label,
+                            selected: _roleFilter == 'owner',
+                            onTap: () => setState(() => _roleFilter = 'owner'),
+                          ),
+                          _RoleFilterChip(
+                            label: _roleMeta('admin').label,
+                            selected: _roleFilter == 'admin',
+                            onTap: () => setState(() => _roleFilter = 'admin'),
+                          ),
+                          _RoleFilterChip(
+                            label: _roleMeta('member').label,
+                            selected: _roleFilter == 'member',
+                            onTap: () => setState(() => _roleFilter = 'member'),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: '搜索成员',
-                      hintText: '按用户名筛选',
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _RoleFilterChip(
-                        label: '全部',
-                        selected: _roleFilter == 'all',
-                        onTap: () => setState(() => _roleFilter = 'all'),
                       ),
-                      _RoleFilterChip(
-                        label: _roleMeta('owner').label,
-                        selected: _roleFilter == 'owner',
-                        onTap: () => setState(() => _roleFilter = 'owner'),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          _RoleFilterChip(
+                            label: '全部状态',
+                            selected: _statusFilter == 'all',
+                            onTap: () => setState(() => _statusFilter = 'all'),
+                          ),
+                          _RoleFilterChip(
+                            label: '活跃',
+                            selected: _statusFilter == 'active',
+                            onTap: () =>
+                                setState(() => _statusFilter = 'active'),
+                          ),
+                          _RoleFilterChip(
+                            label: '待加入',
+                            selected: _statusFilter == 'invited',
+                            onTap: () =>
+                                setState(() => _statusFilter = 'invited'),
+                          ),
+                          _RoleFilterChip(
+                            label: '已停用',
+                            selected: _statusFilter == 'disabled',
+                            onTap: () =>
+                                setState(() => _statusFilter = 'disabled'),
+                          ),
+                        ],
                       ),
-                      _RoleFilterChip(
-                        label: _roleMeta('admin').label,
-                        selected: _roleFilter == 'admin',
-                        onTap: () => setState(() => _roleFilter = 'admin'),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          _RoleFilterChip(
+                            label: '全部对象',
+                            selected: _scopeFilter == 'all',
+                            onTap: () => setState(() => _scopeFilter = 'all'),
+                          ),
+                          _RoleFilterChip(
+                            label: '仅看可操作',
+                            selected: _scopeFilter == 'manageable',
+                            onTap: () =>
+                                setState(() => _scopeFilter = 'manageable'),
+                          ),
+                          _RoleFilterChip(
+                            label: '仅看当前账号',
+                            selected: _scopeFilter == 'current_user',
+                            onTap: () =>
+                                setState(() => _scopeFilter = 'current_user'),
+                          ),
+                          _RoleFilterChip(
+                            label: '仅看过期邀请',
+                            selected: _scopeFilter == 'expired_invites',
+                            onTap: () => setState(
+                                () => _scopeFilter = 'expired_invites'),
+                          ),
+                          _RoleFilterChip(
+                            label: '仅看已重发邀请',
+                            selected: _scopeFilter == 'resent_invites',
+                            onTap: () =>
+                                setState(() => _scopeFilter = 'resent_invites'),
+                          ),
+                        ],
                       ),
-                      _RoleFilterChip(
-                        label: _roleMeta('member').label,
-                        selected: _roleFilter == 'member',
-                        onTap: () => setState(() => _roleFilter = 'member'),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: _sortMode,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: '排序',
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'list', child: Text('列表顺序')),
+                          DropdownMenuItem(
+                              value: 'username', child: Text('按用户名')),
+                          DropdownMenuItem(value: 'role', child: Text('按角色')),
+                          DropdownMenuItem(value: 'status', child: Text('按状态')),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setState(() => _sortMode = value);
+                        },
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _RoleFilterChip(
-                        label: '全部状态',
-                        selected: _statusFilter == 'all',
-                        onTap: () => setState(() => _statusFilter = 'all'),
-                      ),
-                      _RoleFilterChip(
-                        label: 'active',
-                        selected: _statusFilter == 'active',
-                        onTap: () => setState(() => _statusFilter = 'active'),
-                      ),
-                      _RoleFilterChip(
-                        label: 'invited',
-                        selected: _statusFilter == 'invited',
-                        onTap: () => setState(() => _statusFilter = 'invited'),
-                      ),
-                      _RoleFilterChip(
-                        label: 'disabled',
-                        selected: _statusFilter == 'disabled',
-                        onTap: () => setState(() => _statusFilter = 'disabled'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _RoleFilterChip(
-                        label: '全部对象',
-                        selected: _scopeFilter == 'all',
-                        onTap: () => setState(() => _scopeFilter = 'all'),
-                      ),
-                      _RoleFilterChip(
-                        label: '仅看可操作',
-                        selected: _scopeFilter == 'manageable',
-                        onTap: () => setState(() => _scopeFilter = 'manageable'),
-                      ),
-                      _RoleFilterChip(
-                        label: '仅看过期邀请',
-                        selected: _scopeFilter == 'expired_invites',
-                        onTap: () => setState(() => _scopeFilter = 'expired_invites'),
-                      ),
-                      _RoleFilterChip(
-                        label: '仅看已重发邀请',
-                        selected: _scopeFilter == 'resent_invites',
-                        onTap: () => setState(() => _scopeFilter = 'resent_invites'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '当前显示 ${visibleMembers.length} / ${_members.length} 位成员',
-                    style: const TextStyle(
-                      color: TelegramPalette.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'active ${_countByStatus('active')} · invited ${_countByStatus('invited')} · expired $_expiredInviteCount · resent $_resentInviteCount · disabled ${_countByStatus('disabled')}',
-                    style: const TextStyle(
-                      color: TelegramPalette.textSoft,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _TenantMemberSummaryCard(
-                        label: _roleMeta('owner').shortLabel,
-                        value: _countByRole('owner').toString(),
-                        detail: '核心治理',
-                        color: TelegramPalette.accentDark,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: _roleMeta('admin').shortLabel,
-                        value: _countByRole('admin').toString(),
-                        detail: '租户维护',
-                        color: TelegramPalette.accent,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: 'Active',
-                        value: _countByStatus('active').toString(),
-                        detail: '当前可用',
-                        color: TelegramPalette.accent,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: 'Invited',
-                        value: _countByStatus('invited').toString(),
-                        detail: '待加入',
-                        color: TelegramPalette.textStrong,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: 'Expired',
-                        value: _expiredInviteCount.toString(),
-                        detail: '已过期邀请',
-                        color: TelegramPalette.errorText,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: 'Resent',
-                        value: _resentInviteCount.toString(),
-                        detail: '本轮已重发',
-                        color: TelegramPalette.accent,
-                      ),
-                      _TenantMemberSummaryCard(
-                        label: 'Disabled',
-                        value: _countByStatus('disabled').toString(),
-                        detail: '已停用',
-                        color: TelegramPalette.errorText,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (_loading)
-                    const Center(child: CircularProgressIndicator())
-                  else if (_error != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '成员加载失败：$_error',
-                          style: const TextStyle(color: TelegramPalette.errorText),
+                      const SizedBox(height: 12),
+                      if (_activeFilterLabels.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _activeFilterLabels
+                              .map(
+                                (label) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceAccent,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                        color: TelegramPalette.border),
+                                  ),
+                                  child: Text(
+                                    label,
+                                    style: const TextStyle(
+                                      color: TelegramPalette.textStrong,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                         ),
                         const SizedBox(height: 12),
-                        FilledButton.tonalIcon(
-                          onPressed: _reload,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('重新加载'),
-                        ),
                       ],
-                    )
-                  else if (_members.isEmpty)
-                    const Text(
-                      '当前租户还没有可显示的成员。',
-                      style: TextStyle(color: TelegramPalette.textMuted),
-                    )
-                  else if (visibleMembers.isEmpty)
-                    const Text(
-                      '没有符合当前搜索或角色筛选条件的成员。',
-                      style: TextStyle(color: TelegramPalette.textMuted),
-                    )
-                  else
-                    Column(
-                      children: visibleSections
-                          .map(
-                            (section) => Padding(
-                              padding: const EdgeInsets.only(bottom: 18),
-                              child: _TenantMemberSectionCard(
-                                section: section,
-                                recentActions: _recentActions,
-                                focusedMemberId: _focusedMemberId,
-                                activeQueueSectionKey: _activeQueueSectionKey,
-                                activeQueueTitle: _activeQueueTitle,
-                                activeQueuePriorityMemberId: _activeQueuePriorityMemberId,
-                                activeQueueCompletionMessage: _activeQueueCompletionMessage,
-                                memberCardKeyForId: _keyForMember,
-                                onFocusSection: () => _applyQuickView(
-                                  statusFilter: section.filterStatus,
-                                  scopeFilter: section.filterScope,
-                                ),
-                                onFocusManageableInSection: () => _applyQuickView(
-                                  statusFilter: section.filterStatus,
-                                  scopeFilter: section.filterScope == 'expired_invites'
-                                      ? 'manageable_expired_invites'
-                                      : 'manageable',
-                                ),
-                                activeRole: _activeRole,
-                                activeUserId: _activeUserId,
-                                canManageRolesForMember: _canManageRolesForMember,
-                                canManageStatusesForMember: _canManageStatusForMember,
-                                canRemoveMembersForMember: _canRemoveMemberForMember,
-                                updatingMemberId: _updatingMemberId,
-                                onRoleChanged: _updateRole,
-                                onStatusChanged: _updateStatus,
-                                onRemove: _removeMember,
-                                onOpenDetails: _openMemberDetails,
-                              ),
+                      Text(
+                        '当前显示 ${visibleMembers.length} / ${_members.length} 位成员',
+                        style: const TextStyle(
+                          color: TelegramPalette.textMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _InfoChip(
+                            label: '全量活跃',
+                            value: _countByStatus('active').toString(),
+                          ),
+                          _InfoChip(
+                            label: '全量待加入',
+                            value: _countByStatus('invited').toString(),
+                          ),
+                          _InfoChip(
+                            label: '全量过期邀请',
+                            value: _expiredInviteCount.toString(),
+                          ),
+                          _InfoChip(
+                            label: '全量已重发',
+                            value: _resentInviteCount.toString(),
+                          ),
+                          _InfoChip(
+                            label: '全量已停用',
+                            value: _countByStatus('disabled').toString(),
+                          ),
+                          if (_activeQueueTitle != null)
+                            _InfoChip(label: '当前队列', value: _activeQueueTitle!),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _TenantMemberSummaryCard(
+                            label: '当前活跃',
+                            value: _visibleCountByStatus('active').toString(),
+                            detail: '当前结果里可用成员',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前待加入',
+                            value: _visibleCountByStatus('invited').toString(),
+                            detail: '当前结果里待跟进成员',
+                            color: TelegramPalette.textStrong,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前已停用',
+                            value: _visibleCountByStatus('disabled').toString(),
+                            detail: '当前结果里待恢复成员',
+                            color: TelegramPalette.errorText,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前可操作',
+                            value: _visibleManageableCount.toString(),
+                            detail: '当前结果里可继续处理的成员',
+                            color: TelegramPalette.accentDark,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前账号',
+                            value: _visibleIncludesActiveUser ? '已包含' : '已隐藏',
+                            detail: '当前结果里的本人成员关系',
+                            color: TelegramPalette.textStrong,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前过期邀请',
+                            value: _visibleExpiredInviteCount.toString(),
+                            detail: '当前结果里优先重发或撤销',
+                            color: TelegramPalette.errorText,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前已重发',
+                            value: _visibleResentInviteCount.toString(),
+                            detail: '当前结果里可回看本轮对象',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: '当前有效邀请',
+                            value: _visibleFreshInviteCount.toString(),
+                            detail: '当前结果里仍在有效期内',
+                            color: TelegramPalette.accentDark,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: _roleMeta('owner').shortLabel,
+                            value: _visibleCountByRole('owner').toString(),
+                            detail: '当前结果里的所有者',
+                            color: TelegramPalette.accentDark,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: _roleMeta('admin').shortLabel,
+                            value: _visibleCountByRole('admin').toString(),
+                            detail: '当前结果里的管理角色',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: _roleMeta('member').shortLabel,
+                            value: _visibleCountByRole('member').toString(),
+                            detail: '当前结果里的普通成员',
+                            color: TelegramPalette.textStrong,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _TenantMemberSummaryCard(
+                            label: _roleMeta('owner').shortLabel,
+                            value: _countByRole('owner').toString(),
+                            detail: '高权限角色',
+                            color: TelegramPalette.accentDark,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: _roleMeta('admin').shortLabel,
+                            value: _countByRole('admin').toString(),
+                            detail: '租户维护',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: 'Active',
+                            value: _countByStatus('active').toString(),
+                            detail: '当前可用',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: 'Invited',
+                            value: _countByStatus('invited').toString(),
+                            detail: '待加入',
+                            color: TelegramPalette.textStrong,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: 'Expired',
+                            value: _expiredInviteCount.toString(),
+                            detail: '已过期邀请',
+                            color: TelegramPalette.errorText,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: 'Resent',
+                            value: _resentInviteCount.toString(),
+                            detail: '本轮已重发',
+                            color: TelegramPalette.accent,
+                          ),
+                          _TenantMemberSummaryCard(
+                            label: 'Disabled',
+                            value: _countByStatus('disabled').toString(),
+                            detail: '已停用',
+                            color: TelegramPalette.errorText,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (_loading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_error != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '成员加载失败：$_error',
+                              style: const TextStyle(
+                                  color: TelegramPalette.errorText),
                             ),
-                          )
-                          .toList(),
-                    ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed(AppRouter.tenantSwitch),
-                    icon: const Icon(Icons.apartment_outlined),
-                    label: const Text('返回租户切换'),
+                            const SizedBox(height: 12),
+                            FilledButton.tonalIcon(
+                              onPressed: _reload,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('重新加载'),
+                            ),
+                          ],
+                        )
+                      else if (_members.isEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '当前租户还没有可显示的成员。',
+                              style:
+                                  TextStyle(color: TelegramPalette.textMuted),
+                            ),
+                            if (_canAddMembers) ...[
+                              const SizedBox(height: 12),
+                              FilledButton.tonalIcon(
+                                onPressed: _addMember,
+                                icon:
+                                    const Icon(Icons.person_add_alt_1_outlined),
+                                label: const Text('添加第一位成员'),
+                              ),
+                            ],
+                          ],
+                        )
+                      else if (visibleMembers.isEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '没有符合当前搜索或筛选条件的成员。',
+                              style:
+                                  TextStyle(color: TelegramPalette.textMuted),
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton.tonalIcon(
+                              onPressed: _resetFilters,
+                              icon: const Icon(Icons.restart_alt),
+                              label: const Text('恢复默认视图'),
+                            ),
+                          ],
+                        )
+                      else
+                        Column(
+                          children: visibleSections
+                              .map(
+                                (section) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 18),
+                                  child: _TenantMemberSectionCard(
+                                    section: section,
+                                    recentActions: _recentActions,
+                                    focusedMemberId: _focusedMemberId,
+                                    activeQueueSectionKey:
+                                        _activeQueueSectionKey,
+                                    activeQueueTitle: _activeQueueTitle,
+                                    activeQueuePriorityMemberId:
+                                        _activeQueuePriorityMemberId,
+                                    activeQueueCompletionMessage:
+                                        _activeQueueCompletionMessage,
+                                    memberCardKeyForId: _keyForMember,
+                                    onFocusSection: () => _applyQuickView(
+                                      statusFilter: section.filterStatus,
+                                      scopeFilter: section.filterScope,
+                                    ),
+                                    onFocusManageableInSection: () =>
+                                        _applyQuickView(
+                                      statusFilter: section.filterStatus,
+                                      scopeFilter: section.filterScope ==
+                                              'expired_invites'
+                                          ? 'manageable_expired_invites'
+                                          : 'manageable',
+                                    ),
+                                    activeRole: _activeRole,
+                                    activeUserId: _activeUserId,
+                                    canManageRolesForMember:
+                                        _canManageRolesForMember,
+                                    canManageStatusesForMember:
+                                        _canManageStatusForMember,
+                                    canRemoveMembersForMember:
+                                        _canRemoveMemberForMember,
+                                    updatingMemberId: _updatingMemberId,
+                                    onRoleChanged: _updateRole,
+                                    onStatusChanged: _updateStatus,
+                                    onRemove: _removeMember,
+                                    onOpenDetails: _openMemberDetails,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context)
+                            .pushNamed(AppRouter.tenantSwitch),
+                        icon: const Icon(Icons.apartment_outlined),
+                        label: const Text('返回租户切换'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1344,19 +1795,13 @@ class _PermissionHintBanner extends StatelessWidget {
     final activeRoleMeta = _roleMeta(activeRole);
     final hintLines = <String>[
       if (canAddMembers) '你可以把已有账号加入当前租户。' else '你当前不能添加成员。',
-      if (canAddMembers) '你也可以先发送邀请，让对方后续自行激活成员关系。' else '邀请成员同样需要管理员或所有者权限。',
-      if (canManageRoles)
-        '你可以把成员调整为成员 / 管理员 / 所有者。'
-      else
-        '只有所有者可以调整成员角色。',
+      if (canAddMembers) '你也可以先发送邀请，让对方自行完成加入。' else '邀请成员同样需要管理员或所有者权限。',
+      if (canManageRoles) '你可以把成员调整为成员 / 管理员 / 所有者。' else '只有所有者可以调整成员角色。',
       if (canManageStatuses)
         '你可以停用普通成员；只有所有者可以停用或恢复管理员 / 所有者。'
       else
         '你当前不能调整成员状态。',
-      if (canRemoveMembers)
-        '你可以移除普通成员；只有所有者可以移除管理员 / 所有者。'
-      else
-        '你当前不能移除成员。',
+      if (canRemoveMembers) '你可以移除普通成员；只有所有者可以移除管理员 / 所有者。' else '你当前不能移除成员。',
     ];
     return Container(
       width: double.infinity,
@@ -1408,10 +1853,11 @@ class _RoleFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
+    return WorkspaceFilterPill(
+      label: label,
       selected: selected,
-      label: Text(label),
-      onSelected: (_) => onTap(),
+      onTap: onTap,
+      showSelectedCheckmark: true,
     );
   }
 }
@@ -1710,11 +2156,13 @@ _TenantMemberRecentActionMeta _recentActionMeta(
         backgroundColor: TelegramPalette.errorSurface,
         foregroundColor: TelegramPalette.errorText,
       ),
-    _TenantMemberRecentActionType.invitation => const _TenantMemberRecentActionMeta(
+    _TenantMemberRecentActionType.invitation =>
+      const _TenantMemberRecentActionMeta(
         backgroundColor: TelegramPalette.highlight,
         foregroundColor: TelegramPalette.textStrong,
       ),
-    _TenantMemberRecentActionType.membership => const _TenantMemberRecentActionMeta(
+    _TenantMemberRecentActionType.membership =>
+      const _TenantMemberRecentActionMeta(
         backgroundColor: TelegramPalette.surfaceAccent,
         foregroundColor: TelegramPalette.textStrong,
       ),
@@ -1752,86 +2200,116 @@ class _AddTenantMemberDialogState extends State<_AddTenantMemberDialog> {
     final roleOptions = widget.canGrantElevatedRoles
         ? const <String>['member', 'admin', 'owner']
         : const <String>['member'];
-    return AlertDialog(
-      title: const Text('添加租户成员'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '输入系统里已存在的用户名，把该账号加入当前租户。',
-            style: TextStyle(
-              height: 1.5,
-              color: TelegramPalette.textMuted,
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: '用户名',
-              hintText: '例如：teacher_zhang',
-            ),
-            autofocus: true,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _role,
-            items: roleOptions
-                .map(
-                  (role) => DropdownMenuItem<String>(
-                    value: role,
-                    child: Text(_roleMeta(role).label),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() {
-                _role = value;
-              });
-            },
-            decoration: const InputDecoration(labelText: '加入角色'),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _status,
-            items: const [
-              DropdownMenuItem(value: 'active', child: Text('直接加入')),
-              DropdownMenuItem(value: 'invited', child: Text('发送邀请')),
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: WorkspacePanel(
+          borderRadius: 28,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '添加租户成员',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '输入系统里已存在的用户名，把该账号加入当前租户。',
+                style: TextStyle(
+                  height: 1.5,
+                  color: TelegramPalette.textMuted,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: '用户名',
+                  hintText: '例如：teacher_zhang',
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _role,
+                isExpanded: true,
+                items: roleOptions
+                    .map(
+                      (role) => DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(_roleMeta(role).label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _role = value;
+                  });
+                },
+                decoration: const InputDecoration(labelText: '加入角色'),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _status,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(value: 'active', child: Text('直接加入')),
+                  DropdownMenuItem(value: 'invited', child: Text('发送邀请')),
+                ],
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _status = value;
+                  });
+                },
+                decoration: const InputDecoration(labelText: '加入方式'),
+              ),
+              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('取消'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        final username = _usernameController.text.trim();
+                        if (username.isEmpty) {
+                          return;
+                        }
+                        Navigator.of(context).pop(
+                          _TenantMemberCreateResult(
+                            username: username,
+                            role: _role,
+                            status: _status,
+                          ),
+                        );
+                      },
+                      child: const Text('添加成员'),
+                    ),
+                  ],
+                ),
+              ),
             ],
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() {
-                _status = value;
-              });
-            },
-            decoration: const InputDecoration(labelText: '加入方式'),
           ),
-        ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
-        ),
-        FilledButton(
-          onPressed: () {
-            final username = _usernameController.text.trim();
-            if (username.isEmpty) {
-              return;
-            }
-            Navigator.of(context).pop(
-              _TenantMemberCreateResult(username: username, role: _role, status: _status),
-            );
-          },
-          child: const Text('添加成员'),
-        ),
-      ],
     );
   }
 }
@@ -1886,8 +2364,8 @@ _TenantInvitationGuidance? _tenantInvitationGuidance({
   if (member.status != 'invited') {
     return null;
   }
-  final wasRecentlyResent =
-      recentAction?.title == '邀请已重发' || history.any((entry) => entry.title == '邀请已重发');
+  final wasRecentlyResent = recentAction?.title == '邀请已重发' ||
+      history.any((entry) => entry.title == '邀请已重发');
   if (member.isInvitationExpired) {
     return const _TenantInvitationGuidance(
       title: '建议优先重发邀请',
@@ -1906,7 +2384,7 @@ _TenantInvitationGuidance? _tenantInvitationGuidance({
   }
   return const _TenantInvitationGuidance(
     title: '当前建议',
-    detail: '这次邀请仍有效，建议先等待对方自行加入，再做后续治理。',
+    detail: '这次邀请仍有效，建议先等待对方自行加入，再决定下一步怎么处理。',
     prioritizeResend: false,
     showWaitCard: false,
   );
@@ -2077,12 +2555,10 @@ String _tenantMemberStatusNarrative({
         : member.isInvitationExpired
             ? '该成员当前仍处于邀请态，但这次邀请已经过期。你可以重新发送邀请，直接激活成员关系，或撤销当前邀请。'
             : '该成员当前仍处于邀请态。你可以直接激活成员关系，重新发送邀请，或撤销当前邀请。',
-    'disabled' => concise
-        ? '该账号当前无法访问当前租户，可恢复或移除。'
-        : '该成员当前已被停用。恢复后会重新获得当前租户访问权限。',
-    _ => concise
-        ? '该账号当前处于活跃状态，可继续参与当前租户。'
-        : '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出租户。',
+    'disabled' =>
+      concise ? '该账号当前无法访问当前租户，可恢复或移除。' : '该成员当前已被停用。恢复后会重新获得当前租户访问权限。',
+    _ =>
+      concise ? '该账号当前处于活跃状态，可继续参与当前租户。' : '该成员当前处于正常可用状态。你可以调整角色、停用，或将其移出租户。',
   };
   if (invitationResolution != null) {
     return '$base ${invitationResolution.detail}';
@@ -2179,381 +2655,411 @@ class _TenantMemberCard extends StatelessWidget {
       canManageStatuses: canManageStatuses,
       canRemoveMembers: canRemoveMembers,
     );
-    final isReadOnly = !canManageRoles && !canManageStatuses && !canRemoveMembers;
-    final queueContextVisible = activeQueueTitle != null && (memberIsPriorityTarget || focused);
-    return Card(
-      color: focused ? TelegramPalette.surfaceAccent : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: focused ? TelegramPalette.borderAccent : Colors.transparent,
-          width: focused ? 1.5 : 0,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: TelegramPalette.surfaceAccent,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.person_outline, color: TelegramPalette.accentDark),
+    final isReadOnly =
+        !canManageRoles && !canManageStatuses && !canRemoveMembers;
+    final queueContextVisible =
+        activeQueueTitle != null && (memberIsPriorityTarget || focused);
+    final isCurrentUser = member.userId == activeUserId;
+    return WorkspacePanel(
+      padding: const EdgeInsets.all(18),
+      borderRadius: 16,
+      backgroundColor: focused
+          ? TelegramPalette.surfaceAccent
+          : TelegramPalette.surfaceRaised,
+      borderColor:
+          focused ? TelegramPalette.borderAccent : TelegramPalette.border,
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: TelegramPalette.surfaceAccent,
+              borderRadius: BorderRadius.circular(14),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.username,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  if (focused) ...[
-                    const SizedBox(height: 4),
-                    const Text(
-                      '当前聚焦成员',
-                      style: TextStyle(
-                        color: TelegramPalette.accentDark,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      Text(
-                        '${roleMeta.label} · ${member.createdAtLabel}',
-                        style: const TextStyle(color: TelegramPalette.textSoft),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: statusMeta.backgroundColor,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          statusMeta.label,
-                          style: TextStyle(
-                            color: statusMeta.foregroundColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (member.status == 'invited')
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: member.isInvitationExpired
-                                ? TelegramPalette.errorSurface
-                                : TelegramPalette.highlight,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            invitationStateLabel,
-                            style: TextStyle(
-                              color: member.isInvitationExpired
-                                  ? TelegramPalette.errorText
-                                  : TelegramPalette.textStrong,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      if (invitationLifecycle != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: TelegramPalette.surfaceAccent,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: TelegramPalette.border),
-                          ),
-                          child: Text(
-                            invitationLifecycle.label,
-                            style: TextStyle(
-                              color: invitationLifecycle.color,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      if (invitationResolution != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: TelegramPalette.surfaceAccent,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: TelegramPalette.border),
-                          ),
-                          child: Text(
-                            invitationResolution.label,
-                            style: TextStyle(
-                              color: invitationResolution.color,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    statusHint,
-                    style: const TextStyle(
-                      color: TelegramPalette.textMuted,
-                      height: 1.35,
-                    ),
-                  ),
-                  if (invitationGuidance != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: member.isInvitationExpired
-                            ? TelegramPalette.errorSurface
-                            : TelegramPalette.highlight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: TelegramPalette.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            invitationGuidance.title,
-                            style: TextStyle(
-                              color: member.isInvitationExpired
-                                  ? TelegramPalette.errorText
-                                  : TelegramPalette.accentDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            invitationGuidance.detail,
-                            style: const TextStyle(
-                              color: TelegramPalette.textMuted,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (queueContextVisible && queueSummary != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: TelegramPalette.surfaceAccent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: TelegramPalette.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '当前处理队列 · $activeQueueTitle',
-                            style: const TextStyle(
-                              color: TelegramPalette.accentDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            queueSummary.detail,
-                            style: const TextStyle(
-                              color: TelegramPalette.textMuted,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (isReadOnly && lockedReasonLines.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: TelegramPalette.errorSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: TelegramPalette.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '当前为只读对象',
-                            style: TextStyle(
-                              color: TelegramPalette.errorText,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            lockedReasonLines.first,
-                            style: const TextStyle(
-                              color: TelegramPalette.textMuted,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (recentAction != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: TelegramPalette.highlight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: TelegramPalette.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${recentAction!.title} · ${recentAction!.createdAtLabel}',
-                            style: const TextStyle(
-                              color: TelegramPalette.accentDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            recentAction!.detail,
-                            style: const TextStyle(
-                              color: TelegramPalette.textMuted,
-                              height: 1.35,
-                            ),
-                          ),
-                          if (recentAction!.changeLabel != null &&
-                              recentAction!.afterValue != null) ...[
-                            const SizedBox(height: 8),
-                            Builder(
-                              builder: (_) {
-                                final changeMeta = _recentActionMeta(
-                                  recentAction!.changeType,
-                                );
-                                return Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: changeMeta.backgroundColor,
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(color: TelegramPalette.border),
-                                      ),
-                                      child: Text(
-                                        recentAction!.beforeValue == null
-                                            ? '${recentAction!.changeLabel}：${recentAction!.afterValue}'
-                                            : '${recentAction!.changeLabel}：${recentAction!.beforeValue} → ${recentAction!.afterValue}',
-                                        style: TextStyle(
-                                          color: changeMeta.foregroundColor,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: const Icon(Icons.person_outline,
+                color: TelegramPalette.accentDark),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (canManageRoles)
-                  DropdownButton<String>(
-                    value: member.role,
-                    onChanged: updating
-                        ? null
-                        : (value) {
-                            if (value == null || value == member.role) {
-                              return;
-                            }
-                            onRoleChanged(value);
-                          },
-                    items: const [
-                      DropdownMenuItem(value: 'member', child: Text('成员')),
-                      DropdownMenuItem(value: 'admin', child: Text('管理员')),
-                      DropdownMenuItem(value: 'owner', child: Text('所有者')),
-                    ],
-                  )
-                else
+                Text(
+                  member.username,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                if (isCurrentUser) ...[
+                  const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: TelegramPalette.highlight,
+                      color: TelegramPalette.surfaceAccent,
                       borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: TelegramPalette.border),
                     ),
-                    child: Text(
-                      roleMeta.label,
-                      style: const TextStyle(
+                    child: const Text(
+                      '当前账号',
+                      style: TextStyle(
                         color: TelegramPalette.accentDark,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
-                if (canManageStatuses)
-                  (emphasizePrimaryAction
-                      ? FilledButton.tonal(
-                          onPressed: updating
-                              ? null
-                              : () => onStatusChanged(
-                                    member.status == 'active' ? 'disabled' : 'active',
-                                  ),
-                          child: Text(statusActionLabel),
-                        )
-                      : OutlinedButton(
-                          onPressed: updating
-                              ? null
-                              : () => onStatusChanged(
-                                    member.status == 'active' ? 'disabled' : 'active',
-                                  ),
-                          child: Text(statusActionLabel),
-                        )),
-                if (canRemoveMembers) ...[
-                  const SizedBox(height: 8),
-                  if (member.status == 'invited')
-                    OutlinedButton(
-                      onPressed: updating ? null : onRemove,
-                      child: Text(removeLabel),
-                    )
-                  else
-                    TextButton(
-                      onPressed: updating ? null : onRemove,
-                      child: Text(removeLabel),
+                ],
+                if (focused) ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    '当前聚焦成员',
+                    style: TextStyle(
+                      color: TelegramPalette.accentDark,
+                      fontWeight: FontWeight.w800,
                     ),
+                  ),
                 ],
                 const SizedBox(height: 4),
-                TextButton(
-                  onPressed: updating ? null : onOpenDetails,
-                  child: const Text('查看详情'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      '${roleMeta.label} · ${member.createdAtLabel}',
+                      style: const TextStyle(color: TelegramPalette.textSoft),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusMeta.backgroundColor,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        statusMeta.label,
+                        style: TextStyle(
+                          color: statusMeta.foregroundColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    if (member.status == 'invited')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: member.isInvitationExpired
+                              ? TelegramPalette.errorSurface
+                              : TelegramPalette.highlight,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          invitationStateLabel,
+                          style: TextStyle(
+                            color: member.isInvitationExpired
+                                ? TelegramPalette.errorText
+                                : TelegramPalette.textStrong,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    if (invitationLifecycle != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: TelegramPalette.surfaceAccent,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: TelegramPalette.border),
+                        ),
+                        child: Text(
+                          invitationLifecycle.label,
+                          style: TextStyle(
+                            color: invitationLifecycle.color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    if (invitationResolution != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: TelegramPalette.surfaceAccent,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: TelegramPalette.border),
+                        ),
+                        child: Text(
+                          invitationResolution.label,
+                          style: TextStyle(
+                            color: invitationResolution.color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  statusHint,
+                  style: const TextStyle(
+                    color: TelegramPalette.textMuted,
+                    height: 1.35,
+                  ),
+                ),
+                if (invitationGuidance != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: member.isInvitationExpired
+                          ? TelegramPalette.errorSurface
+                          : TelegramPalette.highlight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: TelegramPalette.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          invitationGuidance.title,
+                          style: TextStyle(
+                            color: member.isInvitationExpired
+                                ? TelegramPalette.errorText
+                                : TelegramPalette.accentDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          invitationGuidance.detail,
+                          style: const TextStyle(
+                            color: TelegramPalette.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (queueContextVisible && queueSummary != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: TelegramPalette.surfaceAccent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: TelegramPalette.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '当前处理队列 · $activeQueueTitle',
+                          style: const TextStyle(
+                            color: TelegramPalette.accentDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          queueSummary.detail,
+                          style: const TextStyle(
+                            color: TelegramPalette.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (isReadOnly && lockedReasonLines.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: TelegramPalette.errorSurface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: TelegramPalette.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '当前为只读对象',
+                          style: TextStyle(
+                            color: TelegramPalette.errorText,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          lockedReasonLines.first,
+                          style: const TextStyle(
+                            color: TelegramPalette.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (recentAction != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: TelegramPalette.highlight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: TelegramPalette.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${recentAction!.title} · ${recentAction!.createdAtLabel}',
+                          style: const TextStyle(
+                            color: TelegramPalette.accentDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          recentAction!.detail,
+                          style: const TextStyle(
+                            color: TelegramPalette.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                        if (recentAction!.changeLabel != null &&
+                            recentAction!.afterValue != null) ...[
+                          const SizedBox(height: 8),
+                          Builder(
+                            builder: (_) {
+                              final changeMeta = _recentActionMeta(
+                                recentAction!.changeType,
+                              );
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: changeMeta.backgroundColor,
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                          color: TelegramPalette.border),
+                                    ),
+                                    child: Text(
+                                      recentAction!.beforeValue == null
+                                          ? '${recentAction!.changeLabel}：${recentAction!.afterValue}'
+                                          : '${recentAction!.changeLabel}：${recentAction!.beforeValue} → ${recentAction!.afterValue}',
+                                      style: TextStyle(
+                                        color: changeMeta.foregroundColor,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
-          ],
-        ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (canManageRoles)
+                DropdownButton<String>(
+                  value: member.role,
+                  onChanged: updating
+                      ? null
+                      : (value) {
+                          if (value == null || value == member.role) {
+                            return;
+                          }
+                          onRoleChanged(value);
+                        },
+                  items: const [
+                    DropdownMenuItem(value: 'member', child: Text('成员')),
+                    DropdownMenuItem(value: 'admin', child: Text('管理员')),
+                    DropdownMenuItem(value: 'owner', child: Text('所有者')),
+                  ],
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: TelegramPalette.highlight,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    roleMeta.label,
+                    style: const TextStyle(
+                      color: TelegramPalette.accentDark,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              if (canManageStatuses)
+                (emphasizePrimaryAction
+                    ? FilledButton.tonal(
+                        onPressed: updating
+                            ? null
+                            : () => onStatusChanged(
+                                  member.status == 'active'
+                                      ? 'disabled'
+                                      : 'active',
+                                ),
+                        child: Text(statusActionLabel),
+                      )
+                    : OutlinedButton(
+                        onPressed: updating
+                            ? null
+                            : () => onStatusChanged(
+                                  member.status == 'active'
+                                      ? 'disabled'
+                                      : 'active',
+                                ),
+                        child: Text(statusActionLabel),
+                      )),
+              if (canRemoveMembers) ...[
+                const SizedBox(height: 8),
+                if (member.status == 'invited')
+                  OutlinedButton(
+                    onPressed: updating ? null : onRemove,
+                    child: Text(removeLabel),
+                  )
+                else
+                  TextButton(
+                    onPressed: updating ? null : onRemove,
+                    child: Text(removeLabel),
+                  ),
+              ],
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: updating ? null : onOpenDetails,
+                child: const Text('查看详情'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -2599,8 +3105,10 @@ class _TenantMemberSectionCard extends StatelessWidget {
   final bool Function(TenantMemberSummary member) canManageStatusesForMember;
   final bool Function(TenantMemberSummary member) canRemoveMembersForMember;
   final String? updatingMemberId;
-  final Future<void> Function(TenantMemberSummary member, String nextRole) onRoleChanged;
-  final Future<void> Function(TenantMemberSummary member, String nextStatus) onStatusChanged;
+  final Future<void> Function(TenantMemberSummary member, String nextRole)
+      onRoleChanged;
+  final Future<void> Function(TenantMemberSummary member, String nextStatus)
+      onStatusChanged;
   final Future<void> Function(TenantMemberSummary member) onRemove;
   final Future<void> Function(TenantMemberSummary member) onOpenDetails;
 
@@ -2631,7 +3139,8 @@ class _TenantMemberSectionCard extends StatelessWidget {
         (member) => member.id == priorityMember!.id,
       );
       if (priorityIndex >= 0 && priorityIndex + 1 < section.members.length) {
-        nextPriorityMemberUsername = section.members[priorityIndex + 1].username;
+        nextPriorityMemberUsername =
+            section.members[priorityIndex + 1].username;
       }
     }
     final queueSummary = queueFocused && activeQueueTitle != null
@@ -2677,7 +3186,8 @@ class _TenantMemberSectionCard extends StatelessWidget {
               if (queueFocused && queueSummary != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: queueSummary.isComplete
                         ? TelegramPalette.surfaceAccent
@@ -2717,7 +3227,9 @@ class _TenantMemberSectionCard extends StatelessWidget {
             height: 1.4,
           ),
         ),
-        if (queueFocused && activeQueueTitle != null && queueSummary != null) ...[
+        if (queueFocused &&
+            activeQueueTitle != null &&
+            queueSummary != null) ...[
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -2764,9 +3276,8 @@ class _TenantMemberSectionCard extends StatelessWidget {
               canManageStatuses: canManageStatusesForMember(member),
               canRemoveMembers: canRemoveMembersForMember(member),
               activeQueueTitle: queueFocused ? activeQueueTitle : null,
-              activeQueueCompletionMessage: queueFocused
-                  ? activeQueueCompletionMessage
-                  : null,
+              activeQueueCompletionMessage:
+                  queueFocused ? activeQueueCompletionMessage : null,
               memberIsPriorityTarget: member.id == activeQueuePriorityMemberId,
               nextQueueMemberUsername: member.id == activeQueuePriorityMemberId
                   ? nextPriorityMemberUsername
@@ -2895,9 +3406,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
     final capabilityLines = <String>[
       if (canManageRoles) '你可以调整此成员的角色。',
       if (canManageStatuses)
-        member.status == 'active'
-            ? '你可以停用此成员。'
-            : '你可以更新此成员的可用状态。',
+        member.status == 'active' ? '你可以停用此成员。' : '你可以更新此成员的可用状态。',
       if (canRemoveMembers)
         member.status == 'invited' ? '你可以撤销这次邀请。' : '你可以将此成员移出租户。',
     ];
@@ -2925,7 +3434,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                     color: TelegramPalette.surfaceAccent,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.person_outline, color: TelegramPalette.accentDark),
+                  child: const Icon(Icons.person_outline,
+                      color: TelegramPalette.accentDark),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -2934,12 +3444,14 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                     children: [
                       Text(
                         member.username,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${roleMeta.description} · 加入时间：${member.createdAtLabel}',
-                        style: const TextStyle(color: TelegramPalette.textMuted),
+                        style:
+                            const TextStyle(color: TelegramPalette.textMuted),
                       ),
                     ],
                   ),
@@ -2978,7 +3490,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '治理摘要 · ${statusMeta.label}',
+                    '当前摘要 · ${statusMeta.label}',
                     style: TextStyle(
                       color: statusMeta.foregroundColor,
                       fontWeight: FontWeight.w800,
@@ -3016,7 +3528,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                   ),
                   if (capabilityLines.isEmpty)
                     const Text(
-                      '当前没有可直接执行的治理动作。',
+                      '当前没有可直接执行的操作。',
                       style: TextStyle(
                         color: TelegramPalette.textMuted,
                         height: 1.4,
@@ -3134,7 +3646,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                   if (activityFeed.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     const Text(
-                      '治理活动流',
+                      '最近变更记录',
                       style: TextStyle(
                         color: TelegramPalette.textStrong,
                         fontWeight: FontWeight.w800,
@@ -3174,17 +3686,22 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: entry.source == _TenantMemberActivitySource.local
+                                        color: entry.source ==
+                                                _TenantMemberActivitySource
+                                                    .local
                                             ? TelegramPalette.surfaceAccent
                                             : TelegramPalette.highlight,
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(color: TelegramPalette.border),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                        border: Border.all(
+                                            color: TelegramPalette.border),
                                       ),
                                       child: Text(
                                         entry.sourceLabel,
                                         style: TextStyle(
                                           color: entry.source ==
-                                                  _TenantMemberActivitySource.local
+                                                  _TenantMemberActivitySource
+                                                      .local
                                               ? TelegramPalette.accentDark
                                               : TelegramPalette.textStrong,
                                           fontWeight: FontWeight.w700,
@@ -3201,7 +3718,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                                     height: 1.4,
                                   ),
                                 ),
-                                if (entry.changeLabel != null && entry.afterValue != null) ...[
+                                if (entry.changeLabel != null &&
+                                    entry.afterValue != null) ...[
                                   const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -3211,7 +3729,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: changeMeta.backgroundColor,
                                       borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(color: TelegramPalette.border),
+                                      border: Border.all(
+                                          color: TelegramPalette.border),
                                     ),
                                     child: Text(
                                       entry.beforeValue == null
@@ -3250,7 +3769,9 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 10),
             ],
-            if (member.status == 'invited' && (canManageStatuses || canRemoveMembers) && prioritizeResend) ...[
+            if (member.status == 'invited' &&
+                (canManageStatuses || canRemoveMembers) &&
+                prioritizeResend) ...[
               _TenantMemberActionCard(
                 title: '重新发送邀请',
                 detail: resendDetail,
@@ -3267,7 +3788,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
               _TenantMemberActionCard(
                 title: statusActionLabel,
                 detail: primaryActionDetail,
-                emphasized: prioritizeResend ? false : member.status != 'active',
+                emphasized:
+                    prioritizeResend ? false : member.status != 'active',
                 onPressed: () => Navigator.of(context).pop(
                   _TenantMemberActionResult(
                     kind: _TenantMemberActionKind.updateStatus,
@@ -3277,7 +3799,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
               )
             else
               const _TenantMemberActionInfoCard(
-                title: '状态治理已锁定',
+                title: '状态操作已锁定',
                 detail: '你当前没有权限直接调整此成员的可用状态。',
               ),
             if (member.status == 'invited' &&
@@ -3301,7 +3823,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                 detail: removeDetail,
                 destructive: member.status != 'invited',
                 onPressed: () => Navigator.of(context).pop(
-                  const _TenantMemberActionResult(kind: _TenantMemberActionKind.remove),
+                  const _TenantMemberActionResult(
+                      kind: _TenantMemberActionKind.remove),
                 ),
               )
             else
@@ -3311,7 +3834,7 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
               ),
             const SizedBox(height: 18),
             const Text(
-              '角色治理',
+              '调整角色',
               style: TextStyle(
                 color: TelegramPalette.textStrong,
                 fontWeight: FontWeight.w800,
@@ -3339,8 +3862,8 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
               )
             else
               const _TenantMemberActionInfoCard(
-                title: '角色治理已锁定',
-                detail: '只有具备足够治理权限的成员才能调整当前角色。',
+                title: '角色调整已锁定',
+                detail: '只有具备足够权限的成员才能调整当前角色。',
               ),
           ],
         ),
@@ -3377,7 +3900,8 @@ class _TenantMemberActivityEntry {
   final String? beforeValue;
   final String? afterValue;
 
-  String get sourceLabel => source == _TenantMemberActivitySource.local ? '本地' : '审计';
+  String get sourceLabel =>
+      source == _TenantMemberActivitySource.local ? '本地' : '审计';
 }
 
 List<_TenantMemberActivityEntry> _buildTenantMemberActivityFeed({
@@ -3432,8 +3956,8 @@ String _tenantMemberAuditTitle(String action) {
   return switch (action) {
     'tenant_member.joined' => '成员关系已记录',
     'tenant_member.invitation_resent' => '邀请重发已记录',
-    'tenant_member.role_updated' => '角色治理已记录',
-    'tenant_member.status_updated' => '状态治理已记录',
+    'tenant_member.role_updated' => '角色变更已记录',
+    'tenant_member.status_updated' => '状态变更已记录',
     'tenant_member.removed' => '移除操作已记录',
     _ => action,
   };
@@ -3453,7 +3977,8 @@ _TenantMemberRecentActionType? _tenantMemberAuditChangeType(String action) {
   return switch (action) {
     'tenant_member.role_updated' => _TenantMemberRecentActionType.role,
     'tenant_member.status_updated' => _TenantMemberRecentActionType.status,
-    'tenant_member.invitation_resent' => _TenantMemberRecentActionType.invitation,
+    'tenant_member.invitation_resent' =>
+      _TenantMemberRecentActionType.invitation,
     'tenant_member.joined' => _TenantMemberRecentActionType.membership,
     _ => null,
   };
@@ -3652,12 +4177,12 @@ _TenantMemberRoleMeta _roleMeta(String role) {
     'owner' => const _TenantMemberRoleMeta(
         label: '所有者',
         shortLabel: 'Owner',
-        description: '所有者，负责租户治理与高权限配置',
+        description: '所有者，负责高权限设置与关键成员变更',
       ),
     'admin' => const _TenantMemberRoleMeta(
         label: '管理员',
         shortLabel: 'Admin',
-        description: '管理员，负责成员维护与日常租户管理',
+        description: '管理员，负责成员维护与日常协作设置',
       ),
     _ => const _TenantMemberRoleMeta(
         label: '成员',
@@ -3672,5 +4197,13 @@ int _roleRank(String role) {
     'owner' => 0,
     'admin' => 1,
     _ => 2,
+  };
+}
+
+int _tenantMemberStatusRank(TenantMemberSummary member) {
+  return switch (member.status) {
+    'active' => 0,
+    'invited' => member.isInvitationExpired ? 2 : 1,
+    _ => 3,
   };
 }

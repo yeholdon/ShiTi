@@ -1901,12 +1901,14 @@ class _LibrarySelectionBar extends StatelessWidget {
             icon: const Icon(Icons.flip_to_back_outlined),
             label: Text(compact ? '反选结果' : '反选当前结果'),
           ),
-          FilterChip(
-            selected: showOnlySelected,
-            onSelected: selectedCount == 0 ? null : onToggleShowOnlySelected,
-            avatar: const Icon(Icons.checklist_rtl_outlined, size: 18),
+          WorkspaceFilterPill(
             label:
-                Text(showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选'),
+                showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
+            selected: showOnlySelected,
+            onTap: selectedCount == 0
+                ? null
+                : () => onToggleShowOnlySelected(!showOnlySelected),
+            icon: Icons.checklist_rtl_outlined,
           ),
           OutlinedButton.icon(
             onPressed: selectedCount == 0 ? null : onClearSelection,
