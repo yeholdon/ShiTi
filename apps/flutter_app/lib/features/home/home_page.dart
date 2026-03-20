@@ -586,7 +586,6 @@ class _HomePageState extends State<HomePage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Expanded(
-                                          flex: 3,
                                           child: _RecentTasksPanel(
                                             tasks: recentTasks,
                                             visibleTasks: sortedRecentTasks,
@@ -607,9 +606,11 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                         const SizedBox(width: 16),
-                                        const Expanded(
-                                          flex: 2,
-                                          child: _QuestionBasketPanel(),
+                                        SizedBox(
+                                          width: constraints.maxWidth >= 1240
+                                              ? 344
+                                              : 320,
+                                          child: const _QuestionBasketPanel(),
                                         ),
                                       ],
                                     )
