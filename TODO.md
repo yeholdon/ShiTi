@@ -887,3 +887,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 导出结果页 hero 在桌面端拆成“左侧结果说明 + 右侧当前摘要 rail”，减少真实 Edge 宽屏截图里右半边大面积留白的问题，并让导出状态与结果模式更快进入阅读路径。
 - [x] Flutter: 首页桌面端的“当前聚焦” rail 把刷新动作上提到卡片头部，并收紧内边距与指标行高，让摘要卡在常见桌面高度下再多露出一截；经真实 Edge 首页截图复验，首屏垂直节奏更紧凑。
 - [x] Flutter: 题库页桌面端右侧状态 rail 从松散 pill wrap 收成更紧的三行状态列表，减少 hero 高度并让筛选区在真实 Edge 首屏里更早露出。
+- [x] Tooling: `capture-edge-window.sh` 改成每次抓图都新建并切到新的 Edge tab，避免一级 hash 路由在旧 SPA tab 上只变地址栏不切内容；经顺序抓取 `documents / exports` 真实 Edge 图复验，页面已能稳定切到正确首屏。

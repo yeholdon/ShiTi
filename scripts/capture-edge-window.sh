@@ -29,8 +29,12 @@ tell application "Microsoft Edge"
   if (count of windows) = 0 then
     make new window
   end if
-  set bounds of front window to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
-  set URL of active tab of front window to "$url"
+  tell front window
+    set bounds to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
+    make new tab
+    set active tab index to (count of tabs)
+    set URL of active tab to "$url"
+  end tell
   delay ${delay_seconds}
   repeat ${max_poll_attempts} times
     if loading of active tab of front window is false then
