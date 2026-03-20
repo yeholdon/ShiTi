@@ -1375,36 +1375,55 @@ class _WorkspaceEntryStrip extends StatelessWidget {
           final desktopActions = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '继续工作',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: TelegramPalette.textMuted,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                children: primaryActions,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '工作区设置',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: TelegramPalette.textMuted,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                children: secondaryActions,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '继续工作',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: TelegramPalette.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 10,
+                          children: primaryActions,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '工作区设置',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: TelegramPalette.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 10,
+                          children: secondaryActions,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           );
