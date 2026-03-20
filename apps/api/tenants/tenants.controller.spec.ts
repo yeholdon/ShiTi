@@ -18,22 +18,99 @@ describe('TenantsController', () => {
     prisma.tenant.findUnique.mockResolvedValue({ id: 't1', code: 'acme' });
 
     const ctrl = new TenantsController(prisma);
-    const res = await ctrl.createTenant({ code: 'acme', name: 'ACME' });
+    const res = await ctrl.createTenant({} as any, { code: 'acme', name: 'ACME' });
 
     expect(prisma.tenant.create).not.toHaveBeenCalled();
     expect(res).toEqual({ tenant: { id: 't1', code: 'acme' } });
   });
 
-  it('createTenant creates tenant when not exists', async () => {
+  it('createTenant creates tenant when not exists and request is anonymous', async () => {
     const prisma = makePrisma();
     prisma.tenant.findUnique.mockResolvedValue(null);
     prisma.tenant.create.mockResolvedValue({ id: 't2', code: 'acme', name: 'ACME' });
 
     const ctrl = new TenantsController(prisma);
-    const res = await ctrl.createTenant({ code: 'acme', name: 'ACME' });
+    const res = await ctrl.createTenant({} as any, { code: 'acme', name: 'ACME' });
 
     expect(prisma.tenant.create).toHaveBeenCalledWith({ data: { code: 'acme', name: 'ACME' } });
     expect(res.tenant.id).toBe('t2');
+  });
+
+  it('createTenant can bootstrap owner from creator username when auth is missing', async () => {
+    const prisma = makePrisma({
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'u1' }),
+      },
+    });
+    prisma.tenant.findUnique.mockResolvedValue(null);
+    prisma.tenant.create.mockResolvedValue({ id: 't2', code: 'acme', name: 'ACME' });
+    prisma.withTenant.mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' });
+
+    const ctrl = new TenantsController(prisma);
+    const res = await ctrl.createTenant(
+      {} as any,
+      { code: 'acme', name: 'ACME', creatorUsername: 'teacher-demo' }
+    );
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { username: 'teacher-demo' },
+      select: { id: true },
+    });
+    expect(res).toEqual({
+      tenant: {
+        id: 't2',
+        code: 'acme',
+        name: 'ACME',
+        role: 'owner',
+      },
+    });
+  });
+
+  it('createTenant auto-joins the authenticated creator as owner', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue(null);
+    prisma.tenant.create.mockResolvedValue({ id: 't2', code: 'acme', name: 'ACME' });
+    prisma.withTenant.mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' });
+
+    const ctrl = new TenantsController(prisma);
+    const res = await ctrl.createTenant(
+      { auth: { userId: 'u1' } } as any,
+      { code: 'acme', name: 'ACME' }
+    );
+
+    expect(prisma.withTenant).toHaveBeenCalledTimes(1);
+    expect(res).toEqual({
+      tenant: {
+        id: 't2',
+        code: 'acme',
+        name: 'ACME',
+        role: 'owner',
+      },
+    });
+  });
+
+  it('createTenant auto-recovers owner membership for an empty existing tenant', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({ id: 't1', code: 'acme', name: 'ACME' });
+    prisma.withTenant
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce({ id: 'm1', role: 'owner', status: 'active' });
+
+    const ctrl = new TenantsController(prisma);
+    const res = await ctrl.createTenant(
+      { auth: { userId: 'u1' } } as any,
+      { code: 'acme', name: 'ACME' }
+    );
+
+    expect(res).toEqual({
+      tenant: {
+        id: 't1',
+        code: 'acme',
+        name: 'ACME',
+        role: 'owner',
+      },
+    });
   });
 
   it('resolve returns null when tenantCode missing', async () => {
