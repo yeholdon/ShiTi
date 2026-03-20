@@ -1615,13 +1615,13 @@ class _BasketHeroSection extends StatelessWidget {
               height: 1.15,
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            contextLabel,
-            style: const TextStyle(
-              height: 1.5,
-              color: TelegramPalette.textMuted,
-            ),
+          const SizedBox(height: 14),
+          WorkspaceMessageBanner.info(
+            title: preferredTargetDocumentName == null
+                ? '当前模式：独立整理'
+                : '当前模式：为文档补题',
+            message: contextLabel,
+            child: null,
           ),
           const SizedBox(height: 18),
           Wrap(

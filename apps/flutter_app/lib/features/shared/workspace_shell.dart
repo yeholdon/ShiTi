@@ -415,7 +415,7 @@ class WorkspaceMessageBanner extends StatelessWidget {
        borderColor = TelegramPalette.errorBorder;
 
   const WorkspaceMessageBanner.info({
-    required this.child,
+    this.child,
     this.title,
     this.message,
     this.padding = const EdgeInsets.all(14),
@@ -424,6 +424,17 @@ class WorkspaceMessageBanner extends StatelessWidget {
        foregroundColor = TelegramPalette.textStrong,
        backgroundColor = TelegramPalette.surfaceAccent,
        borderColor = TelegramPalette.border;
+
+  const WorkspaceMessageBanner.warning({
+    required this.message,
+    this.title,
+    this.child,
+    this.padding = const EdgeInsets.all(14),
+    super.key,
+  }) : icon = Icons.warning_amber_rounded,
+       foregroundColor = TelegramPalette.warningText,
+       backgroundColor = TelegramPalette.warningSurface,
+       borderColor = TelegramPalette.warningBorder;
 
   final IconData icon;
   final Color foregroundColor;
