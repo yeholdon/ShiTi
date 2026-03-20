@@ -22,31 +22,38 @@ window_bottom="${CAPTURE_WINDOW_BOTTOM:-1040}"
 
 mkdir -p "$(dirname "$output_path")"
 
-bounds="$(
+window_payload="$(
   osascript <<APPLESCRIPT
 tell application "Microsoft Edge"
   activate
-  if (count of windows) = 0 then
-    make new window
-  end if
-  tell front window
-    set bounds to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
-    make new tab
-    set active tab index to (count of tabs)
-    set URL of active tab to "$url"
-  end tell
+  set targetWindow to make new window
+  set bounds of targetWindow to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
+  set URL of active tab of targetWindow to "$url"
+  set activeTabId to id of active tab of targetWindow
+  repeat while (count of tabs of targetWindow) > 1
+    repeat with candidateTab in tabs of targetWindow
+      if (id of candidateTab) is not activeTabId then
+        close candidateTab
+        exit repeat
+      end if
+    end repeat
+  end repeat
   delay ${delay_seconds}
   repeat ${max_poll_attempts} times
-    if loading of active tab of front window is false then
+    if loading of active tab of targetWindow is false then
       exit repeat
     end if
     delay 0.5
   end repeat
   delay ${post_load_delay_seconds}
-  get bounds of front window
+  set targetBounds to get bounds of targetWindow
+  return (id of targetWindow as text) & "|" & (item 1 of targetBounds as text) & "," & (item 2 of targetBounds as text) & "," & (item 3 of targetBounds as text) & "," & (item 4 of targetBounds as text)
 end tell
 APPLESCRIPT
 )"
+
+window_id="${window_payload%%|*}"
+bounds="${window_payload#*|}"
 
 tmp_capture="$(mktemp -t edge-window-full)"
 for ((capture_attempt = 1; capture_attempt <= max_capture_attempts; capture_attempt++)); do
@@ -93,4 +100,14 @@ PY
 done
 
 rm -f "$tmp_capture"
+osascript <<APPLESCRIPT >/dev/null
+tell application "Microsoft Edge"
+  repeat with browserWindow in windows
+    if (id of browserWindow as text) is "$window_id" then
+      close browserWindow
+      exit repeat
+    end if
+  end repeat
+end tell
+APPLESCRIPT
 echo "$output_path"
