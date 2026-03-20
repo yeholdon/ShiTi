@@ -1278,7 +1278,9 @@ class _HeroCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 640;
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 640;
+    final desktopWide = width >= 760;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1302,21 +1304,38 @@ class _HeroCopy extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        Wrap(
-          spacing: compact ? 8 : 12,
-          runSpacing: compact ? 8 : 12,
-          children: [
-            WorkspaceMetricPill(
-              label: '运行模式',
-              value: AppConfig.dataModeLabel,
-              highlight: !AppConfig.useMockData,
-            ),
-            WorkspaceMetricPill(
-              label: '当前会话',
-              value: AppServices.instance.session?.username ?? '未登录',
-            ),
-          ],
-        ),
+        if (!desktopWide)
+          Wrap(
+            spacing: compact ? 8 : 12,
+            runSpacing: compact ? 8 : 12,
+            children: [
+              WorkspaceMetricPill(
+                label: '运行模式',
+                value: AppConfig.dataModeLabel,
+                highlight: !AppConfig.useMockData,
+              ),
+              WorkspaceMetricPill(
+                label: '当前会话',
+                value: AppServices.instance.session?.username ?? '未登录',
+              ),
+            ],
+          )
+        else
+          Wrap(
+            spacing: 18,
+            runSpacing: 8,
+            children: [
+              _HeroInlineFact(
+                label: '运行模式',
+                value: AppConfig.dataModeLabel,
+                highlight: !AppConfig.useMockData,
+              ),
+              _HeroInlineFact(
+                label: '当前会话',
+                value: AppServices.instance.session?.username ?? '未登录',
+              ),
+            ],
+          ),
         const SizedBox(height: 18),
         Wrap(
           spacing: compact ? 8 : 12,
@@ -1336,6 +1355,61 @@ class _HeroCopy extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _HeroInlineFact extends StatelessWidget {
+  const _HeroInlineFact({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label：',
+          style: TextStyle(
+            fontSize: 12,
+            color: highlight
+                ? TelegramPalette.accentDark
+                : TelegramPalette.textSoft,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: highlight
+                ? TelegramPalette.accentDark
+                : TelegramPalette.textStrong,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          width: 5,
+          height: 5,
+          decoration: BoxDecoration(
+            color: highlight
+                ? TelegramPalette.warningBorder
+                : TelegramPalette.borderAccent,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 2),
       ],
     );
   }
