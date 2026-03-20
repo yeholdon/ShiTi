@@ -795,7 +795,7 @@ class _LoginHeroPanel extends StatelessWidget {
             children: [
               WorkspaceMetricPill(
                 label: '会话状态',
-                value: hasSession ? '已建立' : '未登录',
+                value: hasSession ? '已登录' : '未登录',
                 highlight: hasSession,
               ),
               WorkspaceMetricPill(
