@@ -775,8 +775,8 @@ class _LibraryPageState extends State<LibraryPage> {
                         ),
                       ),
                       const SizedBox(width: 18),
-                      Expanded(
-                        flex: 2,
+                      SizedBox(
+                        width: 320,
                         child: _LibraryStatusCard(
                           modeLabel: AppConfig.dataModeLabel,
                           sessionLabel:

@@ -1563,8 +1563,8 @@ class _DocumentsPageState extends State<DocumentsPage> {
                         ),
                       ),
                       const SizedBox(width: 18),
-                      Expanded(
-                        flex: 2,
+                      SizedBox(
+                        width: 320,
                         child: _DocumentsStatusCard(
                           modeLabel: AppConfig.dataModeLabel,
                           sessionLabel:

@@ -777,8 +777,8 @@ class _ExportsPageState extends State<ExportsPage> {
                   ),
                 ),
                 const SizedBox(width: 18),
-                Expanded(
-                  flex: 2,
+                SizedBox(
+                  width: 320,
                   child: _ExportsStatusCard(
                     modeLabel: AppConfig.dataModeLabel,
                     sessionLabel:
