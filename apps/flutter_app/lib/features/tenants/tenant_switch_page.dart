@@ -756,7 +756,7 @@ class _CreateTenantDialog extends StatefulWidget {
 
 class _CreateTenantDialogState extends State<_CreateTenantDialog> {
   final _codeController = TextEditingController(text: 'new-workspace');
-  final _nameController = TextEditingController(text: '新建教研工作区');
+  final _nameController = TextEditingController(text: '新建教研机构');
   bool _submitting = false;
   String? _errorMessage;
 
@@ -843,7 +843,7 @@ class _CreateTenantDialogState extends State<_CreateTenantDialog> {
               ),
               const SizedBox(height: 8),
               const Text(
-                '填写机构代码和名称，创建后会直接进入该工作区。',
+                '填写机构代码和名称，创建后会直接进入该机构。',
                 style: TextStyle(
                   height: 1.5,
                   color: TelegramPalette.textMuted,
