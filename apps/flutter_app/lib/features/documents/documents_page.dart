@@ -2681,6 +2681,56 @@ class _DocumentsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final desktopWide = MediaQuery.sizeOf(context).width >= 1180;
+    final overviewChips = <Widget>[
+      _HeaderMetricChip(label: '文档', value: '$documentCount'),
+      _HeaderMetricChip(label: '题目项', value: '$questionCount'),
+      _HeaderMetricChip(label: '排版元素', value: '$layoutCount'),
+      _HeaderMetricChip(label: '待导出', value: '$pendingExportCount'),
+      if (recentlyAddedQuestionCount != null)
+        _HeaderMetricChip(
+          label: '本次新增',
+          value: '${recentlyAddedQuestionCount!} 题',
+        ),
+      if (feedbackBadgeLabel != null && feedbackBadgeLabel!.trim().isNotEmpty)
+        _HeaderMetricChip(
+          label: '最近同步',
+          value: feedbackBadgeLabel!,
+        ),
+    ];
+    final resultChips = <Widget>[
+      _HeaderMetricChip(
+        label: '当前结果文档',
+        value: '$filteredDocumentCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果题目项',
+        value: '$filteredQuestionCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果排版项',
+        value: '$filteredLayoutCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果讲义',
+        value: '$filteredHandoutCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果试卷',
+        value: '$filteredPaperCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果处理中',
+        value: '$filteredPendingExportCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果已完成',
+        value: '$filteredSucceededExportCount',
+      ),
+      _HeaderMetricChip(
+        label: '当前结果失败',
+        value: '$filteredFailedExportCount',
+      ),
+    ];
     return WorkspacePanel(
       padding: workspaceHeroPanelPadding(context),
       child: Column(
@@ -2715,66 +2765,67 @@ class _DocumentsHeader extends StatelessWidget {
               ),
             ),
           if (desktopWide) const SizedBox(height: 8),
-          Wrap(
-            spacing: compact ? 8 : 10,
-            runSpacing: compact ? 8 : 10,
-            children: [
-              _HeaderMetricChip(label: '文档', value: '$documentCount'),
-              _HeaderMetricChip(label: '题目项', value: '$questionCount'),
-              _HeaderMetricChip(label: '排版元素', value: '$layoutCount'),
-              _HeaderMetricChip(label: '待导出', value: '$pendingExportCount'),
-              if (recentlyAddedQuestionCount != null)
-                _HeaderMetricChip(
-                  label: '本次新增',
-                  value: '${recentlyAddedQuestionCount!} 题',
+          if (!desktopWide) ...[
+            Wrap(
+              spacing: compact ? 8 : 10,
+              runSpacing: compact ? 8 : 10,
+              children: overviewChips,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: compact ? 8 : 10,
+              runSpacing: compact ? 8 : 10,
+              children: resultChips,
+            ),
+          ] else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '总体概览',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: overviewChips,
+                      ),
+                    ],
+                  ),
                 ),
-              if (feedbackBadgeLabel != null &&
-                  feedbackBadgeLabel!.trim().isNotEmpty)
-                _HeaderMetricChip(
-                  label: '最近同步',
-                  value: feedbackBadgeLabel!,
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '当前结果',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: resultChips,
+                      ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: compact ? 8 : 10,
-            runSpacing: compact ? 8 : 10,
-            children: [
-              _HeaderMetricChip(
-                label: '当前结果文档',
-                value: '$filteredDocumentCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果题目项',
-                value: '$filteredQuestionCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果排版项',
-                value: '$filteredLayoutCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果讲义',
-                value: '$filteredHandoutCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果试卷',
-                value: '$filteredPaperCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果处理中',
-                value: '$filteredPendingExportCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果已完成',
-                value: '$filteredSucceededExportCount',
-              ),
-              _HeaderMetricChip(
-                label: '当前结果失败',
-                value: '$filteredFailedExportCount',
-              ),
-            ],
-          ),
+              ],
+            ),
           if (_activeFilterEntries.isNotEmpty) ...[
             const SizedBox(height: 12),
             if (desktopWide)
