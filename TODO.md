@@ -861,3 +861,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 题库 / 文档 / 导出三页在宽屏下把右侧状态摘要 rail 从弹性分栏改成固定宽度，收紧 Edge 桌面端“摘要区挤在角落里”的观感；经 Edge release 截图复验，三页右上角摘要 rail 宽度已更稳定。
 - [x] Flutter: 成员页的统计卡与快速视图卡在桌面端统一放宽一档，减少 Edge 宽屏截图里顶部摘要区过碎的问题；经 Edge release 截图复验，成员页顶部摘要区密度更稳定。
 - [x] Flutter: 题目详情页在桌面端把右侧“题目操作” rail 改成更宽的固定操作列，并将按钮从横向换行收成纵向铺满，收紧 Edge 宽屏截图里右侧操作区过窄、按钮过挤的问题。
+- [x] Flutter: 文档详情页在桌面端把 Compose Controls 收成“左侧说明 + 更宽的右侧操作列”，并将操作按钮从自由换行收成稳定双列网格，减少 Edge 宽屏截图里左侧留白过多、右侧按钮区过挤的问题。

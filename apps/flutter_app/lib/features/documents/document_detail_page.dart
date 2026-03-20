@@ -2595,110 +2595,106 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                                 ),
                               ],
                             );
-                            final actions = Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                FilledButton.tonalIcon(
-                                  onPressed: _reloadAll,
-                                  icon: const Icon(Icons.edit_note_outlined),
-                                  label: const Text('刷新状态'),
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: _renamingDocument ||
-                                          _removingDocument ||
-                                          _duplicatingDocument
-                                      ? null
-                                      : () => _renameDocument(document),
-                                  icon: _renamingDocument
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.drive_file_rename_outline,
+                            final actionButtons = <Widget>[
+                              FilledButton.tonalIcon(
+                                onPressed: _reloadAll,
+                                icon: const Icon(Icons.edit_note_outlined),
+                                label: const Text('刷新状态'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: _renamingDocument ||
+                                        _removingDocument ||
+                                        _duplicatingDocument
+                                    ? null
+                                    : () => _renameDocument(document),
+                                icon: _renamingDocument
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
                                         ),
-                                  label: Text(
-                                    _renamingDocument ? '重命名中…' : '重命名文档',
-                                  ),
+                                      )
+                                    : const Icon(
+                                        Icons.drive_file_rename_outline,
+                                      ),
+                                label: Text(
+                                  _renamingDocument ? '重命名中…' : '重命名文档',
                                 ),
-                                FilledButton.tonalIcon(
-                                  onPressed: _removingDocument ||
-                                          _renamingDocument ||
-                                          _duplicatingDocument
-                                      ? null
-                                      : () => _removeDocument(document),
-                                  icon: _removingDocument
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.delete_outline),
-                                  label: Text(
-                                    _removingDocument ? '删除中…' : '删除文档',
-                                  ),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: _removingDocument ||
+                                        _renamingDocument ||
+                                        _duplicatingDocument
+                                    ? null
+                                    : () => _removeDocument(document),
+                                icon: _removingDocument
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.delete_outline),
+                                label: Text(
+                                  _removingDocument ? '删除中…' : '删除文档',
                                 ),
-                                FilledButton.tonalIcon(
-                                  onPressed: _duplicatingDocument ||
-                                          _renamingDocument ||
-                                          _removingDocument
-                                      ? null
-                                      : () => _duplicateDocument(document),
-                                  icon: _duplicatingDocument
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.copy_all_outlined),
-                                  label: Text(
-                                    _duplicatingDocument ? '复制中…' : '复制文档',
-                                  ),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: _duplicatingDocument ||
+                                        _renamingDocument ||
+                                        _removingDocument
+                                    ? null
+                                    : () => _duplicateDocument(document),
+                                icon: _duplicatingDocument
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.copy_all_outlined),
+                                label: Text(
+                                  _duplicatingDocument ? '复制中…' : '复制文档',
                                 ),
-                                FilledButton.tonalIcon(
-                                  onPressed: _openDocumentsWorkspace,
-                                  icon: const Icon(Icons.dashboard_outlined),
-                                  label: const Text('返回文档工作区'),
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: document.latestExportStatus ==
-                                          'not_started'
-                                      ? null
-                                      : () => _openExports(document),
-                                  icon: const Icon(Icons.history_outlined),
-                                  label: const Text('查看导出记录'),
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: document.latestExportJobId == null
-                                      ? null
-                                      : () => _openLatestExportDetail(document),
-                                  icon: const Icon(Icons.receipt_long_outlined),
-                                  label: const Text('查看最近导出详情'),
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: document.latestExportStatus !=
-                                              'succeeded' ||
-                                          document.latestExportJobId == null
-                                      ? null
-                                      : () => _openLatestExportResult(document),
-                                  icon: const Icon(Icons.visibility_outlined),
-                                  label: const Text('打开最近结果'),
-                                ),
-                                FilledButton.tonalIcon(
-                                  onPressed: _exportDocument,
-                                  icon: const Icon(Icons.cloud_outlined),
-                                  label: const Text('导出并查看记录'),
-                                ),
-                              ],
-                            );
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: _openDocumentsWorkspace,
+                                icon: const Icon(Icons.dashboard_outlined),
+                                label: const Text('返回文档工作区'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: document.latestExportStatus ==
+                                        'not_started'
+                                    ? null
+                                    : () => _openExports(document),
+                                icon: const Icon(Icons.history_outlined),
+                                label: const Text('查看导出记录'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: document.latestExportJobId == null
+                                    ? null
+                                    : () => _openLatestExportDetail(document),
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                label: const Text('查看最近导出详情'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: document.latestExportStatus !=
+                                            'succeeded' ||
+                                        document.latestExportJobId == null
+                                    ? null
+                                    : () => _openLatestExportResult(document),
+                                icon: const Icon(Icons.visibility_outlined),
+                                label: const Text('打开最近结果'),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: _exportDocument,
+                                icon: const Icon(Icons.cloud_outlined),
+                                label: const Text('导出并查看记录'),
+                              ),
+                            ];
                             final actionRail = Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(18),
@@ -2716,7 +2712,30 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                                     icon: Icons.tune_outlined,
                                   ),
                                   const SizedBox(height: 14),
-                                  actions,
+                                  LayoutBuilder(
+                                    builder: (context, railConstraints) {
+                                      if (!wideDesktop) {
+                                        return Wrap(
+                                          spacing: 12,
+                                          runSpacing: 12,
+                                          children: actionButtons,
+                                        );
+                                      }
+                                      final buttonWidth =
+                                          (railConstraints.maxWidth - 12) / 2;
+                                      return Wrap(
+                                        spacing: 12,
+                                        runSpacing: 12,
+                                        children: [
+                                          for (final button in actionButtons)
+                                            SizedBox(
+                                              width: buttonWidth,
+                                              child: button,
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
                             );
@@ -2733,9 +2752,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(flex: 5, child: summary),
+                                SizedBox(width: 320, child: summary),
                                 const SizedBox(width: 20),
-                                Expanded(flex: 7, child: actionRail),
+                                Expanded(child: actionRail),
                               ],
                             );
                           },
