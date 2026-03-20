@@ -997,23 +997,69 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
               children: [
                 WorkspacePanel(
                   padding: workspacePanelPadding(context),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _InfoChip(
-                        label: '租户',
-                        value: activeTenant?.name ?? '未选择租户',
-                      ),
-                      _InfoChip(label: '代码', value: activeTenant?.code ?? '-'),
-                      _InfoChip(label: '当前角色', value: activeRoleMeta.label),
-                      if (AppServices.instance.session?.username != null &&
-                          AppServices.instance.session!.username.isNotEmpty)
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final contextChips = [
                         _InfoChip(
-                          label: '当前账号',
-                          value: AppServices.instance.session!.username,
+                          label: '租户',
+                          value: activeTenant?.name ?? '未选择租户',
                         ),
-                    ],
+                        _InfoChip(label: '代码', value: activeTenant?.code ?? '-'),
+                        _InfoChip(label: '当前角色', value: activeRoleMeta.label),
+                        if (AppServices.instance.session?.username != null &&
+                            AppServices.instance.session!.username.isNotEmpty)
+                          _InfoChip(
+                            label: '当前账号',
+                            value: AppServices.instance.session!.username,
+                          ),
+                      ];
+                      final wideDesktop = constraints.maxWidth >= 960;
+                      if (!wideDesktop) {
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: contextChips,
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  '当前租户上下文',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: TelegramPalette.textMuted,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  '先确认当前租户、身份和代码，再继续查看成员与权限变更。',
+                                  style: TextStyle(
+                                    height: 1.5,
+                                    color: TelegramPalette.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          SizedBox(
+                            width: 420,
+                            child: Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: contextChips,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
