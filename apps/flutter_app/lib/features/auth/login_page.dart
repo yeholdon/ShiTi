@@ -800,7 +800,7 @@ class _LoginHeroPanel extends StatelessWidget {
               ),
               WorkspaceMetricPill(
                 label: '租户上下文',
-                value: hasTenant ? '已绑定' : '未选择',
+                value: hasTenant ? '已选择' : '未选择',
                 highlight: hasTenant,
               ),
               WorkspaceMetricPill(
