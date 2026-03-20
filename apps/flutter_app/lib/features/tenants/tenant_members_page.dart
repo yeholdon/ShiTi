@@ -1866,7 +1866,7 @@ class _TenantMemberSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 152,
+      width: 176,
       child: WorkspacePanel(
         padding: const EdgeInsets.all(14),
         borderRadius: 16,
@@ -1928,7 +1928,7 @@ class _TenantMemberQuickViewCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
-        width: 182,
+        width: 208,
         child: WorkspacePanel(
           padding: const EdgeInsets.all(14),
           borderRadius: 16,
