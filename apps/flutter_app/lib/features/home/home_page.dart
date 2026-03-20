@@ -1162,6 +1162,7 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
+    final desktopWidth = MediaQuery.sizeOf(context).width;
     return Container(
       padding: workspaceHeroPanelPadding(context),
       decoration: BoxDecoration(
@@ -1181,12 +1182,14 @@ class _HeroSection extends StatelessWidget {
           ? Row(
               children: [
                 Expanded(
+                  flex: 7,
                   child: _HeroCopy(
                     onOpenLibrary: onOpenLibrary,
                   ),
                 ),
                 SizedBox(width: compact ? 16 : 24),
-                Expanded(
+                SizedBox(
+                  width: desktopWidth >= 1360 ? 396 : 372,
                   child: _HeroPanel(
                     snapshot: snapshot,
                     onRefresh: onRefresh,
