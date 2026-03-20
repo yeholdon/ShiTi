@@ -511,16 +511,16 @@ class _HomePageState extends State<HomePage> {
                               );
                             },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           const _WorkspaceContextStrip(),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           if (!AppConfig.useMockData)
                             const _RemoteModeGuideCard(),
                           if (!AppConfig.useMockData)
                             const SizedBox(height: 12),
                           if (!AppConfig.useMockData)
                             const _RemoteWorkspaceProbeCard(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           _WorkspaceEntryStrip(
                             onCreateDocument: _createDocumentFromHome,
                             onOpenBasket: _openBasketFromEntry,
@@ -531,7 +531,7 @@ class _HomePageState extends State<HomePage> {
                               PrimaryAppSection.exports,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           FutureBuilder<_WorkspaceSnapshot>(
                             future: _snapshotFuture,
                             builder: (context, snapshot) {
@@ -1216,8 +1216,11 @@ class _HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final desktopWidth = MediaQuery.sizeOf(context).width;
+    final heroPadding = wide
+        ? const EdgeInsets.fromLTRB(24, 22, 24, 18)
+        : workspaceHeroPanelPadding(context);
     return Container(
-      padding: workspaceHeroPanelPadding(context),
+      padding: heroPadding,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -1240,9 +1243,9 @@ class _HeroSection extends StatelessWidget {
                     onOpenLibrary: onOpenLibrary,
                   ),
                 ),
-                SizedBox(width: compact ? 16 : 24),
+                SizedBox(width: compact ? 16 : 20),
                 SizedBox(
-                  width: desktopWidth >= 1440 ? 376 : 344,
+                  width: desktopWidth >= 1440 ? 352 : 320,
                   child: _HeroPanel(
                     snapshot: snapshot,
                     onRefresh: onRefresh,
@@ -1281,6 +1284,7 @@ class _HeroCopy extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 640;
     final desktopWide = width >= 760;
+    final headlineSize = desktopWide ? 30.0 : 34.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1288,22 +1292,25 @@ class _HeroCopy extends StatelessWidget {
           label: '跨平台教研工作流',
           icon: Icons.auto_awesome_outlined,
         ),
-        const SizedBox(height: 16),
-        const Text(
+        const SizedBox(height: 14),
+        Text(
           '把备题、整理、组卷和导出，收进同一套工作台。',
           style: TextStyle(
-              fontSize: 34, fontWeight: FontWeight.w700, height: 1.15),
+            fontSize: headlineSize,
+            fontWeight: FontWeight.w700,
+            height: 1.12,
+          ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         const Text(
           '优先服务教研场景：按教材章节找题、维护选题篮、沉淀讲义结构，并跟踪导出结果。',
           style: TextStyle(
             fontSize: 16,
-            height: 1.5,
+            height: 1.45,
             color: TelegramPalette.textMuted,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         if (!desktopWide)
           Wrap(
             spacing: compact ? 8 : 12,
@@ -1336,7 +1343,7 @@ class _HeroCopy extends StatelessWidget {
               ),
             ],
           ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         Wrap(
           spacing: compact ? 8 : 12,
           runSpacing: compact ? 8 : 12,
@@ -1628,7 +1635,7 @@ class _HeroPanel extends StatelessWidget {
         context,
         mobile: 14,
         tablet: 16,
-        desktop: 16,
+        desktop: 14,
       ),
       borderRadius: 22,
       child: Column(
@@ -1656,11 +1663,11 @@ class _HeroPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             focusTitle,
             style: TextStyle(
-              fontSize: desktopRail ? 20 : 22,
+              fontSize: desktopRail ? 18 : 20,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1671,7 +1678,7 @@ class _HeroPanel extends StatelessWidget {
               message: errorMessage,
               padding: EdgeInsets.all(desktopRail ? 10 : 12),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Wrap(
               spacing: compact ? 8 : 10,
               runSpacing: compact ? 8 : 10,
@@ -1693,7 +1700,7 @@ class _HeroPanel extends StatelessWidget {
               ],
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _FocusMetric(
             label: '选题篮',
             value: basketLabel,
@@ -1745,14 +1752,14 @@ class _FocusMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
