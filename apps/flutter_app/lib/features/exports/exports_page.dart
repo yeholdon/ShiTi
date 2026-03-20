@@ -2026,46 +2026,16 @@ class _ExportsHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '任务范围',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: overviewChips,
-                      ),
-                    ],
+                  child: _DesktopSummaryInlineRow(
+                    label: '任务范围',
+                    children: overviewChips,
                   ),
                 ),
                 const SizedBox(width: 18),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '处理状态',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: statusChips,
-                      ),
-                    ],
+                  child: _DesktopSummaryInlineRow(
+                    label: '处理状态',
+                    children: statusChips,
                   ),
                 ),
               ],
@@ -2390,6 +2360,47 @@ class _CurrentDocumentContextCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DesktopSummaryInlineRow extends StatelessWidget {
+  const _DesktopSummaryInlineRow({
+    required this.label,
+    required this.children,
+  });
+
+  final String label;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 64,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: TelegramPalette.textMuted,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: children,
+          ),
+        ),
+      ],
     );
   }
 }
