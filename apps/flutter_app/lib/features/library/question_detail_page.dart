@@ -569,78 +569,126 @@ class _QuestionHeroCard extends StatelessWidget {
     final detail = inDocumentContext
         ? '当前正在确认一题是否加入当前文档。看完后可以直接补进文档，或返回继续挑题。'
         : '当前正在单独查看这道题。看完后可以加入选题篮，或直接放进文档。';
+    final metaTags = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _MetaChip(label: question.subject),
+        _MetaChip(label: question.stage),
+        _MetaChip(label: question.grade),
+        _MetaChip(label: question.textbook),
+        _MetaChip(label: question.chapter),
+        _MetaChip(label: '难度 ${question.difficulty}'),
+        for (final tag in question.tags) _MetaChip(label: '#$tag'),
+      ],
+    );
+    final summaryMetrics = Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        WorkspaceMetricPill(
+          label: '选题篮',
+          value: isInBasket ? '已加入' : '未加入',
+          highlight: isInBasket,
+        ),
+        WorkspaceMetricPill(
+          label: '参考答案',
+          value: question.referenceAnswerBlocks.isNotEmpty ||
+                  question.referenceAnswerText.trim().isNotEmpty
+              ? '已提供'
+              : '未提供',
+        ),
+        WorkspaceMetricPill(
+          label: '评分点',
+          value: question.scoringPointBlocks.isNotEmpty ||
+                  question.scoringPointsText.trim().isNotEmpty
+              ? '已提供'
+              : '未提供',
+        ),
+        WorkspaceMetricPill(
+          label: '当前模式',
+          value: inDocumentContext ? '确认并补题' : '查看单题',
+        ),
+      ],
+    );
     return WorkspacePanel(
       padding: const EdgeInsets.all(24),
       borderRadius: 28,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WorkspaceEyebrow(
-            label: '题目详情',
-            icon: Icons.auto_stories_outlined,
-          ),
-          const SizedBox(height: 14),
-          Text(
-            question.title,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              height: 1.12,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            detail,
-            style: const TextStyle(
-              height: 1.5,
-              color: TelegramPalette.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useDesktopHero = constraints.maxWidth >= 960;
+          final leadingContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MetaChip(label: question.subject),
-              _MetaChip(label: question.stage),
-              _MetaChip(label: question.grade),
-              _MetaChip(label: question.textbook),
-              _MetaChip(label: question.chapter),
-              _MetaChip(label: '难度 ${question.difficulty}'),
-              for (final tag in question.tags) _MetaChip(label: '#$tag'),
+              const WorkspaceEyebrow(
+                label: '题目详情',
+                icon: Icons.auto_stories_outlined,
+              ),
+              const SizedBox(height: 14),
+              Text(
+                question.title,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  height: 1.12,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: useDesktopHero ? 560 : double.infinity,
+                ),
+                child: Text(
+                  detail,
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              metaTags,
+              if (!useDesktopHero) ...[
+                const SizedBox(height: 16),
+                summaryMetrics,
+              ],
             ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          );
+
+          if (!useDesktopHero) {
+            return leadingContent;
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WorkspaceMetricPill(
-                label: '选题篮',
-                value: isInBasket ? '已加入' : '未加入',
-                highlight: isInBasket,
-              ),
-              WorkspaceMetricPill(
-                label: '参考答案',
-                value: question.referenceAnswerBlocks.isNotEmpty ||
-                        question.referenceAnswerText.trim().isNotEmpty
-                    ? '已提供'
-                    : '未提供',
-              ),
-              WorkspaceMetricPill(
-                label: '评分点',
-                value: question.scoringPointBlocks.isNotEmpty ||
-                        question.scoringPointsText.trim().isNotEmpty
-                    ? '已提供'
-                    : '未提供',
-              ),
-              WorkspaceMetricPill(
-                label: '当前模式',
-                value: inDocumentContext ? '确认并补题' : '查看单题',
+              Expanded(child: leadingContent),
+              const SizedBox(width: 28),
+              SizedBox(
+                width: 340,
+                child: WorkspacePanel(
+                  padding: const EdgeInsets.all(18),
+                  backgroundColor: TelegramPalette.surfaceRaised,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '当前摘要',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      summaryMetrics,
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
