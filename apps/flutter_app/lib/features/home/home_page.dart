@@ -992,24 +992,77 @@ class _WorkspaceContextStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
+    final desktopWide = MediaQuery.sizeOf(context).width >= 760;
+    final entries = [
+      ('模式', AppConfig.dataModeLabel),
+      ('会话', AppServices.instance.session?.username ?? '未登录'),
+      ('租户', AppServices.instance.activeTenant?.code ?? '未选择租户'),
+    ];
     return WorkspacePanel(
       padding:
-          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
-      child: Wrap(
-        spacing: compact ? 8 : 12,
-        runSpacing: compact ? 8 : 12,
-        children: [
-          _ContextChip(label: '模式', value: AppConfig.dataModeLabel),
-          _ContextChip(
-            label: '会话',
-            value: AppServices.instance.session?.username ?? '未登录',
+          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 14),
+      child: desktopWide
+          ? Row(
+              children: entries
+                  .map(
+                    (entry) => Expanded(
+                      child: _ContextInlineItem(
+                        label: entry.$1,
+                        value: entry.$2,
+                      ),
+                    ),
+                  )
+                  .expand((widget) => [widget, const SizedBox(width: 14)])
+                  .toList(growable: false)
+                ..removeLast(),
+            )
+          : Wrap(
+              spacing: compact ? 8 : 12,
+              runSpacing: compact ? 8 : 12,
+              children: entries
+                  .map(
+                    (entry) => _ContextChip(label: entry.$1, value: entry.$2),
+                  )
+                  .toList(growable: false),
+            ),
+    );
+  }
+}
+
+class _ContextInlineItem extends StatelessWidget {
+  const _ContextInlineItem({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          '$label：',
+          style: const TextStyle(
+            fontSize: 12,
+            color: TelegramPalette.textSoft,
+            fontWeight: FontWeight.w600,
           ),
-          _ContextChip(
-            label: '租户',
-            value: AppServices.instance.activeTenant?.code ?? '未选择租户',
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: TelegramPalette.textStrong,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
