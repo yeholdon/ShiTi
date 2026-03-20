@@ -866,3 +866,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页桌面端的摘要卡改成更明确的等宽卡组，在宽屏下不再使用固定小卡宽度，减少 Edge 截图里摘要区右侧留白太多、卡片信息像碎片散开的观感。
 - [x] Flutter: 首页桌面端 hero 改成“左侧主文案 + 固定宽度当前聚焦 rail”，减少 Edge 宽屏截图里上半区左右平均分栏导致主文案不够舒展、右侧聚焦卡又不够像稳定侧栏的问题。
 - [x] Flutter: 首页中段入口条在桌面端拆成“继续工作 / 工作区设置”两组，不再把六个入口按钮混成一排，减少 Edge 截图里入口条层级不清、按钮显得拥挤的问题。
+- [x] Tooling: 增加 `scripts/capture-edge-window.sh`，统一用“激活真实 Edge 窗口 + 全屏截图后按窗口 bounds 裁切”的方式做 Web 桌面回归，避免首页类页面在本机上反复出现 Edge headless 不稳定落图的问题。
