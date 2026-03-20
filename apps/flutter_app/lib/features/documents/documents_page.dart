@@ -2066,7 +2066,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Documents Workspace',
+            label: '文档工作区',
             icon: Icons.layers_outlined,
           ),
           const SizedBox(height: 14),
@@ -2640,7 +2640,7 @@ class _DocumentsHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Compose & Organize',
+            label: '编排与整理',
             icon: Icons.dashboard_customize_outlined,
           ),
           const SizedBox(height: 12),
