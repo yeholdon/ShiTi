@@ -305,7 +305,7 @@ class _AccountPageState extends State<AccountPage> {
                         _AccountInfoCard(
                           title: '当前账号',
                           icon: Icons.badge_outlined,
-                          emptyMessage: '当前还没有登录会话。先登录，再进入租户工作区。',
+                          emptyMessage: '当前还没有登录会话。先登录，再进入工作区。',
                           items: [
                             if (session != null) ('用户名', session.username),
                             if (session != null) ('访问级别', session.accessLevel),
@@ -331,7 +331,7 @@ class _AccountPageState extends State<AccountPage> {
                               child: _AccountInfoCard(
                                 title: '当前账号',
                                 icon: Icons.badge_outlined,
-                                emptyMessage: '当前还没有登录会话。先登录，再进入租户工作区。',
+                                emptyMessage: '当前还没有登录会话。先登录，再进入工作区。',
                                 items: [
                                   if (session != null) ('用户名', session.username),
                                   if (session != null)
