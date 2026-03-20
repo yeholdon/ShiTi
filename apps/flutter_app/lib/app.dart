@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'core/config/app_config.dart';
+import 'core/services/app_services.dart';
+import 'core/theme/telegram_palette.dart';
 import 'router/app_router.dart';
 
 class ShiTiApp extends StatelessWidget {
@@ -8,54 +11,67 @@ class ShiTiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const telegramBlue = Color(0xFF3390EC);
-    const telegramBlueDark = Color(0xFF2B79C2);
-    const shellBackground = Color(0xFFE9EFF5);
-    const shellForeground = Color(0xFF1F2D3D);
-    const mutedForeground = Color(0xFF5B7083);
-    const cardBorder = Color(0xFFD7E3EE);
-
+    const webFontFamily = 'ShiTiSans';
+    const webFontFallback = <String>[
+      'PingFang SC',
+      'Hiragino Sans GB',
+      'Microsoft YaHei',
+      'Noto Sans SC',
+      'Noto Sans CJK SC',
+      'Source Han Sans SC',
+      'WenQuanYi Micro Hei',
+      'Arial Unicode MS',
+      'Arial',
+      'sans-serif',
+    ];
+    final appFontFamily = kIsWeb ? webFontFamily : null;
+    final appFontFallback = kIsWeb ? webFontFallback : null;
     return MaterialApp(
       title: 'ShiTi',
       debugShowCheckedModeBanner: false,
+      navigatorKey: AppServices.instance.navigatorKey,
       theme: ThemeData(
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFallback,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: telegramBlue,
+          seedColor: TelegramPalette.accent,
           brightness: Brightness.light,
         ).copyWith(
-          primary: telegramBlue,
+          primary: TelegramPalette.accent,
           secondary: const Color(0xFF64B5F6),
-          surface: Colors.white,
-          onSurface: shellForeground,
+          surface: TelegramPalette.surfaceRaised,
+          onSurface: TelegramPalette.text,
         ),
-        scaffoldBackgroundColor: shellBackground,
+        scaffoldBackgroundColor: TelegramPalette.shell,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: shellForeground,
+          backgroundColor: Colors.transparent,
+          foregroundColor: TelegramPalette.text,
           elevation: 0,
           centerTitle: false,
         ),
         textTheme: ThemeData.light().textTheme.apply(
-          bodyColor: shellForeground,
-          displayColor: shellForeground,
-        ),
+              fontFamily: appFontFamily,
+              fontFamilyFallback: appFontFallback,
+              bodyColor: TelegramPalette.text,
+              displayColor: TelegramPalette.text,
+            ),
         cardTheme: const CardThemeData(
-          color: Colors.white,
+          color: TelegramPalette.surfaceRaised,
           elevation: 0,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(18)),
-            side: BorderSide(color: cardBorder),
+            borderRadius: BorderRadius.all(Radius.circular(24)),
+            side: BorderSide(color: TelegramPalette.border),
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          indicatorColor: telegramBlue.withValues(alpha: 0.12),
+          backgroundColor: Colors.white.withValues(alpha: 0.92),
+          indicatorColor: TelegramPalette.accent.withValues(alpha: 0.12),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             return TextStyle(
               color: states.contains(WidgetState.selected)
-                  ? telegramBlueDark
-                  : mutedForeground,
+                  ? TelegramPalette.accentDark
+                  : TelegramPalette.textMuted,
               fontWeight: states.contains(WidgetState.selected)
                   ? FontWeight.w700
                   : FontWeight.w600,
@@ -64,70 +80,112 @@ class ShiTiApp extends StatelessWidget {
           iconTheme: WidgetStateProperty.resolveWith((states) {
             return IconThemeData(
               color: states.contains(WidgetState.selected)
-                  ? telegramBlueDark
-                  : mutedForeground,
+                  ? TelegramPalette.accentDark
+                  : TelegramPalette.textMuted,
             );
           }),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFF2F7FC),
-          selectedColor: telegramBlue.withValues(alpha: 0.12),
-          side: const BorderSide(color: cardBorder),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          backgroundColor: TelegramPalette.surface,
+          selectedColor: TelegramPalette.accent.withValues(alpha: 0.12),
+          side: const BorderSide(color: TelegramPalette.border),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           labelStyle: const TextStyle(
-            color: shellForeground,
+            color: TelegramPalette.text,
             fontWeight: FontWeight.w600,
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: telegramBlue,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFFDDE9F5),
-            disabledForegroundColor: mutedForeground,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return const Color(0xFFE5EEF7);
+              }
+              return TelegramPalette.accent;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return TelegramPalette.textStrong;
+              }
+              return Colors.white;
+            }),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            ),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: telegramBlueDark,
-            side: const BorderSide(color: cardBorder),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return TelegramPalette.surfaceSoft;
+              }
+              return Colors.transparent;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return TelegramPalette.textSoft;
+              }
+              return TelegramPalette.accentDark;
+            }),
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return const BorderSide(color: TelegramPalette.borderAccent);
+              }
+              return const BorderSide(color: TelegramPalette.border);
+            }),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            ),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: telegramBlueDark,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          style: ButtonStyle(
+            foregroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return TelegramPalette.textSoft;
+              }
+              return TelegramPalette.accentDark;
+            }),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0xFFF5F8FB),
-          hintStyle: const TextStyle(color: mutedForeground),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          hintStyle: const TextStyle(color: TelegramPalette.textMuted),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: cardBorder),
+            borderSide: const BorderSide(color: TelegramPalette.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: cardBorder),
+            borderSide: const BorderSide(color: TelegramPalette.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: telegramBlue, width: 1.4),
+            borderSide:
+                const BorderSide(color: TelegramPalette.accent, width: 1.4),
           ),
         ),
-        dividerColor: cardBorder,
+        dividerColor: TelegramPalette.border,
         useMaterial3: true,
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
@@ -136,7 +194,7 @@ class ShiTiApp extends StatelessWidget {
         return Banner(
           message: '${AppConfig.environmentLabel} ${AppConfig.dataModeLabel}',
           location: BannerLocation.topEnd,
-          color: telegramBlueDark,
+          color: TelegramPalette.accentDark,
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 10,
