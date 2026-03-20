@@ -1625,7 +1625,7 @@ class _ExportsHeroStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Export Timeline',
+            label: '导出时间线',
             icon: Icons.cloud_sync_outlined,
           ),
           const SizedBox(height: 14),
@@ -1901,7 +1901,7 @@ class _ExportsHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Queue Filters',
+            label: '队列筛选',
             icon: Icons.filter_list_outlined,
           ),
           const SizedBox(height: 12),

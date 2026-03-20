@@ -127,6 +127,7 @@ When work status changes, update this file in the same change.
   - login hero, auth panel, and session summary now use Chinese workspace labels, so desktop screenshots no longer expose `ShiTi Teaching Workspace`, `Workspace Access`, or `Token preview`
   - library hero and filter header now use Chinese workspace labels, so desktop screenshots no longer expose `Question Library` or `Filters & Targeting` on the question search first screen
   - documents hero and workspace header now use Chinese workspace labels, so desktop screenshots no longer expose `Documents Workspace` or `Compose & Organize` on the documents first screen
+  - exports hero and filter header now use Chinese workspace labels, so desktop screenshots no longer expose `Export Timeline` or `Queue Filters` on the exports first screen
   - adding a question now goes through a shared “choose target document” picker instead of always forcing the default local handout
   - document detail now surfaces current mode/session/tenant context and explicit remote-mode load/action failures for reorder, remove, layout insertion, and export creation
   - home, library, and documents pages now expose direct “登录 / 选择租户” guidance actions in remote mode instead of only passive status text
