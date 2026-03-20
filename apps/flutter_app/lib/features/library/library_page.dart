@@ -1489,46 +1489,16 @@ class _FilterCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '结果摘要',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: summaryChips,
-                      ),
-                    ],
+                  child: _DesktopInlineMetricsRow(
+                    label: '结果摘要',
+                    children: summaryChips,
                   ),
                 ),
                 const SizedBox(width: 18),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '已启用条件',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: activeFilterChips,
-                      ),
-                    ],
+                  child: _DesktopInlineMetricsRow(
+                    label: '已启用条件',
+                    children: activeFilterChips,
                   ),
                 ),
               ],
@@ -1820,6 +1790,47 @@ class _FilterCard extends StatelessWidget {
       default:
         return '结果顺序';
     }
+  }
+}
+
+class _DesktopInlineMetricsRow extends StatelessWidget {
+  const _DesktopInlineMetricsRow({
+    required this.label,
+    required this.children,
+  });
+
+  final String label;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 64,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: TelegramPalette.textMuted,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: children,
+          ),
+        ),
+      ],
+    );
   }
 }
 
