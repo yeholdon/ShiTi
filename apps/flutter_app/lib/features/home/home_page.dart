@@ -795,7 +795,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  '当前还没有完整的远程上下文。先登录并选择租户后，这里会显示题库和文档工作区的真实加载结果。',
+                  '当前还没有完整的工作区上下文。先登录并选择租户后，这里会显示题库和文档工作区的真实数据概览。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -808,8 +808,8 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
           if (snapshot.hasError) {
             final error = snapshot.error;
             final message = error is HttpJsonException
-                ? '连通性探测失败：${error.message}（HTTP ${error.statusCode}）'
-                : '连通性探测失败：$error';
+                ? '工作区探测失败：${error.message}（HTTP ${error.statusCode}）'
+                : '工作区探测失败：$error';
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
