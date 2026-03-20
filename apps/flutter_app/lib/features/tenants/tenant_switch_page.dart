@@ -269,7 +269,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const WorkspaceEyebrow(
-                            label: 'Tenant Directory',
+                            label: '租户目录',
                             icon: Icons.apartment_outlined,
                           ),
                           const SizedBox(height: 14),
@@ -547,7 +547,7 @@ class _TenantHeroSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Tenant Workspace',
+            label: '租户工作区',
             icon: Icons.domain_verification_outlined,
           ),
           const SizedBox(height: 14),
@@ -619,7 +619,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Tenant Resolver',
+            label: '租户解析',
             icon: Icons.travel_explore_outlined,
           ),
           const SizedBox(height: 14),
