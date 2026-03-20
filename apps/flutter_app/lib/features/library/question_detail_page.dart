@@ -321,6 +321,91 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                               ),
                             ],
                           );
+                          final actionButtons = <Widget>[
+                            FilledButton.icon(
+                              onPressed: _addingToDocument ||
+                                      _creatingAndAdding ||
+                                      _updatingBasket
+                                  ? null
+                                  : () => _addToDocument(question),
+                              icon: _addingToDocument
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.playlist_add_outlined),
+                              label: Text(
+                                _addingToDocument
+                                    ? '加入中…'
+                                    : (widget.preferredDocumentSnapshot == null
+                                        ? '加入指定文档'
+                                        : '加入当前文档'),
+                              ),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _addingToDocument ||
+                                      _creatingAndAdding ||
+                                      _updatingBasket
+                                  ? null
+                                  : () => _createDocumentAndAdd(question),
+                              icon: _creatingAndAdding
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.note_add_outlined),
+                              label: Text(
+                                _creatingAndAdding
+                                    ? '创建并加入中…'
+                                    : '新建文档并加入',
+                              ),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _updatingBasket ||
+                                      _addingToDocument ||
+                                      _creatingAndAdding
+                                  ? null
+                                  : () => _toggleBasket(
+                                        question,
+                                        isInBasket,
+                                      ),
+                              icon: _updatingBasket
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Icon(
+                                      isInBasket
+                                          ? Icons.bookmark_remove_outlined
+                                          : Icons
+                                              .collections_bookmark_outlined,
+                                    ),
+                              label: Text(
+                                _updatingBasket
+                                    ? '处理中…'
+                                    : (isInBasket ? '移出选题篮' : '加入选题篮'),
+                              ),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: () {
+                                PrimaryNavigationBar.navigateToSection(
+                                  context,
+                                  PrimaryAppSection.documents,
+                                );
+                              },
+                              icon: const Icon(Icons.description_outlined),
+                              label: const Text('打开文档工作区'),
+                            ),
+                          ];
                           final actionRail = Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -362,110 +447,27 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                                       icon: Icons.tune_outlined,
                                     ),
                                     const SizedBox(height: 14),
-                                    Wrap(
-                                      spacing: 12,
-                                      runSpacing: 12,
-                                      children: [
-                                        FilledButton.icon(
-                                          onPressed: _addingToDocument ||
-                                                  _creatingAndAdding ||
-                                                  _updatingBasket
-                                              ? null
-                                              : () => _addToDocument(question),
-                                          icon: _addingToDocument
-                                              ? const SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : const Icon(
-                                                  Icons.playlist_add_outlined,
-                                                ),
-                                          label: Text(
-                                            _addingToDocument
-                                                ? '加入中…'
-                                                : (widget.preferredDocumentSnapshot ==
-                                                        null
-                                                    ? '加入指定文档'
-                                                    : '加入当前文档'),
-                                          ),
-                                        ),
-                                        FilledButton.tonalIcon(
-                                          onPressed: _addingToDocument ||
-                                                  _creatingAndAdding ||
-                                                  _updatingBasket
-                                              ? null
-                                              : () => _createDocumentAndAdd(
-                                                  question),
-                                          icon: _creatingAndAdding
-                                              ? const SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : const Icon(
-                                                  Icons.note_add_outlined,
-                                                ),
-                                          label: Text(
-                                            _creatingAndAdding
-                                                ? '创建并加入中…'
-                                                : '新建文档并加入',
-                                          ),
-                                        ),
-                                        OutlinedButton.icon(
-                                          onPressed: _updatingBasket ||
-                                                  _addingToDocument ||
-                                                  _creatingAndAdding
-                                              ? null
-                                              : () => _toggleBasket(
-                                                    question,
-                                                    isInBasket,
-                                                  ),
-                                          icon: _updatingBasket
-                                              ? const SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : Icon(
-                                                  isInBasket
-                                                      ? Icons
-                                                          .bookmark_remove_outlined
-                                                      : Icons
-                                                          .collections_bookmark_outlined,
-                                                ),
-                                          label: Text(
-                                            _updatingBasket
-                                                ? '处理中…'
-                                                : (isInBasket
-                                                    ? '移出选题篮'
-                                                    : '加入选题篮'),
-                                          ),
-                                        ),
-                                        FilledButton.tonalIcon(
-                                          onPressed: () {
-                                            PrimaryNavigationBar
-                                                .navigateToSection(
-                                              context,
-                                              PrimaryAppSection.documents,
-                                            );
-                                          },
-                                          icon: const Icon(
-                                            Icons.description_outlined,
-                                          ),
-                                          label: const Text('打开文档工作区'),
-                                        ),
-                                      ],
-                                    ),
+                                    if (wideDesktop)
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          for (var index = 0;
+                                              index < actionButtons.length;
+                                              index++) ...[
+                                            actionButtons[index],
+                                            if (index !=
+                                                actionButtons.length - 1)
+                                              const SizedBox(height: 12),
+                                          ],
+                                        ],
+                                      )
+                                    else
+                                      Wrap(
+                                        spacing: 12,
+                                        runSpacing: 12,
+                                        children: actionButtons,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -486,7 +488,7 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                             children: [
                               Expanded(flex: 7, child: mainContent),
                               const SizedBox(width: 20),
-                              SizedBox(width: 360, child: actionRail),
+                              SizedBox(width: 392, child: actionRail),
                             ],
                           );
                         },
