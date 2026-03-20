@@ -1967,6 +1967,20 @@ class _ExportsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final desktopWide = MediaQuery.sizeOf(context).width >= 1180;
+    final overviewChips = <Widget>[
+      WorkspaceMetricPill(label: '当前结果任务', value: '$filteredJobCount'),
+      WorkspaceMetricPill(
+        label: '当前结果文档',
+        value: '$filteredDocumentCount',
+      ),
+      WorkspaceMetricPill(label: 'PDF', value: '$filteredPdfCount'),
+      WorkspaceMetricPill(label: 'DOCX', value: '$filteredDocxCount'),
+    ];
+    final statusChips = <Widget>[
+      WorkspaceMetricPill(label: '处理中', value: '$filteredPendingCount'),
+      WorkspaceMetricPill(label: '已完成', value: '$filteredSucceededCount'),
+      WorkspaceMetricPill(label: '可重试', value: '$filteredRetryableCount'),
+    ];
     return WorkspacePanel(
       padding: workspaceHeroPanelPadding(context),
       child: Column(
@@ -2001,24 +2015,61 @@ class _ExportsHeader extends StatelessWidget {
               ),
             ),
           if (desktopWide) const SizedBox(height: 8),
-          Wrap(
-            spacing: compact ? 8 : 10,
-            runSpacing: compact ? 8 : 10,
-            children: [
-              WorkspaceMetricPill(label: '当前结果任务', value: '$filteredJobCount'),
-              WorkspaceMetricPill(
-                label: '当前结果文档',
-                value: '$filteredDocumentCount',
-              ),
-              WorkspaceMetricPill(label: 'PDF', value: '$filteredPdfCount'),
-              WorkspaceMetricPill(label: 'DOCX', value: '$filteredDocxCount'),
-              WorkspaceMetricPill(label: '处理中', value: '$filteredPendingCount'),
-              WorkspaceMetricPill(
-                  label: '已完成', value: '$filteredSucceededCount'),
-              WorkspaceMetricPill(
-                  label: '可重试', value: '$filteredRetryableCount'),
-            ],
-          ),
+          if (!desktopWide)
+            Wrap(
+              spacing: compact ? 8 : 10,
+              runSpacing: compact ? 8 : 10,
+              children: [...overviewChips, ...statusChips],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '任务范围',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: overviewChips,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '处理状态',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: statusChips,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           if (_activeFilterEntries.isNotEmpty) ...[
             const SizedBox(height: 12),
             if (desktopWide)
