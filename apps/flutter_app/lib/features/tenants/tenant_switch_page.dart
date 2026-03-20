@@ -274,7 +274,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           ),
                           const SizedBox(height: 14),
                           const Text(
-                            '先定位工作区，再决定是直接进入，还是继续查看成员。',
+                            '先定位机构，再决定是直接进入，还是继续查看成员。',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
@@ -283,7 +283,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           ),
                           const SizedBox(height: 10),
                           const Text(
-                            '这里负责解析工作区代码、整理当前可见列表，并标出哪些工作区可以直接进入。',
+                            '这里负责解析机构代码、整理当前可见列表，并标出哪些机构可以直接进入。',
                             style: TextStyle(
                               height: 1.5,
                               color: TelegramPalette.textMuted,
