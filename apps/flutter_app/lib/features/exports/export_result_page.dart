@@ -125,7 +125,7 @@ class _ExportResultPageState extends State<ExportResultPage> {
                                   ? '当前是样例结果预览'
                                   : '结果文件还没准备好',
                               message: AppConfig.useMockData
-                                  ? '这里用于预览结果页流程，不会生成可下载文件。'
+                                  ? '这里用于预览结果页流程，不会生成真实导出文件。'
                                   : '当前导出还没有可查看的结果文件，请先等待任务成功。',
                               foregroundColor: AppConfig.useMockData
                                   ? TelegramPalette.warningText

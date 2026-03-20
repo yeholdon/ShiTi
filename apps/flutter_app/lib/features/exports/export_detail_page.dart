@@ -134,7 +134,7 @@ class _ExportDetailPageState extends State<ExportDetailPage> {
                             const WorkspaceMessageBanner.warning(
                               title: '当前是样例流程预览',
                               message:
-                                  '这里主要用于预览导出流程，不会生成真实 PDF 文件。',
+                                  '这里主要用于预览导出流程，不会生成真实导出文件。',
                             ),
                           ],
                         ],
