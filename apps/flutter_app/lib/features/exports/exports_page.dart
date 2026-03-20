@@ -1629,22 +1629,28 @@ class _ExportsHeroStrip extends StatelessWidget {
             icon: Icons.cloud_sync_outlined,
           ),
           const SizedBox(height: 14),
-          const Text(
-            '把每次导出都做成可回看的进度记录。',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: const Text(
+              '把每次导出都做成可回看的进度记录。',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            currentDocumentName == null || currentDocumentName!.trim().isEmpty
-                ? '这里聚合所有导出任务，方便你追踪失败、重试和结果回看。'
-                : '当前从“$currentDocumentName”进入，这一页会优先显示这份文档的导出进度和结果。',
-            style: const TextStyle(
-              height: 1.55,
-              color: TelegramPalette.textMuted,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Text(
+              currentDocumentName == null || currentDocumentName!.trim().isEmpty
+                  ? '这里聚合所有导出任务，方便你追踪失败、重试和结果回看。'
+                  : '当前从“$currentDocumentName”进入，这一页会优先显示这份文档的导出进度和结果。',
+              style: const TextStyle(
+                height: 1.55,
+                color: TelegramPalette.textMuted,
+              ),
             ),
           ),
           const SizedBox(height: 16),

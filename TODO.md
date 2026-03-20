@@ -914,3 +914,4 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `capture-edge-window.sh` 在真正截图前会再次把 Microsoft Edge 拉回前台，减少回归时被 Codex 或其他前台窗口抢焦点、导致截图落错窗口的问题。
 - [x] Flutter: “我的”页 hero 回到更稳定的单列桌面布局，把账号/租户摘要胶囊固定放回说明文下方，避免常见桌面宽度下右侧摘要 rail 被挤出屏幕、首屏只剩一大片空白。
 - [x] Flutter: 首页 hero 主文案列在桌面端限制阅读宽度，让标题在带左侧工作台 rail 的场景下更早换行，减少真实 Edge 首屏里主标题横向过长、视觉上像被截断的问题。
+- [x] Flutter: 题库、文档、导出三个一级页的 hero 标题和说明在桌面端统一加上阅读宽度上限，减少主标题横向铺满整列造成的视觉压力，并让三个工作流页的首屏语言更加一致。

@@ -1107,20 +1107,26 @@ class _LibraryHeroSection extends StatelessWidget {
             icon: Icons.travel_explore_outlined,
           ),
           const SizedBox(height: 14),
-          const Text(
-            '先定位题目，再决定是放进选题篮还是直接落到当前文档。',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: const Text(
+              '先定位题目，再决定是放进选题篮还是直接落到当前文档。',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            detail,
-            style: TextStyle(
-              height: 1.55,
-              color: TelegramPalette.textMuted,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Text(
+              detail,
+              style: TextStyle(
+                height: 1.55,
+                color: TelegramPalette.textMuted,
+              ),
             ),
           ),
           const SizedBox(height: 16),

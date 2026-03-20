@@ -2070,20 +2070,26 @@ class _DocumentsHeroStrip extends StatelessWidget {
             icon: Icons.layers_outlined,
           ),
           const SizedBox(height: 14),
-          const Text(
-            '在这里持续整理讲义和试卷，边编排边准备导出。',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: const Text(
+              '在这里持续整理讲义和试卷，边编排边准备导出。',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            detail,
-            style: TextStyle(
-              height: 1.55,
-              color: TelegramPalette.textMuted,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Text(
+              detail,
+              style: TextStyle(
+                height: 1.55,
+                color: TelegramPalette.textMuted,
+              ),
             ),
           ),
           const SizedBox(height: 16),
