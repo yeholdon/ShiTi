@@ -34,12 +34,14 @@ cleanup() {
 trap cleanup EXIT
 
 normalized_url="$url"
+expected_hash=""
 if [[ "$url" == http://* || "$url" == https://* ]]; then
   url_prefix="$url"
   url_hash=""
   if [[ "$url" == *"#"* ]]; then
     url_prefix="${url%%#*}"
     url_hash="#${url#*#}"
+    expected_hash="${url#*#}"
   fi
 
   separator='?'
@@ -75,13 +77,16 @@ tell application "Microsoft Edge"
   end repeat
   delay ${post_load_delay_seconds}
   set targetBounds to get bounds of targetWindow
-  return (id of targetWindow as text) & "|" & (item 1 of targetBounds as text) & "," & (item 2 of targetBounds as text) & "," & (item 3 of targetBounds as text) & "," & (item 4 of targetBounds as text)
+  set finalUrl to URL of active tab of targetWindow
+  return (id of targetWindow as text) & "|" & (item 1 of targetBounds as text) & "," & (item 2 of targetBounds as text) & "," & (item 3 of targetBounds as text) & "," & (item 4 of targetBounds as text) & "|" & finalUrl
 end tell
 APPLESCRIPT
 )"
 
 window_id="${window_payload%%|*}"
-bounds="${window_payload#*|}"
+remaining_payload="${window_payload#*|}"
+bounds="${remaining_payload%%|*}"
+final_url="${remaining_payload#*|}"
 
 tmp_capture="$(mktemp -t edge-window-full)"
 for ((capture_attempt = 1; capture_attempt <= max_capture_attempts; capture_attempt++)); do
@@ -94,21 +99,26 @@ APPLESCRIPT
   screencapture -x "$tmp_capture"
 
   capture_status="$(
-    python3 - "$tmp_capture" "$output_path" "$bounds" "$blank_threshold" <<'PY'
+    python3 - "$tmp_capture" "$output_path" "$bounds" "$blank_threshold" "$expected_hash" "$final_url" <<'PY'
 import sys
 from pathlib import Path
 
 from PIL import Image
+from PIL import ImageStat
 
 src_path = Path(sys.argv[1])
 dest_path = Path(sys.argv[2])
 bounds = [int(part.strip()) for part in sys.argv[3].split(",")]
 blank_threshold = float(sys.argv[4])
+expected_hash = sys.argv[5].strip()
+final_url = sys.argv[6].strip()
 left, top, right, bottom = bounds
 
 with Image.open(src_path) as image:
     cropped = image.crop((left, top, right, bottom))
-    sampled = cropped.convert("RGB").resize((120, 80))
+    analysis_top = min(max(88, int(cropped.height * 0.08)), max(cropped.height - 1, 1))
+    analysis_region = cropped.crop((0, analysis_top, cropped.width, cropped.height))
+    sampled = analysis_region.convert("RGB").resize((120, 80))
     pixels = sampled.load()
     near_white = 0
     total_pixels = sampled.width * sampled.height
@@ -118,9 +128,13 @@ with Image.open(src_path) as image:
             if red > 245 and green > 245 and blue > 245:
                 near_white += 1
     near_white_ratio = near_white / total_pixels
+    stat = ImageStat.Stat(sampled.convert("L"))
+    stddev = stat.stddev[0]
     cropped.save(dest_path)
 
-print("retry" if near_white_ratio >= blank_threshold else "ok")
+hash_mismatch = bool(expected_hash) and f"#{expected_hash}" not in final_url
+blank_like = near_white_ratio >= blank_threshold or (near_white_ratio >= 0.6 and stddev < 12)
+print("retry" if blank_like or hash_mismatch else "ok")
 PY
   )"
 
