@@ -2582,7 +2582,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 WorkspaceEyebrow(
-                                  label: 'Compose Controls',
+                                  label: '文档编排操作',
                                   icon: Icons.dashboard_customize_outlined,
                                 ),
                                 SizedBox(height: 14),
@@ -4525,8 +4525,8 @@ class _DocumentHeroCard extends StatelessWidget {
         children: [
           WorkspaceEyebrow(
             label: document.kind == 'paper'
-                ? 'Paper Workspace'
-                : 'Handout Workspace',
+                ? '试卷编排台'
+                : '讲义编排台',
             icon: document.kind == 'paper'
                 ? Icons.quiz_outlined
                 : Icons.menu_book_outlined,
