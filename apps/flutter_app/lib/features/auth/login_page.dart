@@ -576,7 +576,7 @@ class _LoginPageState extends State<LoginPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Workspace Access',
+            label: '登录入口',
             icon: Icons.hub_outlined,
           ),
           const SizedBox(height: 16),
@@ -711,7 +711,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   Text('访问级别：${_session!.accessLevel}'),
-                  Text('Token preview：${_session!.tokenPreview}'),
+                  Text('令牌预览：${_session!.tokenPreview}'),
                   const SizedBox(height: 14),
                   Wrap(
                     spacing: 12,
@@ -764,7 +764,7 @@ class _LoginHeroPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'ShiTi Teaching Workspace',
+            label: 'ShiTi 教研工作台',
             icon: Icons.auto_awesome_outlined,
             foregroundColor: Colors.white,
             backgroundColor: Color(0x223390EC),
@@ -848,7 +848,7 @@ class _LoginHeroPanel extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Editorial cockpit',
+                  '教研驾驶舱',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,

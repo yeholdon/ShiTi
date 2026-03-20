@@ -124,6 +124,7 @@ When work status changes, update this file in the same change.
   - document detail hero and compose rail now use Chinese workspace labels, so the page's desktop first screen no longer mixes `Handout Workspace` and `Compose Controls` into the main authoring flow
   - export detail and export result heroes now use Chinese workspace labels and localized status text, so desktop screenshots no longer expose `Export Result` or raw values like `succeeded`
   - tenant switch hero and high-visibility panels now use Chinese workspace labels, so desktop screenshots no longer expose `Tenant Workspace`, `Tenant Resolver`, or `Tenant Directory`
+  - login hero, auth panel, and session summary now use Chinese workspace labels, so desktop screenshots no longer expose `ShiTi Teaching Workspace`, `Workspace Access`, or `Token preview`
   - adding a question now goes through a shared “choose target document” picker instead of always forcing the default local handout
   - document detail now surfaces current mode/session/tenant context and explicit remote-mode load/action failures for reorder, remove, layout insertion, and export creation
   - home, library, and documents pages now expose direct “登录 / 选择租户” guidance actions in remote mode instead of only passive status text
