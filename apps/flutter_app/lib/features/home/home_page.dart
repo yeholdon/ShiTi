@@ -1379,48 +1379,16 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '继续工作',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: TelegramPalette.textMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 10,
-                          children: primaryActions,
-                        ),
-                      ],
+                    child: _DesktopActionLine(
+                      label: '继续工作',
+                      actions: primaryActions,
                     ),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '工作区设置',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: TelegramPalette.textMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 10,
-                          children: secondaryActions,
-                        ),
-                      ],
+                    child: _DesktopActionLine(
+                      label: '工作区设置',
+                      actions: secondaryActions,
                     ),
                   ),
                 ],
@@ -1457,6 +1425,48 @@ class _WorkspaceEntryStrip extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _DesktopActionLine extends StatelessWidget {
+  const _DesktopActionLine({
+    required this.label,
+    required this.actions,
+  });
+
+  final String label;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 68,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+                color: TelegramPalette.textMuted,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: actions,
+          ),
+        ),
+      ],
     );
   }
 }
