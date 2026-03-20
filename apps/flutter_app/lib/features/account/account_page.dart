@@ -316,7 +316,7 @@ class _AccountPageState extends State<AccountPage> {
                         _AccountInfoCard(
                           title: '当前机构',
                           icon: Icons.apartment_outlined,
-                          emptyMessage: '当前还没有选择机构。先解析或创建机构，再进入题库和文档工作区。',
+                          emptyMessage: '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
                           items: [
                             if (activeTenant != null) ('机构名称', activeTenant.name),
                             if (activeTenant != null) ('机构代码', activeTenant.code),
@@ -347,7 +347,7 @@ class _AccountPageState extends State<AccountPage> {
                                 title: '当前机构',
                                 icon: Icons.apartment_outlined,
                                 emptyMessage:
-                                    '当前还没有选择机构。先解析或创建机构，再进入题库和文档工作区。',
+                                    '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
                                 items: [
                                   if (activeTenant != null)
                                     ('机构名称', activeTenant.name),
