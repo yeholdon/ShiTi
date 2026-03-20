@@ -4586,20 +4586,9 @@ class _ContextChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: TelegramPalette.surfaceAccent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TelegramPalette.border),
-      ),
-      child: Text(
-        '$label：$value',
-        style: const TextStyle(
-          color: TelegramPalette.textStrong,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return WorkspaceInfoPill(
+      label: label,
+      value: value,
     );
   }
 }

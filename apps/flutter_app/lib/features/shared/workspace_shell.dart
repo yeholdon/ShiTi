@@ -312,14 +312,14 @@ class WorkspaceMetricPill extends StatelessWidget {
 
 class WorkspaceInfoPill extends StatelessWidget {
   const WorkspaceInfoPill({
-    required this.label,
     required this.value,
+    this.label,
     this.icon,
     this.highlight = false,
     super.key,
   });
 
-  final String label;
+  final String? label;
   final String value;
   final IconData? icon;
   final bool highlight;
@@ -348,7 +348,7 @@ class WorkspaceInfoPill extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           Text(
-            '$label：$value',
+            label == null || label!.trim().isEmpty ? value : '${label!}：$value',
             style: TextStyle(
               color: foregroundColor,
               fontWeight: FontWeight.w600,

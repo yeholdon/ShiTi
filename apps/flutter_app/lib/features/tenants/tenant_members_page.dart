@@ -1277,40 +1277,10 @@ class _TenantMembersPageState extends State<TenantMembersPage> {
                                     if (_activeQueueTitle != null &&
                                         activeQueueSummary != null) ...[
                                       const SizedBox(height: 10),
-                                      Container(
-                                        width: double.infinity,
+                                      WorkspaceMessageBanner.info(
+                                        title: '当前处理队列 · $_activeQueueTitle',
+                                        message: activeQueueSummary.detail,
                                         padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: TelegramPalette.surfaceAccent,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: TelegramPalette.border,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '当前处理队列 · $_activeQueueTitle',
-                                              style: const TextStyle(
-                                                color:
-                                                    TelegramPalette.textStrong,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              activeQueueSummary.detail,
-                                              style: const TextStyle(
-                                                color:
-                                                    TelegramPalette.textMuted,
-                                                height: 1.35,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                       ),
                                     ],
                                   ],
@@ -2831,34 +2801,10 @@ class _TenantMemberCard extends StatelessWidget {
                 ],
                 if (queueContextVisible && queueSummary != null) ...[
                   const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
+                  WorkspaceMessageBanner.info(
+                    title: '当前处理队列 · $activeQueueTitle',
+                    message: queueSummary.detail,
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: TelegramPalette.surfaceAccent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: TelegramPalette.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '当前处理队列 · $activeQueueTitle',
-                          style: const TextStyle(
-                            color: TelegramPalette.accentDark,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          queueSummary.detail,
-                          style: const TextStyle(
-                            color: TelegramPalette.textMuted,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
                 if (isReadOnly && lockedReasonLines.isNotEmpty) ...[
@@ -3217,34 +3163,10 @@ class _TenantMemberSectionCard extends StatelessWidget {
             activeQueueTitle != null &&
             queueSummary != null) ...[
           const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
+          WorkspaceMessageBanner.info(
+            title: '当前处理队列 · $activeQueueTitle',
+            message: queueSummary.detail,
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: TelegramPalette.highlight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: TelegramPalette.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '当前处理队列 · $activeQueueTitle',
-                  style: const TextStyle(
-                    color: TelegramPalette.accentDark,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  queueSummary.detail,
-                  style: const TextStyle(
-                    color: TelegramPalette.textMuted,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
         const SizedBox(height: 12),
@@ -3599,34 +3521,10 @@ class _TenantMemberDetailsSheet extends StatelessWidget {
                   ],
                   if (queueContextVisible && queueSummary != null) ...[
                     const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
+                    WorkspaceMessageBanner.info(
+                      title: '当前处理队列 · $activeQueueTitle',
+                      message: queueSummary.detail,
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: TelegramPalette.surfaceAccent,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: TelegramPalette.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '当前处理队列 · $activeQueueTitle',
-                            style: const TextStyle(
-                              color: TelegramPalette.accentDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            queueSummary.detail,
-                            style: const TextStyle(
-                              color: TelegramPalette.textMuted,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                   if (activityFeed.isNotEmpty) ...[

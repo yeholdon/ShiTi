@@ -776,6 +776,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 选题篮页接入统一 workspace shell，页首摘要、当前目标文档上下文和批量处理区与主工作台对齐。
 - [x] Flutter: 租户切换页接入统一 workspace shell，租户解析入口、结果摘要和工作区卡片层级与主工作台对齐。
 - [x] Flutter: 按信息架构补上 `Me` 账号页，当前会话、当前租户、切换租户和退出登录入口不再混在首页主叙事里。
+- [x] Flutter: `我的` 页补上可直接触发的修改密码入口与账号安全卡，并补 widget test 锁住未登录引导和已登录弹层打开行为。
 - [x] Flutter: 首页移动端导航补齐为工作台 / 题库 / 文档 / 导出 / 我的，和 Flutter 信息架构里的主导航对齐。
 - [x] Flutter: 抽出共享移动端主导航，并接入首页 / 题库 / 文档 / 导出 / 我的这五个一级页面，一级工作流入口保持一致。
 - [x] Flutter: 导出记录页拆分一级入口模式和带文档上下文返回模式，主导航不会干扰从文档链进入的回看流。
@@ -855,3 +856,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 导出详情页样例流程提醒、导出结果页“结果未准备好”提示、选题篮页当前模式说明统一接到 `WorkspaceMessageBanner` 的 info / warning 反馈层，继续收次级说明区在 Web 桌面端的表达一致性。
 - [x] Flutter: 选择目标文档弹层里的加载失败 / 空态提示、导出结果预览 stub、租户解析区和创建租户弹层里的错误提示统一接到共享反馈壳层，并把弹层摘要 `Chip` 收成 `WorkspaceInfoPill`，继续清理 Web 下残留的原生组件风险点。
 - [x] Flutter: 题目摘要、选题篮批量摘要、文档卡、导出任务卡里的高频原生 `Chip` 收成共享 `WorkspaceInfoPill`，继续降低 Web 下文案渲染与密度漂移风险，并统一桌面端卡片摘要语言。
+- [x] Flutter: 题目详情页的元信息胶囊、文档详情页的上下文摘要胶囊统一接到共享 `WorkspaceInfoPill`，成员页几处“当前处理队列”提示统一到 `WorkspaceMessageBanner.info`，继续收详情页与治理页的次级反馈层一致性。
