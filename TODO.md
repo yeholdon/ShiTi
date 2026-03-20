@@ -857,3 +857,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 选择目标文档弹层里的加载失败 / 空态提示、导出结果预览 stub、租户解析区和创建租户弹层里的错误提示统一接到共享反馈壳层，并把弹层摘要 `Chip` 收成 `WorkspaceInfoPill`，继续清理 Web 下残留的原生组件风险点。
 - [x] Flutter: 题目摘要、选题篮批量摘要、文档卡、导出任务卡里的高频原生 `Chip` 收成共享 `WorkspaceInfoPill`，继续降低 Web 下文案渲染与密度漂移风险，并统一桌面端卡片摘要语言。
 - [x] Flutter: 题目详情页的元信息胶囊、文档详情页的上下文摘要胶囊统一接到共享 `WorkspaceInfoPill`，成员页几处“当前处理队列”提示统一到 `WorkspaceMessageBanner.info`，继续收详情页与治理页的次级反馈层一致性。
+- [x] Flutter: 首页“当前聚焦”卡接入 `WorkspacePanel + WorkspaceMessageBanner.warning`，成员页统计卡和快速视图卡切到统一 `WorkspacePanel` 壳层，继续收首页与治理页摘要区在 Web 桌面端的卡片语言。

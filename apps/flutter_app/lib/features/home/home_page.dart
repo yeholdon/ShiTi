@@ -15,6 +15,13 @@ import '../shared/primary_navigation_bar.dart';
 import '../shared/primary_page_scroll_memory.dart';
 import '../shared/workspace_shell.dart';
 
+bool _hasWorkspaceSession() => AppServices.instance.session != null;
+
+bool _hasWorkspaceTenant() => AppServices.instance.activeTenant != null;
+
+bool _canLoadRemoteWorkspaceData() =>
+    AppConfig.useMockData || (_hasWorkspaceSession() && _hasWorkspaceTenant());
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -48,7 +55,25 @@ class _HomePageState extends State<HomePage> {
     PrimaryPageScrollMemory.update(_pageKey, _scrollController.offset);
   }
 
+  Future<bool> _ensureWorkspaceAccess() async {
+    if (AppConfig.useMockData) {
+      return true;
+    }
+    if (!_hasWorkspaceSession()) {
+      await Navigator.of(context).pushNamed(AppRouter.login);
+      return false;
+    }
+    if (!_hasWorkspaceTenant()) {
+      await Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
+      return false;
+    }
+    return true;
+  }
+
   Future<_WorkspaceSnapshot> _loadSnapshot() async {
+    if (!_canLoadRemoteWorkspaceData()) {
+      return _buildEntrySnapshot();
+    }
     final services = AppServices.instance;
     final questions = await services.questionRepository.listQuestions(
       filters: const LibraryFilterState(),
@@ -174,6 +199,66 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  _WorkspaceSnapshot _buildEntrySnapshot() {
+    final hasSession = _hasWorkspaceSession();
+    final hasTenant = _hasWorkspaceTenant();
+    final activeTenant = AppServices.instance.activeTenant;
+    final nextStepLabel = !hasSession
+        ? '登录'
+        : !hasTenant
+            ? '选择租户'
+            : '进入工作区';
+    final nextStepDetail = !hasSession
+        ? '先建立账号会话，再继续加载真实题库、文档和导出数据。'
+        : !hasTenant
+            ? '当前会话已存在，接下来只需要绑定一个租户工作区。'
+            : '远程工作区上下文已经完整，可以继续进入内容流。';
+    final focusTitle = !hasSession
+        ? '先登录，再进入真实工作区'
+        : !hasTenant
+            ? '先选择租户，再加载工作台快照'
+            : '工作区上下文已经就绪';
+    final tenantLabel =
+        hasTenant ? (activeTenant?.code ?? activeTenant?.name ?? '已选择') : '未选择';
+
+    return _WorkspaceSnapshot(
+      cards: <_SummaryCardData>[
+        _SummaryCardData(
+          title: '会话状态',
+          value: hasSession ? '已登录' : '未登录',
+          detail: hasSession
+              ? '当前账号：${AppServices.instance.session?.username ?? 'unknown'}'
+              : '先建立登录会话后，首页才会加载真实工作区数据。',
+        ),
+        _SummaryCardData(
+          title: '租户上下文',
+          value: tenantLabel,
+          detail: hasTenant
+              ? '当前工作区：${activeTenant?.name ?? tenantLabel}'
+              : '还没有绑定租户，题库、文档和导出数据暂不加载。',
+        ),
+        _SummaryCardData(
+          title: '下一步',
+          value: nextStepLabel,
+          detail: nextStepDetail,
+        ),
+      ],
+      tasks: <_TaskData>[
+        _TaskData(
+          title: nextStepLabel == '进入工作区' ? '工作区已就绪' : '先完成入口准备',
+          detail: nextStepDetail,
+        ),
+      ],
+      focusTitle: focusTitle,
+      focusBasketLabel: '待连接',
+      focusDocumentLabel: '待连接',
+      focusExportLabel: '待连接',
+      questionCount: 0,
+      documentCount: 0,
+      basketCount: 0,
+    );
+  }
+
   void _reloadSnapshot() {
     setState(() {
       _snapshotFuture = _loadSnapshot();
@@ -181,6 +266,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _createDocumentFromHome() async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     final created = await showCreateDocumentDialog(context);
     if (created == null || !mounted) {
       return;
@@ -202,6 +293,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openTask(_TaskData task) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     switch (task.action) {
       case _TaskAction.document:
         final document = task.document;
@@ -239,6 +336,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openSummaryCard(_SummaryCardData card) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     switch (card.action) {
       case _WorkspaceCardAction.library:
         PrimaryNavigationBar.navigateToSection(
@@ -267,6 +370,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openFocusTarget(_WorkspaceFocusTarget target) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     switch (target) {
       case _WorkspaceFocusTarget.basket:
         await Navigator.of(context).pushNamed(AppRouter.basket);
@@ -288,6 +397,34 @@ class _HomePageState extends State<HomePage> {
       case _WorkspaceFocusTarget.none:
         return;
     }
+    if (!mounted) {
+      return;
+    }
+    _reloadSnapshot();
+  }
+
+  Future<void> _openSectionFromEntry(PrimaryAppSection section) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    PrimaryNavigationBar.navigateToSection(
+      context,
+      section,
+      resetScrollOffset: true,
+    );
+  }
+
+  Future<void> _openBasketFromEntry() async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).pushNamed(AppRouter.basket);
     if (!mounted) {
       return;
     }
@@ -367,6 +504,9 @@ class _HomePageState extends State<HomePage> {
                                 wide: wide,
                                 snapshot: snapshot,
                                 onRefresh: _reloadSnapshot,
+                                onOpenLibrary: () => _openSectionFromEntry(
+                                  PrimaryAppSection.library,
+                                ),
                                 onOpenFocus: _openFocusTarget,
                               );
                             },
@@ -382,7 +522,15 @@ class _HomePageState extends State<HomePage> {
                             const _RemoteWorkspaceProbeCard(),
                           const SizedBox(height: 24),
                           _WorkspaceEntryStrip(
-                              onCreateDocument: _createDocumentFromHome),
+                            onCreateDocument: _createDocumentFromHome,
+                            onOpenBasket: _openBasketFromEntry,
+                            onOpenDocuments: () => _openSectionFromEntry(
+                              PrimaryAppSection.documents,
+                            ),
+                            onOpenExports: () => _openSectionFromEntry(
+                              PrimaryAppSection.exports,
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           FutureBuilder<_WorkspaceSnapshot>(
                             future: _snapshotFuture,
@@ -567,6 +715,12 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
   late Future<_RemoteWorkspaceProbeResult> _probeFuture = _probe();
 
   Future<_RemoteWorkspaceProbeResult> _probe() async {
+    if (!_canLoadRemoteWorkspaceData()) {
+      return const _RemoteWorkspaceProbeResult(
+        questionCount: 0,
+        documentCount: 0,
+      );
+    }
     final services = AppServices.instance;
     final questions = await services.questionRepository.listQuestions(
       filters: const LibraryFilterState(),
@@ -586,8 +740,8 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
 
   @override
   Widget build(BuildContext context) {
-    final hasSession = AppServices.instance.session != null;
-    final hasTenant = AppServices.instance.activeTenant != null;
+    final hasSession = _hasWorkspaceSession();
+    final hasTenant = _hasWorkspaceTenant();
     final compact = MediaQuery.sizeOf(context).width < 640;
     return WorkspacePanel(
       padding: EdgeInsets.all(compact ? 14 : 20),
@@ -958,12 +1112,14 @@ class _HeroSection extends StatelessWidget {
     required this.wide,
     required this.snapshot,
     required this.onRefresh,
+    required this.onOpenLibrary,
     required this.onOpenFocus,
   });
 
   final bool wide;
   final AsyncSnapshot<_WorkspaceSnapshot> snapshot;
   final VoidCallback onRefresh;
+  final VoidCallback onOpenLibrary;
   final ValueChanged<_WorkspaceFocusTarget> onOpenFocus;
 
   @override
@@ -987,7 +1143,11 @@ class _HeroSection extends StatelessWidget {
       child: wide
           ? Row(
               children: [
-                const Expanded(child: _HeroCopy()),
+                Expanded(
+                  child: _HeroCopy(
+                    onOpenLibrary: onOpenLibrary,
+                  ),
+                ),
                 SizedBox(width: compact ? 16 : 24),
                 Expanded(
                   child: _HeroPanel(
@@ -1001,7 +1161,9 @@ class _HeroSection extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _HeroCopy(),
+                _HeroCopy(
+                  onOpenLibrary: onOpenLibrary,
+                ),
                 SizedBox(height: compact ? 16 : 20),
                 _HeroPanel(
                   snapshot: snapshot,
@@ -1015,7 +1177,11 @@ class _HeroSection extends StatelessWidget {
 }
 
 class _HeroCopy extends StatelessWidget {
-  const _HeroCopy();
+  const _HeroCopy({
+    required this.onOpenLibrary,
+  });
+
+  final VoidCallback onOpenLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -1071,13 +1237,7 @@ class _HeroCopy extends StatelessWidget {
               label: Text(compact ? '登录' : '登录工作台'),
             ),
             FilledButton.tonalIcon(
-              onPressed: () {
-                PrimaryNavigationBar.navigateToSection(
-                  context,
-                  PrimaryAppSection.library,
-                  resetScrollOffset: true,
-                );
-              },
+              onPressed: onOpenLibrary,
               icon: const Icon(Icons.search_outlined),
               label: Text(compact ? '题库' : '打开题库'),
             ),
@@ -1091,9 +1251,15 @@ class _HeroCopy extends StatelessWidget {
 class _WorkspaceEntryStrip extends StatelessWidget {
   const _WorkspaceEntryStrip({
     required this.onCreateDocument,
+    required this.onOpenBasket,
+    required this.onOpenDocuments,
+    required this.onOpenExports,
   });
 
   final VoidCallback onCreateDocument;
+  final VoidCallback onOpenBasket;
+  final VoidCallback onOpenDocuments;
+  final VoidCallback onOpenExports;
 
   @override
   Widget build(BuildContext context) {
@@ -1156,31 +1322,17 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 label: Text(compact ? '租户' : '租户切换'),
               ),
               FilledButton.tonalIcon(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(AppRouter.basket);
-                },
+                onPressed: onOpenBasket,
                 icon: const Icon(Icons.collections_bookmark_outlined),
                 label: const Text('选题篮'),
               ),
               FilledButton.tonalIcon(
-                onPressed: () {
-                  PrimaryNavigationBar.navigateToSection(
-                    context,
-                    PrimaryAppSection.documents,
-                    resetScrollOffset: true,
-                  );
-                },
+                onPressed: onOpenDocuments,
                 icon: const Icon(Icons.description_outlined),
                 label: Text(compact ? '文档' : '文档工作区'),
               ),
               FilledButton.tonalIcon(
-                onPressed: () {
-                  PrimaryNavigationBar.navigateToSection(
-                    context,
-                    PrimaryAppSection.exports,
-                    resetScrollOffset: true,
-                  );
-                },
+                onPressed: onOpenExports,
                 icon: const Icon(Icons.cloud_outlined),
                 label: Text(compact ? '导出' : '导出记录'),
               ),
@@ -1215,12 +1367,9 @@ class _HeroPanel extends StatelessWidget {
     final documentLabel = hasError ? '需处理' : data?.focusDocumentLabel ?? '--';
     final exportLabel = hasError ? '需处理' : data?.focusExportLabel ?? '--';
     final errorMessage = _workspaceLoadMessage(error);
-    return Container(
+    return WorkspacePanel(
       padding: workspacePanelPadding(context),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
+      borderRadius: 22,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1235,12 +1384,10 @@ class _HeroPanel extends StatelessWidget {
           ),
           if (hasError) ...[
             const SizedBox(height: 10),
-            Text(
-              errorMessage,
-              style: const TextStyle(
-                height: 1.45,
-                color: TelegramPalette.warningText,
-              ),
+            WorkspaceMessageBanner.warning(
+              title: '工作台快照暂时不可用',
+              message: errorMessage,
+              padding: const EdgeInsets.all(12),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1995,6 +2142,9 @@ class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
   late Future<List<QuestionSummary>> _basketFuture = _loadBasket();
 
   Future<List<QuestionSummary>> _loadBasket() {
+    if (!_canLoadRemoteWorkspaceData()) {
+      return Future<List<QuestionSummary>>.value(const <QuestionSummary>[]);
+    }
     return AppServices.instance.questionRepository.listBasketQuestions();
   }
 
@@ -2024,159 +2174,202 @@ class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final desktopWide = MediaQuery.sizeOf(context).width >= 1180;
+    final hasSession = _hasWorkspaceSession();
+    final hasTenant = _hasWorkspaceTenant();
     return Container(
       padding: workspacePanelPadding(context),
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(24)),
-      child: FutureBuilder<List<QuestionSummary>>(
-        future: _basketFuture,
-        builder: (context, snapshot) {
-          final questions = snapshot.data ?? const <QuestionSummary>[];
-          final questionCount = questions.length;
-          final averageDifficulty = questionCount == 0
-              ? 0.0
-              : questions
-                      .map((question) => question.difficulty)
-                      .reduce((left, right) => left + right) /
-                  questionCount;
-          final chapterCounts = <String, int>{};
-          final subjectCounts = <String, int>{};
-          for (final question in questions) {
-            final chapter =
-                question.chapter.trim().isEmpty ? '未标注章节' : question.chapter;
-            chapterCounts.update(chapter, (value) => value + 1,
-                ifAbsent: () => 1);
-            final subject =
-                question.subject.trim().isEmpty ? '未标注学科' : question.subject;
-            subjectCounts.update(subject, (value) => value + 1,
-                ifAbsent: () => 1);
-          }
-          final topChapters = chapterCounts.entries.toList()
-            ..sort((left, right) => right.value.compareTo(left.value));
-          final topSubjects = subjectCounts.entries.toList()
-            ..sort((left, right) => right.value.compareTo(left.value));
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '选题篮',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: '刷新选题篮',
-                    onPressed: _reload,
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (!snapshot.hasData)
-                const Text('正在同步当前选题篮状态...')
-              else ...[
-                if (desktopWide)
-                  const Text(
-                    '当前摘要',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                      color: TelegramPalette.textMuted,
-                    ),
-                  ),
-                if (desktopWide) const SizedBox(height: 8),
-                Text(
-                  questionCount == 0
-                      ? '当前选题篮为空。'
-                      : '当前已选 $questionCount 题，平均难度 ${averageDifficulty.toStringAsFixed(1)}。',
+      child: !AppConfig.useMockData && (!hasSession || !hasTenant)
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '选题篮',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                 ),
-                if (questionCount > 0) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      WorkspaceMetricPill(
-                          label: '已选题目', value: '$questionCount'),
-                      WorkspaceMetricPill(
-                        label: '平均难度',
-                        value: averageDifficulty.toStringAsFixed(1),
-                      ),
-                      if (topSubjects.isNotEmpty)
-                        WorkspaceMetricPill(
-                          label: '高频学科',
-                          value: topSubjects.first.key,
-                        ),
-                      if (topChapters.isNotEmpty)
-                        WorkspaceMetricPill(
-                          label: '高频章节',
-                          value: topChapters.first.key,
-                        ),
-                    ],
-                  ),
-                ],
                 const SizedBox(height: 12),
-                if (desktopWide)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      '下一步',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                        color: TelegramPalette.textMuted,
-                      ),
-                    ),
+                const Text(
+                  '当前还没有完整的工作区上下文。先登录并选择租户后，这里才会同步真实选题篮状态。',
+                  style: TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
                   ),
+                ),
+                const SizedBox(height: 14),
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: compact ? 8 : 10,
+                  runSpacing: compact ? 8 : 10,
                   children: [
+                    if (!hasSession)
+                      FilledButton.tonalIcon(
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed(AppRouter.login),
+                        icon: const Icon(Icons.login),
+                        label: Text(compact ? '登录' : '先登录'),
+                      ),
                     FilledButton.tonalIcon(
-                      onPressed: _openLibrary,
-                      icon: const Icon(Icons.travel_explore_outlined),
-                      label: Text(compact ? '挑题' : '继续挑题'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: _openBasket,
-                      icon: const Icon(Icons.collections_bookmark_outlined),
-                      label: Text(compact ? '选题篮' : '查看选题篮'),
+                      onPressed: () => Navigator.of(context)
+                          .pushNamed(AppRouter.tenantSwitch),
+                      icon: const Icon(Icons.apartment_outlined),
+                      label: Text(compact ? '租户' : '选择租户'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                if (questionCount == 0)
-                  const Text(
-                    '建议先从题库按教材、章节或关键词收题，再回到这里做批量编排。',
-                    style: TextStyle(
-                      height: 1.5,
-                      color: TelegramPalette.textMuted,
-                    ),
-                  )
-                else ...[
-                  const Text('按学科分布：'),
-                  const SizedBox(height: 8),
-                  ...topSubjects.take(3).map(
-                        (entry) => Text('${entry.key} ${entry.value} 题'),
-                      ),
-                  const SizedBox(height: 12),
-                  const Text('按章节分布：'),
-                  const SizedBox(height: 8),
-                  ...topChapters.take(3).map(
-                        (entry) => Text('${entry.key} ${entry.value} 题'),
-                      ),
-                ],
               ],
-            ],
-          );
-        },
-      ),
+            )
+          : FutureBuilder<List<QuestionSummary>>(
+              future: _basketFuture,
+              builder: (context, snapshot) {
+                final questions = snapshot.data ?? const <QuestionSummary>[];
+                final questionCount = questions.length;
+                final averageDifficulty = questionCount == 0
+                    ? 0.0
+                    : questions
+                            .map((question) => question.difficulty)
+                            .reduce((left, right) => left + right) /
+                        questionCount;
+                final chapterCounts = <String, int>{};
+                final subjectCounts = <String, int>{};
+                for (final question in questions) {
+                  final chapter = question.chapter.trim().isEmpty
+                      ? '未标注章节'
+                      : question.chapter;
+                  chapterCounts.update(chapter, (value) => value + 1,
+                      ifAbsent: () => 1);
+                  final subject = question.subject.trim().isEmpty
+                      ? '未标注学科'
+                      : question.subject;
+                  subjectCounts.update(subject, (value) => value + 1,
+                      ifAbsent: () => 1);
+                }
+                final topChapters = chapterCounts.entries.toList()
+                  ..sort((left, right) => right.value.compareTo(left.value));
+                final topSubjects = subjectCounts.entries.toList()
+                  ..sort((left, right) => right.value.compareTo(left.value));
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '选题篮',
+                            style: TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: '刷新选题篮',
+                          onPressed: _reload,
+                          icon: const Icon(Icons.refresh),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (!snapshot.hasData)
+                      const Text('正在同步当前选题篮状态...')
+                    else ...[
+                      if (desktopWide)
+                        const Text(
+                          '当前摘要',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: TelegramPalette.textMuted,
+                          ),
+                        ),
+                      if (desktopWide) const SizedBox(height: 8),
+                      Text(
+                        questionCount == 0
+                            ? '当前选题篮为空。'
+                            : '当前已选 $questionCount 题，平均难度 ${averageDifficulty.toStringAsFixed(1)}。',
+                      ),
+                      if (questionCount > 0) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            WorkspaceMetricPill(
+                                label: '已选题目', value: '$questionCount'),
+                            WorkspaceMetricPill(
+                              label: '平均难度',
+                              value: averageDifficulty.toStringAsFixed(1),
+                            ),
+                            if (topSubjects.isNotEmpty)
+                              WorkspaceMetricPill(
+                                label: '高频学科',
+                                value: topSubjects.first.key,
+                              ),
+                            if (topChapters.isNotEmpty)
+                              WorkspaceMetricPill(
+                                label: '高频章节',
+                                value: topChapters.first.key,
+                              ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      if (desktopWide)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            '下一步',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                              color: TelegramPalette.textMuted,
+                            ),
+                          ),
+                        ),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          FilledButton.tonalIcon(
+                            onPressed: _openLibrary,
+                            icon: const Icon(Icons.travel_explore_outlined),
+                            label: Text(compact ? '挑题' : '继续挑题'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _openBasket,
+                            icon:
+                                const Icon(Icons.collections_bookmark_outlined),
+                            label: Text(compact ? '选题篮' : '查看选题篮'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      if (questionCount == 0)
+                        const Text(
+                          '建议先从题库按教材、章节或关键词收题，再回到这里做批量编排。',
+                          style: TextStyle(
+                            height: 1.5,
+                            color: TelegramPalette.textMuted,
+                          ),
+                        )
+                      else ...[
+                        const Text('按学科分布：'),
+                        const SizedBox(height: 8),
+                        ...topSubjects.take(3).map(
+                              (entry) => Text('${entry.key} ${entry.value} 题'),
+                            ),
+                        const SizedBox(height: 12),
+                        const Text('按章节分布：'),
+                        const SizedBox(height: 8),
+                        ...topChapters.take(3).map(
+                              (entry) => Text('${entry.key} ${entry.value} 题'),
+                            ),
+                      ],
+                    ],
+                  ],
+                );
+              },
+            ),
     );
   }
 }

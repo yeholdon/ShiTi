@@ -1865,42 +1865,41 @@ class _TenantMemberSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 152,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: TelegramPalette.surfaceAccent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TelegramPalette.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: TelegramPalette.textMuted,
-              fontWeight: FontWeight.w700,
+      child: WorkspacePanel(
+        padding: const EdgeInsets.all(14),
+        borderRadius: 16,
+        backgroundColor: TelegramPalette.surfaceAccent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: TelegramPalette.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            detail,
-            style: const TextStyle(
-              color: TelegramPalette.textSoft,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 4),
+            Text(
+              detail,
+              style: const TextStyle(
+                color: TelegramPalette.textSoft,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1928,44 +1927,43 @@ class _TenantMemberQuickViewCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Ink(
+      child: SizedBox(
         width: 182,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: TelegramPalette.surfaceAccent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: TelegramPalette.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: TelegramPalette.textStrong,
-                fontWeight: FontWeight.w700,
+        child: WorkspacePanel(
+          padding: const EdgeInsets.all(14),
+          borderRadius: 16,
+          backgroundColor: TelegramPalette.surfaceAccent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: TelegramPalette.textStrong,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              detail,
-              style: const TextStyle(
-                color: TelegramPalette.textMuted,
-                height: 1.35,
+              const SizedBox(height: 4),
+              Text(
+                detail,
+                style: const TextStyle(
+                  color: TelegramPalette.textMuted,
+                  height: 1.35,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
