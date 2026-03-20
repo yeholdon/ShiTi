@@ -316,7 +316,7 @@ class _AccountPageState extends State<AccountPage> {
                         _AccountInfoCard(
                           title: '当前租户',
                           icon: Icons.apartment_outlined,
-                          emptyMessage: '当前还没有选中租户。先解析或创建租户，再进入题库和文档工作区。',
+                          emptyMessage: '当前还没有选择租户。先解析或创建租户，再进入题库和文档工作区。',
                           items: [
                             if (activeTenant != null) ('租户名称', activeTenant.name),
                             if (activeTenant != null) ('租户代码', activeTenant.code),
@@ -347,7 +347,7 @@ class _AccountPageState extends State<AccountPage> {
                                 title: '当前租户',
                                 icon: Icons.apartment_outlined,
                                 emptyMessage:
-                                    '当前还没有选中租户。先解析或创建租户，再进入题库和文档工作区。',
+                                    '当前还没有选择租户。先解析或创建租户，再进入题库和文档工作区。',
                                 items: [
                                   if (activeTenant != null)
                                     ('租户名称', activeTenant.name),
