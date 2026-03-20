@@ -11,6 +11,7 @@ url="$1"
 output_path="$2"
 delay_seconds="${CAPTURE_DELAY_SECONDS:-1}"
 max_poll_attempts="${CAPTURE_MAX_POLL_ATTEMPTS:-20}"
+post_load_delay_seconds="${CAPTURE_POST_LOAD_DELAY_SECONDS:-2}"
 window_left="${CAPTURE_WINDOW_LEFT:-160}"
 window_top="${CAPTURE_WINDOW_TOP:-96}"
 window_right="${CAPTURE_WINDOW_RIGHT:-1520}"
@@ -34,7 +35,7 @@ tell application "Microsoft Edge"
     end if
     delay 0.5
   end repeat
-  delay 0.5
+  delay ${post_load_delay_seconds}
   get bounds of front window
 end tell
 APPLESCRIPT

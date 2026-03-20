@@ -1189,7 +1189,7 @@ class _HeroSection extends StatelessWidget {
                 ),
                 SizedBox(width: compact ? 16 : 24),
                 SizedBox(
-                  width: desktopWidth >= 1360 ? 396 : 372,
+                  width: desktopWidth >= 1440 ? 376 : 344,
                   child: _HeroPanel(
                     snapshot: snapshot,
                     onRefresh: onRefresh,
