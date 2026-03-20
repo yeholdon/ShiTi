@@ -561,22 +561,58 @@ class _HomePageState extends State<HomePage> {
                                   else if (!snapshot.hasData)
                                     const _WorkspaceLoadingCard(),
                                   if (cards.isNotEmpty) ...[
-                                    Wrap(
-                                      spacing: 16,
-                                      runSpacing: 16,
-                                      children: cards
-                                          .map(
-                                            (card) => _SummaryCard(
-                                              card: card,
-                                              wide: wide,
-                                              onTap: card.action ==
-                                                      _WorkspaceCardAction.none
-                                                  ? null
-                                                  : () =>
-                                                      _openSummaryCard(card),
-                                            ),
-                                          )
-                                          .toList(),
+                                    LayoutBuilder(
+                                      builder: (context, cardConstraints) {
+                                        final desktopCardRow =
+                                            cardConstraints.maxWidth >= 1180 &&
+                                                cards.length <= 3;
+                                        if (desktopCardRow) {
+                                          return Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              for (var index = 0;
+                                                  index < cards.length;
+                                                  index++) ...[
+                                                Expanded(
+                                                  child: _SummaryCard(
+                                                    card: cards[index],
+                                                    wide: false,
+                                                    onTap: cards[index].action ==
+                                                            _WorkspaceCardAction
+                                                                .none
+                                                        ? null
+                                                        : () =>
+                                                            _openSummaryCard(
+                                                              cards[index],
+                                                            ),
+                                                  ),
+                                                ),
+                                                if (index != cards.length - 1)
+                                                  const SizedBox(width: 16),
+                                              ],
+                                            ],
+                                          );
+                                        }
+                                        return Wrap(
+                                          spacing: 16,
+                                          runSpacing: 16,
+                                          children: cards
+                                              .map(
+                                                (card) => _SummaryCard(
+                                                  card: card,
+                                                  wide: wide,
+                                                  onTap: card.action ==
+                                                          _WorkspaceCardAction
+                                                              .none
+                                                      ? null
+                                                      : () =>
+                                                          _openSummaryCard(card),
+                                                ),
+                                              )
+                                              .toList(),
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 24),
                                   ],
