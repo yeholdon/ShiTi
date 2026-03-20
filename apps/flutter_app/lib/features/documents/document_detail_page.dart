@@ -4484,6 +4484,25 @@ class _DocumentHeroCard extends StatelessWidget {
   final int? liveLayoutCount;
   final bool highlightLatestExport;
 
+  String _exportStatusLabel(String status) {
+    switch (status) {
+      case 'not_started':
+        return '未导出';
+      case 'pending':
+        return '待处理';
+      case 'running':
+        return '处理中';
+      case 'succeeded':
+        return '已完成';
+      case 'failed':
+        return '失败';
+      case 'canceled':
+        return '已取消';
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentQuestionCount = liveQuestionCount ?? document.questionCount;
@@ -4494,6 +4513,9 @@ class _DocumentHeroCard extends StatelessWidget {
     final detail = highlightLatestExport
         ? '当前正在回看这份文档最近一次导出后的状态。接下来可以继续编辑内容，或重新发起导出。'
         : '当前正在编辑这份文档。接下来可以补题、整理版式，或查看最近一次导出。';
+    final latestExportStatusLabel = _exportStatusLabel(
+      document.latestExportStatus,
+    );
 
     return WorkspacePanel(
       padding: const EdgeInsets.all(24),
@@ -4540,7 +4562,7 @@ class _DocumentHeroCard extends StatelessWidget {
               WorkspaceMetricPill(label: '排版元素', value: '$currentLayoutCount'),
               WorkspaceMetricPill(
                 label: '最近导出',
-                value: document.latestExportStatus,
+                value: latestExportStatusLabel,
                 highlight: document.latestExportStatus != 'not_started',
               ),
               WorkspaceMetricPill(
@@ -4576,7 +4598,7 @@ class _DocumentHeroCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '你刚刚查看的是这份文档最近一次导出任务，当前状态：${document.latestExportStatus}。',
+                      '你刚刚查看的是这份文档最近一次导出任务，当前状态：$latestExportStatusLabel。',
                       style: const TextStyle(
                         height: 1.5,
                         color: TelegramPalette.textStrong,

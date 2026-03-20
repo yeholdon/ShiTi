@@ -118,6 +118,7 @@ When work status changes, update this file in the same change.
   - Flutter runtime mode is now switchable with `--dart-define=SHITI_USE_MOCK_DATA=true|false` instead of a hardcoded constant
   - remote HTTP failures are now surfaced as typed client exceptions, and login, tenant selection, and library pages show explicit remote-mode error states instead of failing silently
   - home, documents, and exports pages now also surface current mode/session/tenant context and explicit remote-mode failure/empty states
+  - document detail hero now maps latest export status into user-facing Chinese labels, so Web desktop screenshots no longer expose raw backend values like `succeeded`
   - adding a question now goes through a shared “choose target document” picker instead of always forcing the default local handout
   - document detail now surfaces current mode/session/tenant context and explicit remote-mode load/action failures for reorder, remove, layout insertion, and export creation
   - home, library, and documents pages now expose direct “登录 / 选择租户” guidance actions in remote mode instead of only passive status text
