@@ -41,7 +41,7 @@ end tell
 APPLESCRIPT
 )"
 
-tmp_capture="$(mktemp "/tmp/edge-window-full.XXXXXX.png")"
+tmp_capture="$(mktemp -t edge-window-full)"
 screencapture -x "$tmp_capture"
 
 python3 - "$tmp_capture" "$output_path" "$bounds" <<'PY'

@@ -868,3 +868,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页中段入口条在桌面端拆成“继续工作 / 工作区设置”两组，不再把六个入口按钮混成一排，减少 Edge 截图里入口条层级不清、按钮显得拥挤的问题。
 - [x] Tooling: 增加 `scripts/capture-edge-window.sh`，统一用“激活真实 Edge 窗口 + 全屏截图后按窗口 bounds 裁切”的方式做 Web 桌面回归，避免首页类页面在本机上反复出现 Edge headless 不稳定落图的问题。
 - [x] Flutter: 首页 hero 右侧“当前聚焦” rail 在常见桌面宽度下再收窄一档，给主标题和说明文留出更多主列空间，减少 Edge 桌面截图里主标题过早换行的问题。
+- [x] Tooling: 修复 `scripts/capture-edge-window.sh` 在本机连续抓取多个页面时偶发的 `mktemp ... File exists` 问题，确保 Edge 桌面回归可以稳定串行跑多张截图。
