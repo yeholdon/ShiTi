@@ -85,6 +85,12 @@ bounds="${window_payload#*|}"
 
 tmp_capture="$(mktemp -t edge-window-full)"
 for ((capture_attempt = 1; capture_attempt <= max_capture_attempts; capture_attempt++)); do
+  osascript <<'APPLESCRIPT' >/dev/null
+tell application "Microsoft Edge"
+  activate
+end tell
+APPLESCRIPT
+  sleep 0.2
   screencapture -x "$tmp_capture"
 
   capture_status="$(
