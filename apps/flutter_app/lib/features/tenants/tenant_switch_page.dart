@@ -141,7 +141,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
     return Scaffold(
-      appBar: AppBar(title: const Text('选择机构工作区')),
+      appBar: AppBar(title: const Text('选择机构')),
       body: WorkspaceBackdrop(
         child: SafeArea(
           child: workspaceConstrainedContent(
@@ -224,7 +224,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '当前账号还没有已加入的机构。你可以直接输入机构代码解析，或先创建一个新的机构工作区。',
+                              '当前账号还没有已加入的机构。你可以直接输入机构代码解析，或先创建一个新的机构。',
                               style: TextStyle(
                                 height: 1.5,
                                 color: TelegramPalette.textMuted,
@@ -246,7 +246,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '当前还没有可显示的机构工作区。',
+                              '当前还没有可显示的机构。',
                               style: TextStyle(
                                 height: 1.5,
                                 color: TelegramPalette.textMuted,
@@ -569,7 +569,7 @@ class _TenantHeroSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const WorkspaceEyebrow(
-                label: '机构工作区',
+                label: '机构',
                 icon: Icons.domain_verification_outlined,
               ),
               const SizedBox(height: 14),
@@ -671,7 +671,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           const Text(
-            '解析机构代码，或直接创建新的学校或教培机构工作区。',
+            '解析机构代码，或直接创建新的学校或教培机构。',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,

@@ -211,7 +211,7 @@ class _HomePageState extends State<HomePage> {
     final nextStepDetail = !hasSession
         ? '先建立账号会话，再继续加载真实题库、文档和导出数据。'
         : !hasTenant
-            ? '当前会话已存在，接下来只需要选择一个机构工作区。'
+            ? '当前会话已存在，接下来只需要选择一个机构。'
             : '工作区上下文已经完整，可以继续进入内容流。';
     final focusTitle = !hasSession
         ? '先登录，再进入真实工作区'

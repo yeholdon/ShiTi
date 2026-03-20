@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _registerMode ? '注册成功，继续选择机构工作区' : '登录成功，继续选择机构工作区',
+            _registerMode ? '注册成功，继续选择机构' : '登录成功，继续选择机构',
           ),
         ),
       );
@@ -593,8 +593,8 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 14),
           Text(
             _registerMode
-                ? '先创建账号，再进入工作区选择。完成后可以继续去题库、文档和导出页工作。'
-                : '先建立登录会话，再进入工作区选择。登录状态会在本机保留，之后可以直接回到上次的工作流。',
+                ? '先创建账号，再进入机构选择。完成后可以继续去题库、文档和导出页工作。'
+                : '先建立登录会话，再进入机构选择。登录状态会在本机保留，之后可以直接回到上次的工作流。',
             style: const TextStyle(
               height: 1.55,
               color: TelegramPalette.textMuted,
@@ -689,7 +689,7 @@ class _LoginPageState extends State<LoginPage> {
                     ? '正在建立会话...'
                     : _registerMode
                         ? '注册并进入机构选择'
-                        : '登录并进入工作区选择',
+                        : '登录并进入机构选择',
               ),
             ),
           ),
@@ -817,7 +817,7 @@ class _LoginHeroPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const WorkspaceBulletPoint(
-            text: '完成登录后直接衔接机构工作区，不再让用户在入口页失去方向。',
+            text: '完成登录后直接衔接机构选择，不再让用户在入口页失去方向。',
             color: Color(0xFF8BD0FF),
           ),
           const SizedBox(height: 12),
