@@ -572,8 +572,8 @@ class _AccountHeroSection extends StatelessWidget {
       borderRadius: 28,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final useDesktopHero = constraints.maxWidth >= 960;
-          final leadingContent = Column(
+          final headlineSize = constraints.maxWidth >= 960 ? 26.0 : 28.0;
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const WorkspaceEyebrow(
@@ -581,19 +581,17 @@ class _AccountHeroSection extends StatelessWidget {
                 icon: Icons.account_circle_outlined,
               ),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 '先确认当前身份和租户，再回到教学工作台继续处理内容。',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: headlineSize,
                   fontWeight: FontWeight.w800,
                   height: 1.15,
                 ),
               ),
               const SizedBox(height: 10),
               ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: useDesktopHero ? 560 : double.infinity,
-                ),
+                constraints: const BoxConstraints(maxWidth: 760),
                 child: const Text(
                   '这里专门用来确认身份和工作区，再回到题库、文档或导出继续处理内容。',
                   style: TextStyle(
@@ -602,44 +600,8 @@ class _AccountHeroSection extends StatelessWidget {
                   ),
                 ),
               ),
-              if (!useDesktopHero) ...[
-                const SizedBox(height: 18),
-                summaryMetrics,
-              ],
-            ],
-          );
-
-          if (!useDesktopHero) {
-            return leadingContent;
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: leadingContent),
-              const SizedBox(width: 28),
-              SizedBox(
-                width: 340,
-                child: WorkspacePanel(
-                  padding: const EdgeInsets.all(18),
-                  backgroundColor: TelegramPalette.surfaceRaised,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '当前摘要',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      summaryMetrics,
-                    ],
-                  ),
-                ),
-              ),
+              const SizedBox(height: 18),
+              summaryMetrics,
             ],
           );
         },

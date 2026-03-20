@@ -911,3 +911,5 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页中段入口条在桌面端把“继续工作 / 工作区设置”从上下标题+按钮堆叠收成内联动作行，进一步压低入口条高度，并让下面的摘要卡在真实 Edge 首页里再多露出一截。
 - [x] Flutter: 首页 hero 里的“运行模式 / 当前会话”在桌面端从两枚大 pill 收成更紧的行内事实摘要，继续压低主文案区下方的信息高度；构建与真实 Edge 新产物链路已复验通过。
 - [x] Flutter: 首页 hero 在桌面端继续压缩首屏高度，收紧面板 padding、标题节奏、`当前聚焦` rail 和 hero 下方段落间距，减少快照尚未同步时首页第一屏被上半区整体占满的问题。
+- [x] Tooling: `capture-edge-window.sh` 在真正截图前会再次把 Microsoft Edge 拉回前台，减少回归时被 Codex 或其他前台窗口抢焦点、导致截图落错窗口的问题。
+- [x] Flutter: “我的”页 hero 回到更稳定的单列桌面布局，把账号/租户摘要胶囊固定放回说明文下方，避免常见桌面宽度下右侧摘要 rail 被挤出屏幕、首屏只剩一大片空白。
