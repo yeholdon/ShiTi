@@ -132,7 +132,7 @@ with Image.open(src_path) as image:
     near_white_ratio = near_white / total_pixels
     grayscale = sampled.convert("L")
     stat = ImageStat.Stat(grayscale)
-    pixels = list(grayscale.getdata())
+    pixels = list(grayscale.tobytes())
     stddev = stat.stddev[0]
     bright_ratio = sum(1 for value in pixels if value > 235) / len(pixels)
     cropped.save(dest_path)
