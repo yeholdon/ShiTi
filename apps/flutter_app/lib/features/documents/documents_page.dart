@@ -2409,14 +2409,61 @@ class _DocumentsStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return WorkspacePanel(
       padding:
-          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StatusChip(label: '模式', value: modeLabel),
-          _StatusChip(label: '会话', value: sessionLabel),
-          _StatusChip(label: '租户', value: tenantLabel),
+          _StatusRow(label: '模式', value: modeLabel),
+          const SizedBox(height: 8),
+          _StatusRow(label: '会话', value: sessionLabel),
+          const SizedBox(height: 8),
+          _StatusRow(label: '租户', value: tenantLabel),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: TelegramPalette.surfaceAccent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: TelegramPalette.border),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$label：',
+            style: const TextStyle(
+              color: TelegramPalette.textSoft,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: TelegramPalette.textStrong,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
