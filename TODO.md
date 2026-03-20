@@ -934,6 +934,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 创建机构弹层把默认名称和“进入该工作区”提示继续收成纯“机构”语言，避免机构创建链里还混入旧工作区口径。
 - [x] Flutter: 机构切换页顶部说明把“先定位工作区 / 解析工作区代码”继续收成“先定位机构 / 解析机构代码”，让机构列表入口不再混用旧工作区口径。
 - [x] Flutter: 登录页 hero 把“创建账号后继续进入工作区”统一收成“创建账号后继续进入机构选择”，让注册入口和后续动作文案保持一致。
+- [x] Flutter: 机构切换页错误提示把“当前还不能进入工作区”统一收成“当前还不能进入机构”，让机构页内的失败反馈语境保持一致。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
 - [x] Tooling: `capture-edge-window.sh` 在白屏重拍前会重新等待 `loading=false + post-load delay`，文档页这类加载更慢的深链首屏不再因为 reload 后马上截图而持续落成白页。

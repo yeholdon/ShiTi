@@ -702,7 +702,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
           if (errorMessage != null) ...[
             const SizedBox(height: 12),
             WorkspaceMessageBanner.error(
-              title: '当前还不能进入工作区',
+              title: '当前还不能进入机构',
               message: errorMessage!,
             ),
           ],
