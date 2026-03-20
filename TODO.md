@@ -900,3 +900,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页中段入口条在桌面端把“继续工作 / 工作区设置”从上下堆叠收成并排双列，减少入口条高度并让摘要卡在真实 Edge 首页里再多露出一截。
 - [x] Tooling: `capture-edge-window.sh` 在新建抓图窗口后主动清掉多余标签，只保留当前回归页面，避免累积标签页挤占截图顶部空间；经真实 Edge 首页截图复验，回归图已恢复单标签页窗口。
 - [x] Tooling: `capture-edge-window.sh` 增加轻量独占锁，避免并行抓图时多个进程互相抢占 Edge 前台窗口，导致不同页面截图错误落成同一首屏；经并行抓取 `library / exports` 真实 Edge 图复验，两张图已稳定落到各自页面。
+- [x] Flutter: 文档页“当前结果”摘要在桌面端从两行 pill wrap 收成更紧的双列小摘要卡，进一步压低结果摘要区高度，并让筛选区在真实 Edge 首屏里再多露出一截。

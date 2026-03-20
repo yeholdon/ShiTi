@@ -2697,40 +2697,19 @@ class _DocumentsHeader extends StatelessWidget {
           value: feedbackBadgeLabel!,
         ),
     ];
-    final resultChips = <Widget>[
-      _HeaderMetricChip(
-        label: '当前结果文档',
-        value: '$filteredDocumentCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果题目项',
-        value: '$filteredQuestionCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果排版项',
-        value: '$filteredLayoutCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果讲义',
-        value: '$filteredHandoutCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果试卷',
-        value: '$filteredPaperCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果处理中',
-        value: '$filteredPendingExportCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果已完成',
-        value: '$filteredSucceededExportCount',
-      ),
-      _HeaderMetricChip(
-        label: '当前结果失败',
-        value: '$filteredFailedExportCount',
-      ),
+    final resultMetrics = <(String, String)>[
+      ('当前结果文档', '$filteredDocumentCount'),
+      ('当前结果题目项', '$filteredQuestionCount'),
+      ('当前结果排版项', '$filteredLayoutCount'),
+      ('当前结果讲义', '$filteredHandoutCount'),
+      ('当前结果试卷', '$filteredPaperCount'),
+      ('当前结果处理中', '$filteredPendingExportCount'),
+      ('当前结果已完成', '$filteredSucceededExportCount'),
+      ('当前结果失败', '$filteredFailedExportCount'),
     ];
+    final resultChips = resultMetrics
+        .map((entry) => _HeaderMetricChip(label: entry.$1, value: entry.$2))
+        .toList(growable: false);
     return WorkspacePanel(
       padding: workspaceHeroPanelPadding(context),
       child: Column(
@@ -2816,10 +2795,8 @@ class _DocumentsHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: resultChips,
+                      _DesktopMetricGrid(
+                        metrics: resultMetrics,
                       ),
                     ],
                   ),
@@ -3110,6 +3087,85 @@ class _HeaderMetricChip extends StatelessWidget {
           color: TelegramPalette.textStrong,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _DesktopMetricGrid extends StatelessWidget {
+  const _DesktopMetricGrid({
+    required this.metrics,
+  });
+
+  final List<(String, String)> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: metrics
+              .map(
+                (entry) => SizedBox(
+                  width: itemWidth,
+                  child: _DesktopMetricTile(
+                    label: entry.$1,
+                    value: entry.$2,
+                  ),
+                ),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+}
+
+class _DesktopMetricTile extends StatelessWidget {
+  const _DesktopMetricTile({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: TelegramPalette.surfaceAccent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: TelegramPalette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              color: TelegramPalette.textSoft,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: TelegramPalette.textStrong,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
