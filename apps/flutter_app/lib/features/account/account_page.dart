@@ -563,7 +563,7 @@ class _AccountHeroSection extends StatelessWidget {
         ),
         WorkspaceMetricPill(
           label: '当前角色',
-          value: tenantRole ?? '-',
+          value: tenantRole ?? '未选择',
         ),
       ],
     );
