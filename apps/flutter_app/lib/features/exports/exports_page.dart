@@ -2405,10 +2405,20 @@ class _ExportJobCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      Chip(label: Text(_statusLabel(job.status))),
-                      Chip(label: Text(job.format.toUpperCase())),
+                      WorkspaceInfoPill(
+                        label: '状态',
+                        value: _statusLabel(job.status),
+                      ),
+                      WorkspaceInfoPill(
+                        label: '格式',
+                        value: job.format.toUpperCase(),
+                      ),
                       if (job.documentId != null)
-                        const Chip(label: Text('可回文档')),
+                        const WorkspaceInfoPill(
+                          label: '回看',
+                          value: '可回文档',
+                          highlight: true,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 10),

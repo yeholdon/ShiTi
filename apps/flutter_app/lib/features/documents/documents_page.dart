@@ -3113,7 +3113,10 @@ class _DocumentCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Chip(label: Text(document.kind == 'paper' ? '试卷' : '讲义')),
+              WorkspaceInfoPill(
+                label: '类型',
+                value: document.kind == 'paper' ? '试卷' : '讲义',
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -3153,16 +3156,14 @@ class _DocumentCard extends StatelessWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            Chip(
-                              label: Text(
-                                document.kind == 'paper' ? '试卷' : '讲义',
-                              ),
+                            WorkspaceInfoPill(
+                              label: '类型',
+                              value: document.kind == 'paper' ? '试卷' : '讲义',
                             ),
-                            Chip(
-                              label: Text(
-                                _exportStatusLabel(
-                                  document.latestExportStatus,
-                                ),
+                            WorkspaceInfoPill(
+                              label: '导出',
+                              value: _exportStatusLabel(
+                                document.latestExportStatus,
                               ),
                             ),
                           ],
@@ -3206,9 +3207,17 @@ class _DocumentCard extends StatelessWidget {
                 if (highlighted &&
                     feedbackBadgeLabel != null &&
                     feedbackBadgeLabel!.trim().isNotEmpty)
-                  Chip(label: Text(feedbackBadgeLabel!)),
+                  WorkspaceInfoPill(
+                    label: '提示',
+                    value: feedbackBadgeLabel!,
+                    highlight: true,
+                  ),
                 if (highlighted && recentlyAddedQuestionCount != null)
-                  Chip(label: Text('本次新增 $recentlyAddedQuestionCount 题')),
+                  WorkspaceInfoPill(
+                    label: '新增',
+                    value: '$recentlyAddedQuestionCount 题',
+                    highlight: true,
+                  ),
               ],
             ),
           ],

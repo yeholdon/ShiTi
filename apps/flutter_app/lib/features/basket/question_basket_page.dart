@@ -1715,25 +1715,30 @@ class _BasketSelectionBar extends StatelessWidget {
             ),
           ),
           if (selectedCount > 0) ...[
-            Chip(
-              avatar: const Icon(Icons.auto_stories_outlined, size: 18),
-              label: Text('涉及 $selectedSubjectCount 个学科'),
+            WorkspaceInfoPill(
+              icon: Icons.auto_stories_outlined,
+              label: '学科',
+              value: '$selectedSubjectCount',
             ),
-            Chip(
-              avatar: const Icon(Icons.menu_book_outlined, size: 18),
-              label: Text('涉及 $selectedTextbookCount 套教材'),
+            WorkspaceInfoPill(
+              icon: Icons.menu_book_outlined,
+              label: '教材',
+              value: '$selectedTextbookCount',
             ),
-            Chip(
-              avatar: const Icon(Icons.account_tree_outlined, size: 18),
-              label: Text('涉及 $selectedChapterCount 个章节'),
+            WorkspaceInfoPill(
+              icon: Icons.account_tree_outlined,
+              label: '章节',
+              value: '$selectedChapterCount',
             ),
-            Chip(
-              avatar: const Icon(Icons.layers_outlined, size: 18),
-              label: Text('涉及 $selectedStageCount 个学段'),
+            WorkspaceInfoPill(
+              icon: Icons.layers_outlined,
+              label: '学段',
+              value: '$selectedStageCount',
             ),
-            Chip(
-              avatar: const Icon(Icons.looks_outlined, size: 18),
-              label: Text('涉及 $selectedGradeCount 个年级'),
+            WorkspaceInfoPill(
+              icon: Icons.looks_outlined,
+              label: '年级',
+              value: '$selectedGradeCount',
             ),
           ],
           OutlinedButton.icon(

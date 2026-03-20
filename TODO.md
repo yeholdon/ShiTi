@@ -854,3 +854,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 抽共享 `WorkspaceMessageBanner`，并把登录页错误条、成员页权限提示、文档新建/重命名弹层错误提示接到统一反馈壳层，继续收 Secondary feedback 区在 Web 桌面端的层级一致性。
 - [x] Flutter: 导出详情页样例流程提醒、导出结果页“结果未准备好”提示、选题篮页当前模式说明统一接到 `WorkspaceMessageBanner` 的 info / warning 反馈层，继续收次级说明区在 Web 桌面端的表达一致性。
 - [x] Flutter: 选择目标文档弹层里的加载失败 / 空态提示、导出结果预览 stub、租户解析区和创建租户弹层里的错误提示统一接到共享反馈壳层，并把弹层摘要 `Chip` 收成 `WorkspaceInfoPill`，继续清理 Web 下残留的原生组件风险点。
+- [x] Flutter: 题目摘要、选题篮批量摘要、文档卡、导出任务卡里的高频原生 `Chip` 收成共享 `WorkspaceInfoPill`，继续降低 Web 下文案渲染与密度漂移风险，并统一桌面端卡片摘要语言。
