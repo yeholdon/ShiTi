@@ -1385,6 +1385,54 @@ class _FilterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final desktopWide = MediaQuery.sizeOf(context).width >= 1180;
+    final summaryChips = <Widget>[
+      WorkspaceMetricPill(
+        label: '当前结果',
+        value: '${visibleQuestions.length}',
+      ),
+      WorkspaceMetricPill(
+        label: '学科',
+        value:
+            '${_distinctQuestionValues(visibleQuestions.map((q) => q.subject)).length}',
+      ),
+      WorkspaceMetricPill(
+        label: '学段',
+        value:
+            '${_distinctQuestionValues(visibleQuestions.map((q) => q.stage)).length}',
+      ),
+      WorkspaceMetricPill(
+        label: '年级',
+        value:
+            '${_distinctQuestionValues(visibleQuestions.map((q) => q.grade)).length}',
+      ),
+      WorkspaceMetricPill(
+        label: '教材',
+        value:
+            '${_distinctQuestionValues(visibleQuestions.map((q) => q.textbook)).length}',
+      ),
+      WorkspaceMetricPill(
+        label: '章节',
+        value:
+            '${_distinctQuestionValues(visibleQuestions.map((q) => q.chapter)).length}',
+      ),
+      WorkspaceMetricPill(
+        label: '已在篮',
+        value: '$visibleInBasketCount',
+      ),
+      WorkspaceMetricPill(
+        label: '未入篮',
+        value: '$visibleOutOfBasketCount',
+      ),
+    ];
+    final activeFilterChips = _activeFilterEntries
+        .map(
+          (entry) => WorkspaceMetricPill(
+            label: entry.$1,
+            value: entry.$2,
+            highlight: true,
+          ),
+        )
+        .toList(growable: false);
     return WorkspacePanel(
       padding:
           workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
@@ -1413,7 +1461,7 @@ class _FilterCard extends StatelessWidget {
             },
           ),
           const SizedBox(height: 16),
-          if (desktopWide)
+          if (desktopWide && activeFilterChips.isEmpty)
             const Text(
               '结果摘要',
               style: TextStyle(
@@ -1423,77 +1471,74 @@ class _FilterCard extends StatelessWidget {
                 color: TelegramPalette.textMuted,
               ),
             ),
-          if (desktopWide) const SizedBox(height: 8),
-          Wrap(
-            spacing: compact ? 8 : 10,
-            runSpacing: compact ? 8 : 10,
-            children: [
-              WorkspaceMetricPill(
-                label: '当前结果',
-                value: '${visibleQuestions.length}',
-              ),
-              WorkspaceMetricPill(
-                label: '学科',
-                value:
-                    '${_distinctQuestionValues(visibleQuestions.map((q) => q.subject)).length}',
-              ),
-              WorkspaceMetricPill(
-                label: '学段',
-                value:
-                    '${_distinctQuestionValues(visibleQuestions.map((q) => q.stage)).length}',
-              ),
-              WorkspaceMetricPill(
-                label: '年级',
-                value:
-                    '${_distinctQuestionValues(visibleQuestions.map((q) => q.grade)).length}',
-              ),
-              WorkspaceMetricPill(
-                label: '教材',
-                value:
-                    '${_distinctQuestionValues(visibleQuestions.map((q) => q.textbook)).length}',
-              ),
-              WorkspaceMetricPill(
-                label: '章节',
-                value:
-                    '${_distinctQuestionValues(visibleQuestions.map((q) => q.chapter)).length}',
-              ),
-              WorkspaceMetricPill(
-                label: '已在篮',
-                value: '$visibleInBasketCount',
-              ),
-              WorkspaceMetricPill(
-                label: '未入篮',
-                value: '$visibleOutOfBasketCount',
-              ),
-            ],
-          ),
-          if (_activeFilterEntries.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            if (desktopWide)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '已启用条件',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                    color: TelegramPalette.textMuted,
-                  ),
-                ),
-              ),
+          if (desktopWide && activeFilterChips.isEmpty) const SizedBox(height: 8),
+          if (!desktopWide)
             Wrap(
               spacing: compact ? 8 : 10,
               runSpacing: compact ? 8 : 10,
-              children: _activeFilterEntries
-                  .map(
-                    (entry) => WorkspaceMetricPill(
-                      label: entry.$1,
-                      value: entry.$2,
-                      highlight: true,
-                    ),
-                  )
-                  .toList(growable: false),
+              children: summaryChips,
+            )
+          else if (activeFilterChips.isEmpty)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: summaryChips,
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '结果摘要',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: summaryChips,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '已启用条件',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: activeFilterChips,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          if (_activeFilterEntries.isNotEmpty && !desktopWide) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: compact ? 8 : 10,
+              runSpacing: compact ? 8 : 10,
+              children: activeFilterChips,
             ),
           ],
           const SizedBox(height: 16),
