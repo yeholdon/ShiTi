@@ -1455,7 +1455,9 @@ class _HeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 640;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final compact = screenWidth < 640;
+    final desktopRail = screenWidth >= 1100;
     final data = snapshot.data;
     final hasError = snapshot.hasError;
     final error = snapshot.error;
@@ -1466,28 +1468,54 @@ class _HeroPanel extends StatelessWidget {
     final exportLabel = hasError ? '需处理' : data?.focusExportLabel ?? '--';
     final errorMessage = _workspaceLoadMessage(error);
     return WorkspacePanel(
-      padding: workspacePanelPadding(context),
+      padding: workspacePanelPadding(
+        context,
+        mobile: 14,
+        tablet: 16,
+        desktop: 16,
+      ),
       borderRadius: 22,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '当前聚焦',
-            style: TextStyle(fontSize: 12, color: TelegramPalette.textSoft),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '当前聚焦',
+                  style: TextStyle(fontSize: 12, color: TelegramPalette.textSoft),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: Text(compact || desktopRail ? '刷新' : '刷新工作台'),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: desktopRail ? 12 : 14,
+                    vertical: desktopRail ? 8 : 10,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             focusTitle,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: desktopRail ? 20 : 22,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (hasError) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             WorkspaceMessageBanner.warning(
               title: '工作台快照暂时不可用',
               message: errorMessage,
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(desktopRail ? 10 : 12),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Wrap(
               spacing: compact ? 8 : 10,
               runSpacing: compact ? 8 : 10,
@@ -1509,16 +1537,7 @@ class _HeroPanel extends StatelessWidget {
               ],
             ),
           ],
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: Text(compact ? '刷新' : '刷新工作台'),
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _FocusMetric(
             label: '选题篮',
             value: basketLabel,
@@ -1570,14 +1589,14 @@ class _FocusMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
