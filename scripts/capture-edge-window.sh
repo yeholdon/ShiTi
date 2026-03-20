@@ -15,6 +15,7 @@ post_load_delay_seconds="${CAPTURE_POST_LOAD_DELAY_SECONDS:-2}"
 max_capture_attempts="${CAPTURE_MAX_CAPTURE_ATTEMPTS:-4}"
 retry_delay_seconds="${CAPTURE_RETRY_DELAY_SECONDS:-2}"
 blank_threshold="${CAPTURE_BLANK_THRESHOLD:-0.8}"
+bright_threshold="${CAPTURE_BRIGHT_THRESHOLD:-0.95}"
 window_left="${CAPTURE_WINDOW_LEFT:-160}"
 window_top="${CAPTURE_WINDOW_TOP:-96}"
 window_right="${CAPTURE_WINDOW_RIGHT:-1520}"
@@ -99,7 +100,7 @@ APPLESCRIPT
   screencapture -x "$tmp_capture"
 
   capture_status="$(
-    python3 - "$tmp_capture" "$output_path" "$bounds" "$blank_threshold" "$expected_hash" "$final_url" <<'PY'
+    python3 - "$tmp_capture" "$output_path" "$bounds" "$blank_threshold" "$bright_threshold" "$expected_hash" "$final_url" <<'PY'
 import sys
 from pathlib import Path
 
@@ -110,8 +111,9 @@ src_path = Path(sys.argv[1])
 dest_path = Path(sys.argv[2])
 bounds = [int(part.strip()) for part in sys.argv[3].split(",")]
 blank_threshold = float(sys.argv[4])
-expected_hash = sys.argv[5].strip()
-final_url = sys.argv[6].strip()
+bright_threshold = float(sys.argv[5])
+expected_hash = sys.argv[6].strip()
+final_url = sys.argv[7].strip()
 left, top, right, bottom = bounds
 
 with Image.open(src_path) as image:
@@ -128,12 +130,19 @@ with Image.open(src_path) as image:
             if red > 245 and green > 245 and blue > 245:
                 near_white += 1
     near_white_ratio = near_white / total_pixels
-    stat = ImageStat.Stat(sampled.convert("L"))
+    grayscale = sampled.convert("L")
+    stat = ImageStat.Stat(grayscale)
+    pixels = list(grayscale.getdata())
     stddev = stat.stddev[0]
+    bright_ratio = sum(1 for value in pixels if value > 235) / len(pixels)
     cropped.save(dest_path)
 
 hash_mismatch = bool(expected_hash) and f"#{expected_hash}" not in final_url
-blank_like = near_white_ratio >= blank_threshold or (near_white_ratio >= 0.6 and stddev < 12)
+blank_like = (
+    near_white_ratio >= blank_threshold
+    or (near_white_ratio >= 0.6 and stddev < 12)
+    or (bright_ratio >= bright_threshold and stddev < 10)
+)
 print("retry" if blank_like or hash_mismatch else "ok")
 PY
   )"
@@ -143,6 +152,17 @@ PY
   fi
 
   if (( capture_attempt < max_capture_attempts )); then
+    osascript <<APPLESCRIPT >/dev/null
+tell application "Microsoft Edge"
+  activate
+  repeat with browserWindow in windows
+    if (id of browserWindow as text) is "$window_id" then
+      tell active tab of browserWindow to reload
+      exit repeat
+    end if
+  end repeat
+end tell
+APPLESCRIPT
     sleep "$retry_delay_seconds"
   fi
 done

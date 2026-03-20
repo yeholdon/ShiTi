@@ -929,3 +929,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页把“绑定租户”统一收成“选择租户”，让入口提示与登录页、账号页、租户页沿用同一套租户动作口径。
 - [x] Flutter: 前端用户可见的“租户”统一改成“机构”，覆盖登录页、首页、题库、文档、导出、账号页、机构切换页和成员页，并在机构切换页补充“机构可以是学校或教培机构”的解释；内部 `tenant` 技术命名暂不改动。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
+- [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
