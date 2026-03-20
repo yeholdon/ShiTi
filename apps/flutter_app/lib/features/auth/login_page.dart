@@ -581,7 +581,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            _registerMode ? '创建账号后继续进入工作区' : '登录后继续你的教研流程',
+            _registerMode ? '创建账号后继续进入机构选择' : '登录后继续你的教研流程',
             style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
