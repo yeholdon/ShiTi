@@ -690,7 +690,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
             child: Text(
               AppConfig.useMockData
                   ? '样例数据：列表来自本地演示数据'
-                  : '真实工作区：按代码读取机构列表',
+                  : '真实数据：按代码读取机构列表',
               style: TextStyle(
                 color: AppConfig.useMockData
                     ? TelegramPalette.warningText
