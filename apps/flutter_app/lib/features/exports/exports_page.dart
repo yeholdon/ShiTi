@@ -1702,21 +1702,93 @@ class _ExportsStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final compact = screenWidth < 640;
+    final desktopRail = screenWidth >= 1100;
     return WorkspacePanel(
       padding:
-          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StatusChip(label: '模式', value: modeLabel),
-          _StatusChip(label: '会话', value: sessionLabel),
-          _StatusChip(label: '租户', value: tenantLabel),
-          _StatusChip(label: '刷新', value: '每 8 秒自动同步'),
-          FilledButton.tonalIcon(
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh),
-            label: const Text('立即刷新'),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '当前状态',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: TelegramPalette.textSoft,
+                  ),
+                ),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: Text(compact || desktopRail ? '刷新' : '立即刷新'),
+                style: FilledButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: desktopRail ? 12 : 14,
+                    vertical: desktopRail ? 8 : 10,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _StatusRow(label: '模式', value: modeLabel),
+          const SizedBox(height: 8),
+          _StatusRow(label: '会话', value: sessionLabel),
+          const SizedBox(height: 8),
+          _StatusRow(label: '租户', value: tenantLabel),
+          const SizedBox(height: 8),
+          const _StatusRow(label: '刷新', value: '每 8 秒自动同步'),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: TelegramPalette.surfaceAccent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: TelegramPalette.border),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$label：',
+            style: const TextStyle(
+              color: TelegramPalette.textSoft,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: TelegramPalette.textStrong,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
