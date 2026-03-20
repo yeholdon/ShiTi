@@ -540,56 +540,103 @@ class _TenantHeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summaryMetrics = Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        WorkspaceMetricPill(
+          label: '当前模式',
+          value: AppConfig.dataModeLabel,
+          highlight: true,
+        ),
+        WorkspaceMetricPill(
+          label: '活跃租户',
+          value: hasActiveTenant ? (activeTenantName ?? '已选择') : '未选择',
+        ),
+        WorkspaceMetricPill(
+          label: '最近解析',
+          value: resolvedTenantName ?? '还未解析',
+        ),
+      ],
+    );
     return WorkspacePanel(
       padding: const EdgeInsets.all(24),
       borderRadius: 28,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WorkspaceEyebrow(
-            label: '租户工作区',
-            icon: Icons.domain_verification_outlined,
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            '先确认工作区边界，再进入当前租户继续处理题库和文档。',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            useMockData
-                ? '当前使用样例数据，工作区列表和页面反馈都来自本地演示内容。'
-                : '当前连接真实工作区，租户解析和成员权限都会按线上数据返回。',
-            style: const TextStyle(
-              height: 1.5,
-              color: TelegramPalette.textMuted,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useDesktopHero = constraints.maxWidth >= 960;
+          final leadingContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WorkspaceMetricPill(
-                label: '当前模式',
-                value: AppConfig.dataModeLabel,
-                highlight: true,
+              const WorkspaceEyebrow(
+                label: '租户工作区',
+                icon: Icons.domain_verification_outlined,
               ),
-              WorkspaceMetricPill(
-                label: '活跃租户',
-                value: hasActiveTenant ? (activeTenantName ?? '已选择') : '未选择',
+              const SizedBox(height: 14),
+              const Text(
+                '先确认工作区边界，再进入当前租户继续处理题库和文档。',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
               ),
-              WorkspaceMetricPill(
-                label: '最近解析',
-                value: resolvedTenantName ?? '还未解析',
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: useDesktopHero ? 560 : double.infinity,
+                ),
+                child: Text(
+                  useMockData
+                      ? '当前使用样例数据，工作区列表和页面反馈都来自本地演示内容。'
+                      : '当前连接真实工作区，租户解析和成员权限都会按线上数据返回。',
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+              ),
+              if (!useDesktopHero) ...[
+                const SizedBox(height: 18),
+                summaryMetrics,
+              ],
+            ],
+          );
+
+          if (!useDesktopHero) {
+            return leadingContent;
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: leadingContent),
+              const SizedBox(width: 28),
+              SizedBox(
+                width: 320,
+                child: WorkspacePanel(
+                  padding: const EdgeInsets.all(18),
+                  backgroundColor: TelegramPalette.surfaceRaised,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '当前摘要',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: TelegramPalette.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      summaryMetrics,
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

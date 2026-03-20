@@ -892,3 +892,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 文档页桌面端右侧状态 rail 从松散 pill wrap 收成更紧的三行状态列表，减少 hero 高度并让摘要区与筛选区在真实 Edge 首屏里更早露出。
 - [x] Flutter: 账号页 hero 在桌面端拆成“左侧身份说明 + 右侧当前摘要 rail”，减少真实 Edge 宽屏截图里右半边大面积留白的问题，并让账号/租户状态更快进入阅读路径。
 - [x] Flutter: 账号页“账号中心”里的当前账号/当前租户卡片在桌面端改成双栏并排，减少中段首屏只有单列长卡的问题，并让账号安全与后续动作更早露出。
+- [x] Flutter: 租户切换页 hero 在桌面端拆成“左侧工作区说明 + 右侧当前摘要 rail”，减少真实 Edge 宽屏截图里右半边大面积留白的问题，并让活跃租户与最近解析状态更快进入阅读路径。
