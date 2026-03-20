@@ -33,13 +33,30 @@ cleanup() {
 
 trap cleanup EXIT
 
+normalized_url="$url"
+if [[ "$url" == http://* || "$url" == https://* ]]; then
+  url_prefix="$url"
+  url_hash=""
+  if [[ "$url" == *"#"* ]]; then
+    url_prefix="${url%%#*}"
+    url_hash="#${url#*#}"
+  fi
+
+  separator='?'
+  if [[ "$url_prefix" == *"?"* ]]; then
+    separator='&'
+  fi
+
+  normalized_url="${url_prefix}${separator}codex_capture_ts=$(date +%s%N)${url_hash}"
+fi
+
 window_payload="$(
   osascript <<APPLESCRIPT
 tell application "Microsoft Edge"
   activate
   set targetWindow to make new window
   set bounds of targetWindow to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
-  set URL of active tab of targetWindow to "$url"
+  set URL of active tab of targetWindow to "$normalized_url"
   set activeTabId to id of active tab of targetWindow
   repeat while (count of tabs of targetWindow) > 1
     repeat with candidateTab in tabs of targetWindow
