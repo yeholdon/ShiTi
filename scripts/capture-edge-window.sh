@@ -158,11 +158,18 @@ tell application "Microsoft Edge"
   repeat with browserWindow in windows
     if (id of browserWindow as text) is "$window_id" then
       tell active tab of browserWindow to reload
+      repeat ${max_poll_attempts} times
+        if loading of active tab of browserWindow is false then
+          exit repeat
+        end if
+        delay 0.5
+      end repeat
       exit repeat
     end if
   end repeat
 end tell
 APPLESCRIPT
+    sleep "$post_load_delay_seconds"
     sleep "$retry_delay_seconds"
   fi
 done
