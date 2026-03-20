@@ -881,3 +881,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页 hero 右侧“当前聚焦” rail 在常见桌面宽度下再收窄一档，给主标题和说明文留出更多主列空间，减少 Edge 桌面截图里主标题过早换行的问题。
 - [x] Tooling: 修复 `scripts/capture-edge-window.sh` 在本机连续抓取多个页面时偶发的 `mktemp ... File exists` 问题，确保 Edge 桌面回归可以稳定串行跑多张截图。
 - [x] Flutter: 首页首屏在桌面端再压紧一档 hero、上下文条和入口条之间的纵向留白，让摘要卡在常见桌面高度下更早露出；经真实 Edge 首页截图复验，首屏信息密度更均衡。
+- [x] Flutter: 文档详情页 hero 在桌面端拆成“左侧标题说明 + 右侧当前摘要 rail”，减少真实 Edge 宽屏截图里右半边大面积留白的问题，并让首屏状态摘要更快进入阅读路径。

@@ -4517,100 +4517,164 @@ class _DocumentHeroCard extends StatelessWidget {
       document.latestExportStatus,
     );
 
+    final metrics = Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        WorkspaceMetricPill(
+          label: '文档类型',
+          value: document.kind == 'paper' ? '试卷' : '讲义',
+          highlight: true,
+        ),
+        WorkspaceMetricPill(label: '题目', value: '$currentQuestionCount'),
+        WorkspaceMetricPill(label: '排版元素', value: '$currentLayoutCount'),
+        WorkspaceMetricPill(
+          label: '最近导出',
+          value: latestExportStatusLabel,
+          highlight: document.latestExportStatus != 'not_started',
+        ),
+        WorkspaceMetricPill(
+          label: '当前模式',
+          value: highlightLatestExport ? '导出后回看' : '继续编辑文档',
+        ),
+      ],
+    );
+    final statusNotes = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hasLiveCountDrift)
+          const Text(
+            '当前统计已按页面里的最新文档项即时更新。',
+            style: TextStyle(
+              height: 1.5,
+              color: TelegramPalette.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        if (hasLiveCountDrift && highlightLatestExport)
+          const SizedBox(height: 14),
+        if (highlightLatestExport)
+          WorkspacePanel(
+            padding: const EdgeInsets.all(14),
+            backgroundColor: TelegramPalette.surfaceAccent,
+            borderColor: TelegramPalette.borderAccent,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.task_alt,
+                  color: TelegramPalette.textStrong,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '你刚刚查看的是这份文档最近一次导出任务，当前状态：$latestExportStatusLabel。',
+                    style: const TextStyle(
+                      height: 1.5,
+                      color: TelegramPalette.textStrong,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+
     return WorkspacePanel(
       padding: const EdgeInsets.all(24),
       borderRadius: 30,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          WorkspaceEyebrow(
-            label: document.kind == 'paper'
-                ? '试卷编排台'
-                : '讲义编排台',
-            icon: document.kind == 'paper'
-                ? Icons.quiz_outlined
-                : Icons.menu_book_outlined,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            document.name,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            detail,
-            style: TextStyle(
-              height: 1.6,
-              color: TelegramPalette.textMuted,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useDesktopHero = constraints.maxWidth >= 960;
+          final leadingContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WorkspaceMetricPill(
-                label: '文档类型',
-                value: document.kind == 'paper' ? '试卷' : '讲义',
-                highlight: true,
+              WorkspaceEyebrow(
+                label: document.kind == 'paper'
+                    ? '试卷编排台'
+                    : '讲义编排台',
+                icon: document.kind == 'paper'
+                    ? Icons.quiz_outlined
+                    : Icons.menu_book_outlined,
               ),
-              WorkspaceMetricPill(label: '题目', value: '$currentQuestionCount'),
-              WorkspaceMetricPill(label: '排版元素', value: '$currentLayoutCount'),
-              WorkspaceMetricPill(
-                label: '最近导出',
-                value: latestExportStatusLabel,
-                highlight: document.latestExportStatus != 'not_started',
+              const SizedBox(height: 16),
+              Text(
+                document.name,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                ),
               ),
-              WorkspaceMetricPill(
-                label: '当前模式',
-                value: highlightLatestExport ? '导出后回看' : '继续编辑文档',
-              ),
-            ],
-          ),
-          if (hasLiveCountDrift) ...[
-            const SizedBox(height: 14),
-            const Text(
-              '当前统计已按页面里的最新文档项即时更新。',
-              style: TextStyle(
-                height: 1.5,
-                color: TelegramPalette.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (highlightLatestExport) ...[
-            const SizedBox(height: 14),
-            WorkspacePanel(
-              padding: const EdgeInsets.all(14),
-              backgroundColor: TelegramPalette.surfaceAccent,
-              borderColor: TelegramPalette.borderAccent,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.task_alt,
-                    color: TelegramPalette.textStrong,
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: useDesktopHero ? 560 : double.infinity,
+                ),
+                child: Text(
+                  detail,
+                  style: TextStyle(
+                    height: 1.6,
+                    color: TelegramPalette.textMuted,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '你刚刚查看的是这份文档最近一次导出任务，当前状态：$latestExportStatusLabel。',
-                      style: const TextStyle(
-                        height: 1.5,
-                        color: TelegramPalette.textStrong,
-                        fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (!useDesktopHero) ...[
+                const SizedBox(height: 16),
+                metrics,
+                if (hasLiveCountDrift || highlightLatestExport) ...[
+                  const SizedBox(height: 14),
+                  statusNotes,
+                ],
+              ],
+            ],
+          );
+
+          if (!useDesktopHero) {
+            return leadingContent;
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: leadingContent),
+              const SizedBox(width: 28),
+              SizedBox(
+                width: 340,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    WorkspacePanel(
+                      padding: const EdgeInsets.all(18),
+                      backgroundColor: TelegramPalette.surfaceRaised,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '当前摘要',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: TelegramPalette.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          metrics,
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    if (hasLiveCountDrift || highlightLatestExport) ...[
+                      const SizedBox(height: 14),
+                      statusNotes,
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ],
+            ],
+          );
+        },
       ),
     );
   }
