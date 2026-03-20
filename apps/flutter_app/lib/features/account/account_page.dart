@@ -224,6 +224,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
+    final wideDesktop = MediaQuery.sizeOf(context).width >= 1100;
     final pagePadding = workspacePagePadding(context);
     final session = AppServices.instance.session;
     final activeTenant = AppServices.instance.activeTenant;
@@ -300,27 +301,65 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ],
                       const SizedBox(height: 18),
-                      _AccountInfoCard(
-                        title: '当前账号',
-                        icon: Icons.badge_outlined,
-                        emptyMessage: '当前还没有登录会话。先登录，再进入租户工作区。',
-                        items: [
-                          if (session != null) ('用户名', session.username),
-                          if (session != null) ('访问级别', session.accessLevel),
-                          if (session != null) ('令牌预览', session.tokenPreview),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _AccountInfoCard(
-                        title: '当前租户',
-                        icon: Icons.apartment_outlined,
-                        emptyMessage: '当前还没有选中租户。先解析或创建租户，再进入题库和文档工作区。',
-                        items: [
-                          if (activeTenant != null) ('租户名称', activeTenant.name),
-                          if (activeTenant != null) ('租户代码', activeTenant.code),
-                          if (activeTenant != null) ('当前角色', activeTenant.role),
-                        ],
-                      ),
+                      if (!wideDesktop) ...[
+                        _AccountInfoCard(
+                          title: '当前账号',
+                          icon: Icons.badge_outlined,
+                          emptyMessage: '当前还没有登录会话。先登录，再进入租户工作区。',
+                          items: [
+                            if (session != null) ('用户名', session.username),
+                            if (session != null) ('访问级别', session.accessLevel),
+                            if (session != null) ('令牌预览', session.tokenPreview),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _AccountInfoCard(
+                          title: '当前租户',
+                          icon: Icons.apartment_outlined,
+                          emptyMessage: '当前还没有选中租户。先解析或创建租户，再进入题库和文档工作区。',
+                          items: [
+                            if (activeTenant != null) ('租户名称', activeTenant.name),
+                            if (activeTenant != null) ('租户代码', activeTenant.code),
+                            if (activeTenant != null) ('当前角色', activeTenant.role),
+                          ],
+                        ),
+                      ] else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _AccountInfoCard(
+                                title: '当前账号',
+                                icon: Icons.badge_outlined,
+                                emptyMessage: '当前还没有登录会话。先登录，再进入租户工作区。',
+                                items: [
+                                  if (session != null) ('用户名', session.username),
+                                  if (session != null)
+                                    ('访问级别', session.accessLevel),
+                                  if (session != null)
+                                    ('令牌预览', session.tokenPreview),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _AccountInfoCard(
+                                title: '当前租户',
+                                icon: Icons.apartment_outlined,
+                                emptyMessage:
+                                    '当前还没有选中租户。先解析或创建租户，再进入题库和文档工作区。',
+                                items: [
+                                  if (activeTenant != null)
+                                    ('租户名称', activeTenant.name),
+                                  if (activeTenant != null)
+                                    ('租户代码', activeTenant.code),
+                                  if (activeTenant != null)
+                                    ('当前角色', activeTenant.role),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: 14),
                       _AccountSecurityCard(
                         hasSession: session != null,
