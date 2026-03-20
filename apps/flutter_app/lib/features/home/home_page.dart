@@ -795,7 +795,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里会显示题库和文档工作区的真实数据概览。',
+                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里会显示题库和文档的真实数据概览。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
