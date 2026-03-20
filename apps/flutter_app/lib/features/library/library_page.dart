@@ -1103,7 +1103,7 @@ class _LibraryHeroSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Question Library',
+            label: '题库检索',
             icon: Icons.travel_explore_outlined,
           ),
           const SizedBox(height: 14),
@@ -1345,7 +1345,7 @@ class _FilterCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Filters & Targeting',
+            label: '筛选与投递',
             icon: Icons.tune_outlined,
           ),
           const SizedBox(height: 12),
