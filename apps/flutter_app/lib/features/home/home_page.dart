@@ -511,16 +511,16 @@ class _HomePageState extends State<HomePage> {
                               );
                             },
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           const _WorkspaceContextStrip(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           if (!AppConfig.useMockData)
                             const _RemoteModeGuideCard(),
                           if (!AppConfig.useMockData)
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                           if (!AppConfig.useMockData)
                             const _RemoteWorkspaceProbeCard(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           _WorkspaceEntryStrip(
                             onCreateDocument: _createDocumentFromHome,
                             onOpenBasket: _openBasketFromEntry,
@@ -531,7 +531,7 @@ class _HomePageState extends State<HomePage> {
                               PrimaryAppSection.exports,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           FutureBuilder<_WorkspaceSnapshot>(
                             future: _snapshotFuture,
                             builder: (context, snapshot) {
@@ -1348,7 +1348,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
     ];
     return WorkspacePanel(
       padding:
-          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
+          workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wideDesktop = constraints.maxWidth >= 920;
@@ -1361,7 +1361,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                   '从首页就能继续备课、组题和导出',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: 4),
                 Text(
                   '题库、选题篮、文档工作区、导出记录和我的入口已经接通，找题、编排、导出和结果回看可以连续完成。',
                   style: TextStyle(
@@ -1384,13 +1384,13 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                   color: TelegramPalette.textMuted,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 12,
-                runSpacing: 12,
+                runSpacing: 10,
                 children: primaryActions,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               const Text(
                 '工作区设置',
                 style: TextStyle(
@@ -1400,10 +1400,10 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                   color: TelegramPalette.textMuted,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 12,
-                runSpacing: 12,
+                runSpacing: 10,
                 children: secondaryActions,
               ),
             ],
