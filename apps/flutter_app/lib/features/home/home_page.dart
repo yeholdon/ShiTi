@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
       _SummaryCardData(
         title: '题库规模',
         value: '$questionCount',
-        detail: questionCount == 0 ? '当前还没有远程题目。' : '当前聚焦学科：$topSubject',
+        detail: questionCount == 0 ? '当前还没有工作区题目。' : '当前聚焦学科：$topSubject',
         action: _WorkspaceCardAction.library,
       ),
       _SummaryCardData(
@@ -212,7 +212,7 @@ class _HomePageState extends State<HomePage> {
         ? '先建立账号会话，再继续加载真实题库、文档和导出数据。'
         : !hasTenant
             ? '当前会话已存在，接下来只需要绑定一个租户工作区。'
-            : '远程工作区上下文已经完整，可以继续进入内容流。';
+            : '工作区上下文已经完整，可以继续进入内容流。';
     final focusTitle = !hasSession
         ? '先登录，再进入真实工作区'
         : !hasTenant
