@@ -607,6 +607,23 @@ class _ExportDetailHeroCard extends StatelessWidget {
 
   final ExportJobSummary job;
 
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'pending':
+        return '待处理';
+      case 'running':
+        return '处理中';
+      case 'succeeded':
+        return '已完成';
+      case 'failed':
+        return '失败';
+      case 'canceled':
+        return '已取消';
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final detail = switch (job.status) {
@@ -621,7 +638,7 @@ class _ExportDetailHeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Export Detail',
+            label: '导出详情',
             icon: Icons.cloud_done_outlined,
           ),
           const SizedBox(height: 14),
@@ -648,7 +665,7 @@ class _ExportDetailHeroCard extends StatelessWidget {
             children: [
               WorkspaceMetricPill(
                 label: '状态',
-                value: job.status,
+                value: _statusLabel(job.status),
                 highlight: true,
               ),
               WorkspaceMetricPill(label: '格式', value: job.format.toUpperCase()),
@@ -763,6 +780,23 @@ class _StatusChip extends StatelessWidget {
 
   final String status;
 
+  String _statusLabel(String value) {
+    switch (value) {
+      case 'pending':
+        return '待处理';
+      case 'running':
+        return '处理中';
+      case 'succeeded':
+        return '已完成';
+      case 'failed':
+        return '失败';
+      case 'canceled':
+        return '已取消';
+      default:
+        return value;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Color chipColor;
@@ -784,7 +818,7 @@ class _StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: TelegramPalette.border),
       ),
-      child: Text(status),
+      child: Text(_statusLabel(status)),
     );
   }
 }
