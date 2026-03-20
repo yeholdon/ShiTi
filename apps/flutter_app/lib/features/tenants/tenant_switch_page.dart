@@ -588,8 +588,8 @@ class _TenantHeroSection extends StatelessWidget {
                 ),
                 child: Text(
                   useMockData
-                      ? '当前使用样例数据，工作区列表和页面反馈都来自本地演示内容。'
-                      : '当前连接真实工作区，租户解析和成员权限都会按线上数据返回。',
+                      ? '当前使用样例数据，工作区列表和页面反馈都来自本地演示数据。'
+                      : '当前连接真实工作区，租户解析结果和成员权限都会按真实工作区数据返回。',
                   style: const TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -688,7 +688,9 @@ class _TenantSwitcherHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              AppConfig.useMockData ? '样例数据：列表来自本地演示内容' : '真实工作区：按代码读取在线工作区',
+              AppConfig.useMockData
+                  ? '样例数据：列表来自本地演示数据'
+                  : '真实工作区：按代码读取工作区列表',
               style: TextStyle(
                 color: AppConfig.useMockData
                     ? TelegramPalette.warningText
