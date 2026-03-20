@@ -913,3 +913,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页 hero 在桌面端继续压缩首屏高度，收紧面板 padding、标题节奏、`当前聚焦` rail 和 hero 下方段落间距，减少快照尚未同步时首页第一屏被上半区整体占满的问题。
 - [x] Tooling: `capture-edge-window.sh` 在真正截图前会再次把 Microsoft Edge 拉回前台，减少回归时被 Codex 或其他前台窗口抢焦点、导致截图落错窗口的问题。
 - [x] Flutter: “我的”页 hero 回到更稳定的单列桌面布局，把账号/租户摘要胶囊固定放回说明文下方，避免常见桌面宽度下右侧摘要 rail 被挤出屏幕、首屏只剩一大片空白。
+- [x] Flutter: 首页 hero 主文案列在桌面端限制阅读宽度，让标题在带左侧工作台 rail 的场景下更早换行，减少真实 Edge 首屏里主标题横向过长、视觉上像被截断的问题。

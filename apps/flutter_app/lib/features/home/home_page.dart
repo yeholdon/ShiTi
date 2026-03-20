@@ -1239,8 +1239,14 @@ class _HeroSection extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 7,
-                  child: _HeroCopy(
-                    onOpenLibrary: onOpenLibrary,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 620),
+                      child: _HeroCopy(
+                        onOpenLibrary: onOpenLibrary,
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: compact ? 16 : 20),
