@@ -19,8 +19,19 @@ window_left="${CAPTURE_WINDOW_LEFT:-160}"
 window_top="${CAPTURE_WINDOW_TOP:-96}"
 window_right="${CAPTURE_WINDOW_RIGHT:-1520}"
 window_bottom="${CAPTURE_WINDOW_BOTTOM:-1040}"
+lock_dir="${CAPTURE_LOCK_DIR:-/tmp/shiti-edge-capture.lock}"
 
 mkdir -p "$(dirname "$output_path")"
+
+while ! mkdir "$lock_dir" 2>/dev/null; do
+  sleep 0.2
+done
+
+cleanup() {
+  rm -rf "$lock_dir"
+}
+
+trap cleanup EXIT
 
 window_payload="$(
   osascript <<APPLESCRIPT
