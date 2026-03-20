@@ -128,6 +128,7 @@ When work status changes, update this file in the same change.
   - library hero and filter header now use Chinese workspace labels, so desktop screenshots no longer expose `Question Library` or `Filters & Targeting` on the question search first screen
   - documents hero and workspace header now use Chinese workspace labels, so desktop screenshots no longer expose `Documents Workspace` or `Compose & Organize` on the documents first screen
   - exports hero and filter header now use Chinese workspace labels, so desktop screenshots no longer expose `Export Timeline` or `Queue Filters` on the exports first screen
+  - home entry strip now switches into grouped desktop sections at a more realistic content width, so `继续工作 / 工作区设置` no longer collapse into one flat row on common wide screens
   - adding a question now goes through a shared “choose target document” picker instead of always forcing the default local handout
   - document detail now surfaces current mode/session/tenant context and explicit remote-mode load/action failures for reorder, remove, layout insertion, and export creation
   - home, library, and documents pages now expose direct “登录 / 选择租户” guidance actions in remote mode instead of only passive status text

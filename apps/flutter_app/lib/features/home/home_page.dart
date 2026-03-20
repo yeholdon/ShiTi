@@ -1351,9 +1351,9 @@ class _WorkspaceEntryStrip extends StatelessWidget {
           workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 18),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final wideDesktop = constraints.maxWidth >= 1100;
+          final wideDesktop = constraints.maxWidth >= 920;
           final summary = ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 380),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1432,7 +1432,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 4, child: summary),
-              const SizedBox(width: 24),
+              const SizedBox(width: 20),
               Expanded(flex: 5, child: desktopActions),
             ],
           );
