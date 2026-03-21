@@ -1017,7 +1017,7 @@ class _QuestionBasketPageState extends State<QuestionBasketPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const WorkspaceEyebrow(
-                        label: 'Basket Control',
+                        label: '选题整理',
                         icon: Icons.checklist_rtl_outlined,
                       ),
                       const SizedBox(height: 14),
@@ -1603,7 +1603,7 @@ class _BasketHeroSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: 'Question Basket',
+            label: '选题篮',
             icon: Icons.inventory_2_outlined,
           ),
           const SizedBox(height: 14),

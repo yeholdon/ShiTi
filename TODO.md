@@ -956,6 +956,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 题库页和文档页把“先登录并进入工作区”统一收成“先登录并选择机构”，让机构入口提示在主工作流里全部对齐。
 - [x] Flutter: 文档删除确认把“从当前工作区移除”统一收成“从当前文档列表移除”，把文档链路里最后两处旧工作区口径收尾。
 - [x] Flutter: 文档链路和加题链路把“文档工作区 / 工作区列表 / 工作区顺序 / 进入文档工作区”统一收成“文档 / 文档列表 / 列表顺序 / 进入文档”，把这批历史工作区称呼继续收短。
+- [x] Flutter: 真实 Edge 验收里补掉选题篮首屏残留的 `Question Basket / Basket Control` 英文标签，统一收成“选题篮 / 选题整理”。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
 - [x] Tooling: `capture-edge-window.sh` 在白屏重拍前会重新等待 `loading=false + post-load delay`，文档页这类加载更慢的深链首屏不再因为 reload 后马上截图而持续落成白页。
