@@ -417,7 +417,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
             _focusedDocumentId = null;
             _lastScrolledDocumentId = null;
             _highlightTitle = '刚删除的文档已同步移除';
-            _highlightDetail = '这份文档已从工作区列表中移除，你可以继续新建文档或编辑其他文档。';
+            _highlightDetail = '这份文档已从文档列表中移除，你可以继续新建文档或编辑其他文档。';
             _feedbackBadgeLabel = '删除已同步';
             _flashMessage = '文档已删除，工作区已同步移除该卡片。';
             _recentlyAddedQuestionCount = null;
@@ -731,9 +731,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
       _upsertDocument(created, prepend: true);
       _focusedDocumentId = created.id;
       _lastScrolledDocumentId = null;
-      _flashMessage = '新文档已创建并定位到工作区。';
+      _flashMessage = '新文档已创建并定位到文档列表。';
       _highlightTitle = '刚创建的文档';
-      _highlightDetail = '这份文档已经加入工作区，可以继续编排、加题或发起导出。';
+      _highlightDetail = '这份文档已经加入文档列表，可以继续编排、加题或发起导出。';
       _feedbackBadgeLabel = '新建文档';
     });
     await _openDocumentDetail(created);
@@ -765,7 +765,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         _lastScrolledDocumentId = null;
         _flashMessage = '文档名称已更新。';
         _highlightTitle = '刚重命名的文档';
-        _highlightDetail = '文档工作区已经同步最新名称，可以继续编排或导出。';
+        _highlightDetail = '文档列表已经同步最新名称，可以继续编排或导出。';
         _feedbackBadgeLabel = '名称已同步';
       });
     } catch (error) {
@@ -806,7 +806,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         flashMessage: copiedCount == 0 ? '已创建空副本，你可以继续补内容。' : '已创建文档副本并定位到新文档。',
         highlightTitle: '刚复制出的文档',
         highlightDetail: copiedCount == 0
-            ? '原文档当前没有可复制的内容，这份新文档已经加入工作区。'
+            ? '原文档当前没有可复制的内容，这份新文档已经加入文档列表。'
             : '这份文档已经承接了原文档的内容，可以继续编排、加题或导出。',
         feedbackBadgeLabel: '文档复制已完成',
       );
@@ -884,7 +884,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         _lastScrolledDocumentId = null;
         _flashMessage = '文档已删除，工作区已同步移除该卡片。';
         _highlightTitle = '刚删除的文档已同步移除';
-        _highlightDetail = '这份文档已从工作区列表中移除，你可以继续新建文档或编辑其他文档。';
+        _highlightDetail = '这份文档已从文档列表中移除，你可以继续新建文档或编辑其他文档。';
         _feedbackBadgeLabel = '删除已同步';
         _recentlyAddedQuestionCount = null;
       });
@@ -961,7 +961,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
             documentSnapshot: result,
             flashMessage: '已同步批量导出后的最新状态。',
             highlightTitle: '刚发起批量导出的文档',
-            highlightDetail: '文档工作区已同步最近一次批量导出任务结果。',
+            highlightDetail: '文档列表已同步最近一次批量导出任务结果。',
             feedbackBadgeLabel: '批量导出已同步',
           );
         }
@@ -995,7 +995,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
     }
     final confirmed = await _showConfirmDialog(
       title: '批量删除文档',
-      message: '确定删除当前选中的 ${selectedDocuments.length} 份文档吗？这些文档会从工作区列表中移除。',
+      message: '确定删除当前选中的 ${selectedDocuments.length} 份文档吗？这些文档会从文档列表中移除。',
       confirmLabel: '删除',
     );
     if (confirmed != true || !mounted) {
@@ -1083,7 +1083,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         _lastScrolledDocumentId = null;
         _flashMessage = '已批量创建 ${createdDocuments.length} 份文档副本。';
         _highlightTitle = '刚复制出的文档';
-        _highlightDetail = '这些副本已经加入工作区，可以继续编排、合并或导出。';
+        _highlightDetail = '这些副本已经加入文档列表，可以继续编排、合并或导出。';
         _feedbackBadgeLabel = '批量复制已完成';
         _recentlyAddedQuestionCount = null;
       });
@@ -1442,7 +1442,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '即将把$documentLabel的内容合并到目标文档。合并完成后，是否同时把这些源文档从工作区移出？',
+                  '即将把$documentLabel的内容合并到目标文档。合并完成后，是否同时把这些源文档从文档列表移出？',
                   style: const TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -2066,7 +2066,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const WorkspaceEyebrow(
-            label: '文档工作区',
+            label: '文档',
             icon: Icons.layers_outlined,
           ),
           const SizedBox(height: 14),
@@ -2123,7 +2123,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
               ),
               WorkspaceMetricPill(
                 label: '当前模式',
-                value: hasFocusedContext ? '工作区回看' : '工作区总览',
+                value: hasFocusedContext ? '列表回看' : '文档总览',
               ),
             ],
           ),
@@ -2526,7 +2526,7 @@ class _DocumentsErrorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '文档工作区暂时不可用',
+            '文档列表暂时不可用',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
@@ -2679,7 +2679,7 @@ class _DocumentsHeader extends StatelessWidget {
         return '导出状态优先';
       case 'workspace':
       default:
-        return '工作区顺序';
+        return '列表顺序';
     }
   }
 
@@ -2727,7 +2727,7 @@ class _DocumentsHeader extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            '文档工作区',
+            '文档',
             style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
@@ -2961,7 +2961,7 @@ class _DocumentsHeader extends StatelessWidget {
                   items: const [
                     DropdownMenuItem(
                       value: 'workspace',
-                      child: Text('工作区顺序'),
+                      child: Text('列表顺序'),
                     ),
                     DropdownMenuItem(
                       value: 'name',

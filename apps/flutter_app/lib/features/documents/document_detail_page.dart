@@ -2268,7 +2268,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
         documentSnapshot: currentDocument,
         flashMessage: addedCount == null
             ? '已定位到刚刚编辑的文档。'
-            : '本次已批量加入 $addedCount 道题，文档工作区已定位到对应文档。',
+            : '本次已批量加入 $addedCount 道题，文档列表已定位到对应文档。',
         highlightTitle: addedCount == null ? '刚刚编辑过的文档' : '批量加题已同步',
         highlightDetail: addedCount == null
             ? '这份文档刚从详情页返回，列表统计和最近导出状态已刷新。'
@@ -2663,7 +2663,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                               FilledButton.tonalIcon(
                                 onPressed: _openDocumentsWorkspace,
                                 icon: const Icon(Icons.dashboard_outlined),
-                                label: const Text('返回文档工作区'),
+                                label: const Text('返回文档'),
                               ),
                               FilledButton.tonalIcon(
                                 onPressed: document.latestExportStatus ==
@@ -3771,7 +3771,7 @@ class _ComposeHintCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '文档编排工作区',
+                      '文档编排',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,

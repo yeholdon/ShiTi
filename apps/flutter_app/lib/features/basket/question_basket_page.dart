@@ -1022,7 +1022,7 @@ class _QuestionBasketPageState extends State<QuestionBasketPage> {
                       ),
                       const SizedBox(height: 14),
                       const Text(
-                        '筛选、确认上下文，然后把一篮题目送进文档工作区。',
+                        '筛选、确认上下文，然后把一篮题目送进文档。',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
@@ -1343,7 +1343,7 @@ class _QuestionBasketPageState extends State<QuestionBasketPage> {
                               );
                             },
                             icon: const Icon(Icons.description_outlined),
-                            label: const Text('进入文档工作区'),
+                            label: const Text('进入文档'),
                           ),
                           OutlinedButton.icon(
                             onPressed: () {

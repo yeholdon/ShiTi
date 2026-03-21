@@ -403,7 +403,7 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                                 );
                               },
                               icon: const Icon(Icons.description_outlined),
-                              label: const Text('打开文档工作区'),
+                              label: const Text('打开文档'),
                             ),
                           ];
                           final actionRail = Column(
