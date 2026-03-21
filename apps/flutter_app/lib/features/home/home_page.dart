@@ -795,7 +795,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里会显示题库和文档的真实数据概览。',
+                  '当前还没有完整的上下文。先登录并选择机构后，这里会显示题库和文档的真实数据概览。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
@@ -954,7 +954,7 @@ class _RemoteModeGuideCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             hasSession && hasTenant
-                ? '当前已经具备账号和工作区上下文，可以直接进入题库和文档区处理真实数据。'
+                ? '当前已经具备账号和机构上下文，可以直接进入题库和文档区处理真实数据。'
                 : '要加载真实题库和文档，先登录账号，再选择要进入的机构。',
             style: const TextStyle(
               height: 1.5,
@@ -2476,7 +2476,7 @@ class _QuestionBasketPanelState extends State<_QuestionBasketPanel> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  '当前还没有完整的工作区上下文。先登录并选择机构后，这里才会同步真实选题篮状态。',
+                  '当前还没有完整的上下文。先登录并选择机构后，这里才会同步真实选题篮状态。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
