@@ -871,7 +871,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
               ),
               const SizedBox(height: 10),
               const Text(
-                '工作区已经返回题库和文档数据，可以直接进入对应页面继续操作。',
+                '真实数据已经返回题库和文档数据，可以直接进入对应页面继续操作。',
                 style: TextStyle(
                   height: 1.5,
                   color: TelegramPalette.textMuted,

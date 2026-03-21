@@ -950,6 +950,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 机构切换页 hero 把“先确认工作区边界”统一收成“先确认机构边界”，让机构页首屏说明继续和机构口径对齐。
 - [x] Flutter: 首页题库规模卡把“当前还没有工作区题目”统一收成“当前还没有机构题目”，让首页摘要继续和机构口径对齐。
 - [x] Flutter: 首页默认任务提示把“回到文档工作区沉淀讲义结构”统一收成“回到文档沉淀讲义结构”，让首页工作流描述更自然。
+- [x] Flutter: 首页连通性反馈把“工作区已经返回题库和文档数据”统一收成“真实数据已经返回题库和文档数据”，让探测成功提示更直接。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
 - [x] Tooling: `capture-edge-window.sh` 在白屏重拍前会重新等待 `loading=false + post-load delay`，文档页这类加载更慢的深链首屏不再因为 reload 后马上截图而持续落成白页。
