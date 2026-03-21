@@ -23,6 +23,11 @@ enum TenantRole {
   owner
 }
 
+enum TenantKind {
+  personal
+  organization
+}
+
 enum QuestionType {
   choice
   blank
@@ -55,19 +60,23 @@ model User {
   lastLoginAt   DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  memberships   TenantMember[]
-  createdQs     Question[]     @relation("QuestionCreatedBy")
-  updatedQs     Question[]     @relation("QuestionUpdatedBy")
-  auditLogs     AuditLog[]
+  personalTenant Tenant?       @relation("PersonalTenantOwner")
+  memberships    TenantMember[]
+  createdQs      Question[]    @relation("QuestionCreatedBy")
+  updatedQs      Question[]    @relation("QuestionUpdatedBy")
+  auditLogs      AuditLog[]
 }
 
 model Tenant {
-  id          String         @id @default(uuid())
-  code        String         @unique
-  name        String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  members     TenantMember[]
+  id                  String         @id @default(uuid())
+  code                String         @unique
+  name                String
+  kind                TenantKind     @default(organization)
+  personalOwnerUserId String?        @unique
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  personalOwner       User?          @relation("PersonalTenantOwner", fields: [personalOwnerUserId], references: [id], onDelete: SetNull)
+  members             TenantMember[]
 }
 
 model TenantMember {
@@ -352,4 +361,3 @@ model AuditLog {
 
   user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
-

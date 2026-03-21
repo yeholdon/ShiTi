@@ -6,7 +6,12 @@ This document describes the intended system design for ShiTi based on the curren
 
 ## 1. Architecture Overview
 
-ShiTi is designed as a multi-tenant content platform with separate user and admin surfaces.
+ShiTi is designed as a tenant-isolated content platform with separate user and admin surfaces.
+
+It should support two workspace modes under one shared context model:
+
+- personal workspace
+- organization workspace
 
 Target components:
 
@@ -45,7 +50,27 @@ Question content, explanations, options, and layout-related content should favor
 
 ## 3. Data Design
 
-## 3.1 Tenant-owned tables
+## 3.1 Tenant kinds
+
+Tenant context should distinguish two modes:
+
+- `personal`
+  - exactly one per user
+  - no extra members
+  - private workspace for individual work
+- `organization`
+  - standard multi-member tenant
+  - supports `member / admin / owner`
+  - represents a school or training institution
+
+Recommended additive fields on `tenants`:
+
+- `kind`
+- `personal_owner_user_id` nullable unique
+
+This keeps one isolation model while allowing both personal and organization workspaces.
+
+## 3.2 Tenant-owned tables
 
 All tenant-owned tables should carry `tenant_id`.
 
@@ -61,7 +86,7 @@ Examples:
 - export jobs
 - audit logs
 
-## 3.2 Relationship integrity
+## 3.3 Relationship integrity
 
 Where feasible, foreign keys should be tenant-aware so tenant scope is preserved structurally.
 
@@ -71,7 +96,7 @@ Preferred direction:
 - application validation as the first guard
 - DB structure as the last guard
 
-## 3.3 System-level vs tenant-level data
+## 3.4 System-level vs tenant-level data
 
 Some data may have system-owned rows, such as default tags or default taxonomies.
 
@@ -81,7 +106,7 @@ Recommended approach:
 - keep read rules explicit
 - avoid ambiguous shared ownership semantics
 
-## 3.4 RLS
+## 3.5 RLS
 
 Tenant-owned tables should use PostgreSQL RLS.
 
@@ -93,6 +118,8 @@ Expected runtime pattern:
 4. all business queries for that request run inside that same transaction scope
 
 This makes RLS a real safety boundary instead of documentation.
+
+The same runtime pattern should apply to both personal and organization tenants.
 
 ## 4. Backend Module Design
 
@@ -142,6 +169,15 @@ Sensitive operations should remain owner-only where appropriate:
 - cleanup operations
 - role adjustment
 - other broad-impact maintenance flows
+
+Additional rules for tenant kinds:
+
+- personal tenant:
+  - owner is the same user as `personal_owner_user_id`
+  - no additional members
+  - no admin assignment
+- organization tenant:
+  - normal `member / admin / owner` rules apply
 
 ## 7. Question Model
 
@@ -268,4 +304,3 @@ Migration direction:
 4. extract worker app
 5. scaffold Flutter app
 6. treat current static pages as prototype and documentation surfaces only
-

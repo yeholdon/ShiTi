@@ -60,8 +60,8 @@ Recommended main tabs:
 
 ## 3.5 Me
 
-- current tenant
-- tenant switch
+- current workspace context
+- personal / organization switch
 - profile
 - sign out
 
@@ -84,6 +84,11 @@ The first mobile and desktop iterations should prioritize:
 3. question list and detail
 4. question basket
 5. document list and detail
+
+The tenant switch flow should evolve into a unified workspace switch:
+
+- personal workspace
+- joined organizations
 6. export list and result access
 
 ## 6. What Should Stay Out of the Flutter App Initially
@@ -121,4 +126,3 @@ Mobile Flutter should emphasize:
 - search-first entry points
 - lightweight detail screens
 - fast add-to-basket and add-to-document actions
-

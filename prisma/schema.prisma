@@ -19,6 +19,11 @@ enum TenantMemberStatus {
   disabled
 }
 
+enum TenantKind {
+  personal
+  organization
+}
+
 enum QuestionType {
   single_choice
   fill_blank
@@ -53,13 +58,16 @@ enum ExportKind {
 }
 
 model Tenant {
-  id        String   @id @default(uuid()) @db.Uuid
-  code      String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id                  String     @id @default(uuid()) @db.Uuid
+  code                String     @unique
+  name                String
+  kind                TenantKind @default(organization)
+  personalOwnerUserId String?    @unique @db.Uuid
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @default(now()) @updatedAt
 
-  members   TenantMember[]
+  personalOwner User?          @relation("PersonalTenantOwner", fields: [personalOwnerUserId], references: [id])
+  members       TenantMember[]
 }
 
 model Stage {
@@ -97,14 +105,15 @@ model Grade {
 }
 
 model User {
-  id          String   @id @default(uuid()) @db.Uuid
-  username    String   @unique
-  passwordHash String
-  sessionVersion Int    @default(0)
-  createdAt   DateTime @default(now())
-  lastLoginAt DateTime?
+  id               String   @id @default(uuid()) @db.Uuid
+  username         String   @unique
+  passwordHash     String
+  sessionVersion   Int      @default(0)
+  createdAt        DateTime @default(now())
+  lastLoginAt      DateTime?
 
-  memberships TenantMember[]
+  personalTenantOwned Tenant?         @relation("PersonalTenantOwner")
+  memberships         TenantMember[]
   passwordResetTokens PasswordResetToken[]
 }
 

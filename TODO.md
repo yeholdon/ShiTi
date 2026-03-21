@@ -52,10 +52,15 @@ When work status changes, update this file in the same change.
 - `[x]` Admin console for tenant setup, question management, taxonomy management, assets, layout elements, documents, exports
 - `[x]` Admin console improvements: question filters, question summaries, document summaries, document rename/delete
 - `[x]` Admin console audit panel for tenant-scoped persistent audit log search, time presets, readable action summaries, username display, action/user aggregates, and target-type distribution
+- `[x]` Product/data-model decision frozen: personal workspace is implemented as `Tenant.kind = personal`, not as a second root workspace model
 
 ## In progress
 
 - `[-]` Keep this TODO current as project work continues
+- `[-]` Evolve tenant model from pure organization membership toward personal + organization workspaces
+  - design is now frozen: personal workspace is a special tenant kind, not a second root workspace table
+  - docs now describe `Tenant.kind = personal | organization`
+  - runtime Prisma schema now has additive `Tenant.kind` and `Tenant.personalOwnerUserId` fields as the first execution step
 - `[-]` Migrate from single-root Nest app toward target `apps/api + apps/worker + apps/flutter_app` structure without breaking the current backend
   - `apps/api` and `apps/worker` now have runnable entrypoints
   - e2e and Docker Compose now run API and worker as separate processes

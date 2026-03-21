@@ -93,12 +93,22 @@ Primary needs:
 The system must support:
 
 - user registration and login
-- one user joining multiple tenants
-- switching tenant context
+- one user always having one personal workspace
+- one user optionally joining multiple organization tenants
+- switching workspace context between personal and organization scopes
 - per-tenant roles:
   - member
   - admin
   - owner
+
+Additional expectations:
+
+- a user may remain outside all organizations and still use the product through the personal workspace
+- an organization may represent a school or a training institution
+- one user may join multiple organizations
+  - initial product recommendation: up to 5 organizations
+- organization owners may create multiple organizations
+- organization owners may designate multiple admins, with limits enforced by product policy if needed
 
 ## 5.2 Question bank
 
@@ -200,6 +210,8 @@ Characteristics:
 
 Primary objects:
 
+- personal workspace context
+- organization workspace context
 - recent materials
 - question search
 - question basket
@@ -218,7 +230,7 @@ Characteristics:
 
 Primary objects:
 
-- tenant identity
+- organization identity
 - roles
 - exports
 - audit logs
@@ -270,4 +282,3 @@ The target delivery shape is:
 - Flutter full-end client
 
 Static web pages inside this repository are transitional surfaces, not the final user-facing product architecture.
-

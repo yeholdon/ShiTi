@@ -67,8 +67,14 @@ Key contracts:
 Flutter needs these for:
 
 - authentication
-- tenant list and tenant switch
+- workspace list and workspace switch
 - onboarding
+
+Expected evolution:
+
+- `GET /tenants` should return both personal and organization workspaces
+- `POST /tenants` should create organization tenants only
+- registration/login flow should ensure one personal tenant exists for the user
 
 ## 4. Question Domain
 
@@ -178,4 +184,3 @@ These are not primary user-facing client flows.
 - formalize tenant-switch transport
 - define stable field subsets for mobile list screens
 - define upload/result URL lifetime assumptions
-

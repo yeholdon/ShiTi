@@ -24,9 +24,22 @@ Core tables:
 
 Key expectations:
 
-- one user can belong to many tenants
+- one user always owns one personal tenant
+- one user can additionally belong to many organization tenants
 - role is tenant-scoped
 - one membership row per `(tenant_id, user_id)`
+
+Recommended additive tenant fields:
+
+- `kind`
+  - `personal`
+  - `organization`
+- `personal_owner_user_id` nullable unique
+
+Behavior rules:
+
+- personal tenants do not accept extra tenant members
+- organization tenants continue to use normal membership rows
 
 ## 3. Question Family
 
@@ -130,4 +143,3 @@ Examples of intended direction:
 ## 10. Migration Note
 
 Current Prisma schema is already tenant-aware and RLS-backed, but it should continue evolving toward this stricter composite-integrity model instead of relaxing away from it.
-

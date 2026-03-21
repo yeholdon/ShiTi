@@ -40,6 +40,14 @@ Why keep this:
 - supports organization-level data separation
 - supports future paid/workspace-based product packaging
 
+Recommended evolution:
+
+- keep `tenants` as the only workspace root model
+- add `tenants.kind = personal | organization`
+- add `tenants.personal_owner_user_id` nullable unique
+
+This lets one user own a private personal workspace while still joining multiple organizations, without introducing a second root workspace table.
+
 ## 2.3 Questions
 
 Suggested tables:

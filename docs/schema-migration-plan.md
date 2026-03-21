@@ -21,6 +21,7 @@ These questions must be answered before changing the runtime schema:
 2. Should explanation overview and commentary be block-based?
 3. Should solution final answer become block-based?
 4. Is a global user access level required, or are tenant roles sufficient?
+5. Is personal workspace implemented as a special tenant kind? Decision: yes.
 
 If a decision is not frozen, do not migrate that area yet.
 
@@ -66,6 +67,37 @@ Only after backfill and compatibility testing:
 - simplify service logic
 
 ## 4. Topic-by-Topic Migration Order
+
+## 4.0 Personal workspace / organization split
+
+Recommended first tenant-model migration.
+
+Current state:
+
+- users may exist without tenant membership
+- business tables mostly require `tenantId`
+- no durable personal workspace root exists
+
+Target state:
+
+- every user owns exactly one personal tenant
+- organization membership remains many-to-many
+- personal and organization workspaces share the same `tenantId`-based business tables
+
+Migration path:
+
+1. add `Tenant.kind`
+2. add `Tenant.personalOwnerUserId`
+3. backfill all existing tenants as `organization`
+4. on registration/login bootstrap a personal tenant if missing
+5. update tenant list/switch APIs to return both personal and organization workspaces
+6. enforce that personal tenants do not accept extra members
+7. add application-level organization membership limits and admin limits
+
+Why first:
+
+- it unlocks the target product model
+- it avoids later rewriting all tenant-scoped content tables
 
 ## 4.1 Explanation block unification
 
