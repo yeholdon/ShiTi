@@ -265,7 +265,7 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       const SizedBox(height: 14),
                       const Text(
-                        '确认当前账号、当前工作区，以及接下来回哪里继续。',
+                        '确认当前账号、当前机构，以及接下来回哪里继续。',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
@@ -274,7 +274,7 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        '这里用来确认当前是谁、正在哪个工作区，以及是否需要切换账号或切换机构。',
+                        '这里用来确认当前是谁、正在哪个机构，以及是否需要切换账号或切换机构。',
                         style: TextStyle(
                           height: 1.5,
                           color: TelegramPalette.textMuted,

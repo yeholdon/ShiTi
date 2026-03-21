@@ -939,6 +939,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 登录页把“样例数据还是真实工作区 / 当前模式：真实工作区”统一收成“样例数据还是真实数据 / 当前模式：真实数据”，让登录入口状态词更直接。
 - [x] Flutter: 机构切换页把“当前工作区”标识和“跟着当前工作区切换”说明统一收成“当前机构 / 跟着当前机构切换”，让机构页内的当前上下文表达更一致。
 - [x] Flutter: 账号页空态把“先登录，再进入工作区”统一收成“先登录，再进入机构选择”，让未登录状态和当前入口路径保持一致。
+- [x] Flutter: 账号页说明把“当前工作区 / 正在哪个工作区”统一收成“当前机构 / 正在哪个机构”，让账号页语境继续和机构口径对齐。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
 - [x] Tooling: `capture-edge-window.sh` 在白屏重拍前会重新等待 `loading=false + post-load delay`，文档页这类加载更慢的深链首屏不再因为 reload 后马上截图而持续落成白页。
