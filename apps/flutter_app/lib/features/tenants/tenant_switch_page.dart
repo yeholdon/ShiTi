@@ -168,7 +168,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                   _TenantCard(
                     tenant: activeTenant,
                     isActive: true,
-                    actionLabel: '回到当前机构',
+                    actionLabel: '继续使用当前机构',
                     onEnter: () => _enterTenant(activeTenant),
                     onManageMembers: activeTenant.role == 'owner' ||
                             activeTenant.role == 'admin'
@@ -186,7 +186,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                   _TenantCard(
                     tenant: _resolvedTenant!,
                     isActive: _resolvedTenant!.id == activeTenant?.id,
-                    actionLabel: '进入当前机构',
+                    actionLabel: '切换到该机构',
                     onEnter: () => _enterTenant(_resolvedTenant!),
                     onManageMembers: _resolvedTenant!.role == 'owner' ||
                             _resolvedTenant!.role == 'admin'
