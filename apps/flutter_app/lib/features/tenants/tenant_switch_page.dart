@@ -589,7 +589,7 @@ class _TenantHeroSection extends StatelessWidget {
                 child: Text(
                   useMockData
                       ? '当前使用样例数据，机构列表和页面反馈都来自本地演示数据。机构可以是学校，也可以是教培机构。'
-                      : '当前连接真实工作区，机构解析结果和成员权限都会按真实工作区数据返回。机构可以是学校，也可以是教培机构。',
+                      : '当前连接真实数据，机构解析结果和成员权限都会按真实机构数据返回。机构可以是学校，也可以是教培机构。',
                   style: const TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
