@@ -234,7 +234,7 @@ class _HomePageState extends State<HomePage> {
           title: '机构上下文',
           value: tenantLabel,
           detail: hasTenant
-              ? '当前工作区：${activeTenant?.name ?? tenantLabel}'
+              ? '当前机构：${activeTenant?.name ?? tenantLabel}'
               : '还没有选择机构，题库、文档和导出数据暂不加载。',
         ),
         _SummaryCardData(
