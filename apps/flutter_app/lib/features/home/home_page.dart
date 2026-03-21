@@ -207,17 +207,17 @@ class _HomePageState extends State<HomePage> {
         ? '登录'
         : !hasTenant
             ? '选择机构'
-            : '进入工作区';
+            : '继续工作';
     final nextStepDetail = !hasSession
         ? '先建立账号会话，再继续加载真实题库、文档和导出数据。'
         : !hasTenant
             ? '当前会话已存在，接下来只需要选择一个机构。'
-            : '工作区上下文已经完整，可以继续进入内容流。';
+            : '当前上下文已经完整，可以继续进入内容流。';
     final focusTitle = !hasSession
-        ? '先登录，再进入真实工作区'
+        ? '先登录，再加载真实数据'
         : !hasTenant
             ? '先选择机构，再加载工作台快照'
-            : '工作区上下文已经就绪';
+            : '当前上下文已经就绪';
     final tenantLabel =
         hasTenant ? (activeTenant?.code ?? activeTenant?.name ?? '已选择') : '未选择';
 
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
       ],
       tasks: <_TaskData>[
         _TaskData(
-          title: nextStepLabel == '进入工作区' ? '工作区已就绪' : '先完成入口准备',
+          title: nextStepLabel == '继续工作' ? '可以继续工作' : '先完成入口准备',
           detail: nextStepDetail,
         ),
       ],
