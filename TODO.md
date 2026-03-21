@@ -962,6 +962,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 登录页把“进入机构选择 / 登录并进入机构选择”统一收成“选择机构 / 登录并选择机构”，让机构入口动作词更自然也更一致。
 - [x] Flutter: 机构切换页把“回到当前机构 / 进入当前机构”统一收成“继续使用当前机构 / 切换到该机构”，让机构卡动作词更贴近真实语义。
 - [x] Flutter: 账号页把“先登录，再进入机构选择”统一收成“先登录，再选择机构”，让账号页空态和登录页入口动作词保持一致。
+- [x] Flutter: 账号页把紧凑按钮里的“切机构”统一收成“机构”，让账号页和首页的机构入口紧凑文案保持一致。
 - [x] Flutter: 真实 Edge 验收里补掉选题篮首屏残留的 `Question Basket / Basket Control` 英文标签，统一收成“选题篮 / 选题整理”。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。

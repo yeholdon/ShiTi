@@ -398,7 +398,7 @@ class _AccountPageState extends State<AccountPage> {
                             label: Text(
                               activeTenant == null
                                   ? '选择机构'
-                                  : (compact ? '切机构' : '切换机构'),
+                                  : (compact ? '机构' : '切换机构'),
                             ),
                           ),
                           FilledButton.tonalIcon(
