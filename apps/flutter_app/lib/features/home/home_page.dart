@@ -185,7 +185,7 @@ class _HomePageState extends State<HomePage> {
           ? const <_TaskData>[
               _TaskData(
                 title: '开始新的备课流',
-                detail: '先去题库挑题，再回到文档工作区沉淀讲义结构。',
+                detail: '先去题库挑题，再回到文档沉淀讲义结构。',
               ),
             ]
           : tasks.take(6).toList(),
