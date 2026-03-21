@@ -948,14 +948,14 @@ class _RemoteModeGuideCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '连接真实工作区',
+            '连接真实数据',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           Text(
             hasSession && hasTenant
                 ? '当前已经具备账号和工作区上下文，可以直接进入题库和文档区处理真实数据。'
-                : '要加载真实题库和文档，先登录账号，再选择要进入的工作区。',
+                : '要加载真实题库和文档，先登录账号，再选择要进入的机构。',
             style: const TextStyle(
               height: 1.5,
               color: TelegramPalette.textMuted,
