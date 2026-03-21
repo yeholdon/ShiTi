@@ -863,7 +863,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Future<void> _removeDocument(DocumentSummary document) async {
     final confirmed = await _showConfirmDialog(
       title: '删除文档',
-      message: '确定删除“${document.name}”吗？这个操作会把它从当前工作区移除。',
+      message: '确定删除“${document.name}”吗？这个操作会把它从当前文档列表移除。',
       confirmLabel: '删除',
     );
     if (confirmed != true || !mounted) {
@@ -1709,7 +1709,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                         Text(
                           AppConfig.useMockData
                               ? '当前还没有文档。先新建一份讲义或试卷，再继续编排内容。'
-                              : '当前还没有文档。先确认已登录并进入工作区，再新建讲义或试卷。',
+                              : '当前还没有文档。先确认已登录并选择机构，再新建讲义或试卷。',
                           style: const TextStyle(
                             height: 1.5,
                             color: TelegramPalette.textMuted,

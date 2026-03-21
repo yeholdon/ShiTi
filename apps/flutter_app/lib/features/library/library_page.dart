@@ -1003,7 +1003,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                   ? '可以调整关键词、学科、学段、年级、教材或章节筛选，或者直接清空筛选后重新查看题库。'
                                   : AppConfig.useMockData
                                       ? '当前使用样例数据，可以直接从本地演示题目开始挑题。'
-                                      : '当前还没有可展示的题目。先登录并进入工作区，再回来查看真实题库。',
+                                      : '当前还没有可展示的题目。先登录并选择机构，再回来查看真实题库。',
                           style: TextStyle(
                             height: 1.5,
                             color: TelegramPalette.textMuted,

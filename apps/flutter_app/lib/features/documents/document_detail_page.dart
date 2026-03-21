@@ -2417,7 +2417,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
   Future<void> _removeDocument(DocumentSummary document) async {
     final confirmed = await _showConfirmDialog(
       title: '删除文档',
-      message: '确定删除“${document.name}”吗？这个操作会把它从当前工作区移除。',
+      message: '确定删除“${document.name}”吗？这个操作会把它从当前文档列表移除。',
       confirmLabel: '删除',
     );
     if (confirmed != true || !mounted) {
