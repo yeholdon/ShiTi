@@ -228,7 +228,7 @@ class _HomePageState extends State<HomePage> {
           value: hasSession ? '已登录' : '未登录',
           detail: hasSession
               ? '当前账号：${AppServices.instance.session?.username ?? 'unknown'}'
-              : '先建立登录会话后，首页才会加载真实工作区数据。',
+              : '先建立登录会话后，首页才会加载真实数据。',
         ),
         _SummaryCardData(
           title: '机构上下文',
