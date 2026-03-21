@@ -1503,7 +1503,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  '题库、选题篮、文档工作区、导出记录和我的入口已经接通，找题、编排、导出和结果回看可以连续完成。',
+                  '题库、选题篮、文档、导出记录和我的入口已经接通，找题、编排、导出和结果回看可以连续完成。',
                   style: TextStyle(
                     height: 1.45,
                     color: TelegramPalette.textMuted,
@@ -1832,7 +1832,7 @@ class _SummaryCard extends StatelessWidget {
       case _WorkspaceCardAction.library:
         return '打开题库';
       case _WorkspaceCardAction.documents:
-        return '打开文档工作区';
+        return '打开文档';
       case _WorkspaceCardAction.exports:
         return '打开导出记录';
       case _WorkspaceCardAction.none:
