@@ -419,7 +419,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
             _highlightTitle = '刚删除的文档已同步移除';
             _highlightDetail = '这份文档已从文档列表中移除，你可以继续新建文档或编辑其他文档。';
             _feedbackBadgeLabel = '删除已同步';
-            _flashMessage = '文档已删除，工作区已同步移除该卡片。';
+            _flashMessage = '文档已删除，文档列表已同步移除该卡片。';
             _recentlyAddedQuestionCount = null;
           }
           return;
@@ -882,7 +882,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         _selectedDocumentIds.remove(document.id);
         _focusedDocumentId = null;
         _lastScrolledDocumentId = null;
-        _flashMessage = '文档已删除，工作区已同步移除该卡片。';
+        _flashMessage = '文档已删除，文档列表已同步移除该卡片。';
         _highlightTitle = '刚删除的文档已同步移除';
         _highlightDetail = '这份文档已从文档列表中移除，你可以继续新建文档或编辑其他文档。';
         _feedbackBadgeLabel = '删除已同步';
