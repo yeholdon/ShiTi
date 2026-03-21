@@ -409,7 +409,7 @@ class _TenantSwitchPageState extends State<TenantSwitchPage> {
                               ),
                               if (activeTenant != null)
                                 WorkspaceMetricPill(
-                                  label: '当前工作区',
+                                  label: '当前机构',
                                   value: activeTenantVisible ? '已包含' : '已隐藏',
                                 ),
                             ],
@@ -708,7 +708,7 @@ class _TenantSwitcherHeader extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           const Text(
-            '题库、讲义和试卷都会跟着当前工作区切换。当前会话和上次进入的工作区会保留在本机，刷新后可以继续回到原来的位置。',
+            '题库、讲义和试卷都会跟着当前机构切换。当前会话和上次进入的机构会保留在本机，刷新后可以继续回到原来的位置。',
             style: TextStyle(
               height: 1.5,
               color: TelegramPalette.textMuted,
@@ -1022,7 +1022,7 @@ class _TenantCardHeader extends StatelessWidget {
                     border: Border.all(color: TelegramPalette.border),
                   ),
                   child: const Text(
-                    '当前工作区',
+                    '当前机构',
                     style: TextStyle(
                       color: TelegramPalette.accentDark,
                       fontWeight: FontWeight.w700,
