@@ -959,6 +959,7 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 文档页删除成功提示把“工作区已同步移除该卡片”统一收成“文档列表已同步移除该卡片”，把文档链路里这条残留历史口径补干净。
 - [x] Flutter: 题库、文档、导出一级页把“返回工作区”统一收成“返回工作台”，让一级导航名称和返回入口名称保持一致。
 - [x] Flutter: 账号页把“教学工作台”统一收成“教研工作台”，让首页、登录页、账号页的产品名称保持一致。
+- [x] Flutter: 登录页把“进入机构选择 / 登录并进入机构选择”统一收成“选择机构 / 登录并选择机构”，让机构入口动作词更自然也更一致。
 - [x] Flutter: 真实 Edge 验收里补掉选题篮首屏残留的 `Question Basket / Basket Control` 英文标签，统一收成“选题篮 / 选题整理”。
 - [x] Tooling: `capture-edge-window.sh` 现在会同时校验空白首帧和 hash 深链是否真正命中目标页面，首页白屏抓图会自动重拍，`#/tenants` 这类机构页深链也能更早暴露落错路由的问题。
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。

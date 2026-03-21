@@ -581,7 +581,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            _registerMode ? '创建账号后继续进入机构选择' : '登录后继续你的教研流程',
+            _registerMode ? '创建账号后继续选择机构' : '登录后继续你的教研流程',
             style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
@@ -593,8 +593,8 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 14),
           Text(
             _registerMode
-                ? '先创建账号，再进入机构选择。完成后可以继续去题库、文档和导出页工作。'
-                : '先建立登录会话，再进入机构选择。登录状态会在本机保留，之后可以直接回到上次的工作流。',
+                ? '先创建账号，再选择机构。完成后可以继续去题库、文档和导出页工作。'
+                : '先建立登录会话，再选择机构。登录状态会在本机保留，之后可以直接回到上次的工作流。',
             style: const TextStyle(
               height: 1.55,
               color: TelegramPalette.textMuted,
@@ -688,8 +688,8 @@ class _LoginPageState extends State<LoginPage> {
                 _submitting
                     ? '正在建立会话...'
                     : _registerMode
-                        ? '注册并进入机构选择'
-                        : '登录并进入机构选择',
+                        ? '注册并选择机构'
+                        : '登录并选择机构',
               ),
             ),
           ),
@@ -723,7 +723,7 @@ class _LoginPageState extends State<LoginPage> {
                               .pushNamed(AppRouter.tenantSwitch);
                         },
                         icon: const Icon(Icons.apartment_outlined),
-                        label: const Text('进入机构选择'),
+                        label: const Text('选择机构'),
                       ),
                       FilledButton.tonalIcon(
                         onPressed:
