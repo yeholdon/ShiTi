@@ -2100,7 +2100,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenWorkspace,
                 icon: const Icon(Icons.home_outlined),
-                label: Text(compact ? '工作区' : '返回工作区'),
+                label: Text(compact ? '工作台' : '返回工作台'),
               ),
             ],
           ),

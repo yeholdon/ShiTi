@@ -728,7 +728,7 @@ class _LibraryPageState extends State<LibraryPage> {
         automaticallyImplyLeading: !showPrimaryNavigation,
         leading: showPrimaryNavigation
             ? IconButton(
-                tooltip: '返回工作区',
+                tooltip: '返回工作台',
                 onPressed: _openWorkspace,
                 icon: const Icon(Icons.arrow_back_outlined),
               )
@@ -739,7 +739,7 @@ class _LibraryPageState extends State<LibraryPage> {
             TextButton.icon(
               onPressed: _openWorkspace,
               icon: const Icon(Icons.home_outlined),
-              label: Text(compact ? '工作区' : '返回工作区'),
+              label: Text(compact ? '工作台' : '返回工作台'),
             ),
           TextButton.icon(
             onPressed: () {
@@ -1137,7 +1137,7 @@ class _LibraryHeroSection extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenWorkspace,
                 icon: const Icon(Icons.home_outlined),
-                label: Text(compact ? '工作区' : '返回工作区'),
+                label: Text(compact ? '工作台' : '返回工作台'),
               ),
             ],
           ),
