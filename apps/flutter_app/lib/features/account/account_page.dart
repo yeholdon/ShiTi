@@ -582,7 +582,7 @@ class _AccountHeroSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                '先确认当前身份和机构，再回到教学工作台继续处理内容。',
+                '先确认当前身份和机构，再回到教研工作台继续处理内容。',
                 style: TextStyle(
                   fontSize: headlineSize,
                   fontWeight: FontWeight.w800,
