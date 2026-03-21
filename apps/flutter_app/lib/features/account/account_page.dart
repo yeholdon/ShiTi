@@ -577,7 +577,7 @@ class _AccountHeroSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const WorkspaceEyebrow(
-                label: '账号与工作区',
+                label: '账号与机构',
                 icon: Icons.account_circle_outlined,
               ),
               const SizedBox(height: 14),
@@ -593,7 +593,7 @@ class _AccountHeroSection extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: const Text(
-                  '这里专门用来确认身份和工作区，再回到题库、文档或导出继续处理内容。',
+                  '这里专门用来确认身份和机构，再回到题库、文档或导出继续处理内容。',
                   style: TextStyle(
                     height: 1.5,
                     color: TelegramPalette.textMuted,
