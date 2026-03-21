@@ -574,7 +574,7 @@ class _TenantHeroSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               const Text(
-                '先确认工作区边界，再进入当前机构继续处理题库和文档。',
+                '先确认机构边界，再进入当前机构继续处理题库和文档。',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
