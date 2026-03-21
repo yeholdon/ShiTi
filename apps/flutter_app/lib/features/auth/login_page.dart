@@ -822,7 +822,7 @@ class _LoginHeroPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const WorkspaceBulletPoint(
-            text: '保留轻量但明确的状态提示，让你一眼看清当前用的是样例数据还是真实工作区。',
+            text: '保留轻量但明确的状态提示，让你一眼看清当前用的是样例数据还是真实数据。',
             color: Color(0xFF8BD0FF),
           ),
           const SizedBox(height: 28),
@@ -878,7 +878,7 @@ class _ModeBadge extends StatelessWidget {
     final color = AppConfig.useMockData
         ? TelegramPalette.warningText
         : TelegramPalette.accentDark;
-    final label = AppConfig.useMockData ? '当前模式：样例数据' : '当前模式：真实工作区';
+    final label = AppConfig.useMockData ? '当前模式：样例数据' : '当前模式：真实数据';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
