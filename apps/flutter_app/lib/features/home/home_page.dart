@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
       _SummaryCardData(
         title: '题库规模',
         value: '$questionCount',
-        detail: questionCount == 0 ? '当前还没有工作区题目。' : '当前聚焦学科：$topSubject',
+        detail: questionCount == 0 ? '当前还没有机构题目。' : '当前聚焦学科：$topSubject',
         action: _WorkspaceCardAction.library,
       ),
       _SummaryCardData(
