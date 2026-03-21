@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
         action: _WorkspaceCardAction.library,
       ),
       _SummaryCardData(
-        title: '文档工作区',
+        title: '文档',
         value: '$documentCount',
         detail: documentCount == 0
             ? '还没有讲义或试卷。'
@@ -790,7 +790,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '工作区连通性探测',
+                  '数据连通性检查',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 10),
@@ -808,13 +808,13 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
           if (snapshot.hasError) {
             final error = snapshot.error;
             final message = error is HttpJsonException
-                ? '工作区探测失败：${error.message}（HTTP ${error.statusCode}）'
-                : '工作区探测失败：$error';
+                ? '数据检查失败：${error.message}（HTTP ${error.statusCode}）'
+                : '数据检查失败：$error';
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '工作区连通性探测',
+                  '数据连通性检查',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 10),
@@ -833,7 +833,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
                     FilledButton.tonalIcon(
                       onPressed: _reload,
                       icon: const Icon(Icons.refresh),
-                      label: Text(compact ? '探测' : '重新探测'),
+                      label: Text(compact ? '重试' : '重新检查'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => Navigator.of(context)
@@ -852,7 +852,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '工作区连通性探测',
+                  '数据连通性检查',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 12),
@@ -866,7 +866,7 @@ class _RemoteWorkspaceProbeCardState extends State<_RemoteWorkspaceProbeCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '工作区连通性探测',
+                '数据连通性检查',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
@@ -1458,7 +1458,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
       FilledButton.tonalIcon(
         onPressed: onOpenDocuments,
         icon: const Icon(Icons.description_outlined),
-        label: Text(compact ? '文档' : '文档工作区'),
+        label: const Text('文档'),
       ),
       FilledButton.tonalIcon(
         onPressed: onOpenExports,
@@ -1527,7 +1527,7 @@ class _WorkspaceEntryStrip extends StatelessWidget {
                   const SizedBox(width: 18),
                   Expanded(
                     child: _DesktopActionLine(
-                      label: '工作区设置',
+                      label: '账号与机构',
                       actions: secondaryActions,
                     ),
                   ),
