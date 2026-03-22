@@ -24,6 +24,16 @@ enum TenantKind {
   organization
 }
 
+enum QuestionBankStorageMode {
+  local
+  cloud
+}
+
+enum QuestionBankAccessLevel {
+  read
+  write
+}
+
 enum QuestionType {
   single_choice
   fill_blank
@@ -68,6 +78,7 @@ model Tenant {
 
   personalOwner User?          @relation("PersonalTenantOwner", fields: [personalOwnerUserId], references: [id])
   members       TenantMember[]
+  questionBanks QuestionBank[]
 }
 
 model Stage {
@@ -114,6 +125,9 @@ model User {
 
   personalTenantOwned Tenant?         @relation("PersonalTenantOwner")
   memberships         TenantMember[]
+  ownedQuestionBanks  QuestionBank[]       @relation("QuestionBankOwner")
+  questionBankGrants  QuestionBankGrant[]  @relation("QuestionBankGrantedUser")
+  questionGrantChanges QuestionBankGrant[] @relation("QuestionBankGrantedByUser")
   passwordResetTokens PasswordResetToken[]
 }
 
@@ -148,6 +162,43 @@ model TenantMember {
   @@id([tenantId, id])
   @@unique([tenantId, userId])
   @@index([userId])
+}
+
+model QuestionBank {
+  tenantId    String @db.Uuid
+  id          String @default(uuid()) @db.Uuid
+  name        String
+  storageMode QuestionBankStorageMode @default(cloud)
+  ownerUserId String @db.Uuid
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  owner     User   @relation("QuestionBankOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  grants    QuestionBankGrant[]
+  questions Question[]
+
+  @@id([tenantId, id])
+  @@index([ownerUserId])
+}
+
+model QuestionBankGrant {
+  tenantId        String @db.Uuid
+  questionBankId  String @db.Uuid
+  userId          String @db.Uuid
+  accessLevel     QuestionBankAccessLevel
+  grantedByUserId String @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  questionBank QuestionBank @relation(fields: [tenantId, questionBankId], references: [tenantId, id], onDelete: Cascade)
+  user         User         @relation("QuestionBankGrantedUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy    User         @relation("QuestionBankGrantedByUser", fields: [grantedByUserId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, questionBankId, userId])
+  @@index([userId])
+  @@index([grantedByUserId])
 }
 
 model Subject {
@@ -266,6 +317,7 @@ model QuestionChapter {
 model Question {
   tenantId     String @db.Uuid
   id           String @default(uuid()) @db.Uuid
+  questionBankId String? @db.Uuid
   type         QuestionType
   difficulty   Int
   defaultScore Decimal @db.Decimal(5, 2)
@@ -281,6 +333,7 @@ model Question {
   choiceAnswer  QuestionAnswerChoice?
   blankAnswer   QuestionAnswerBlank?
   solutionAnswer QuestionAnswerSolution?
+  questionBank  QuestionBank? @relation(fields: [tenantId, questionBankId], references: [tenantId, id])
 
   questionTaggings QuestionTagging[]
   questionStages QuestionStage[]
@@ -291,6 +344,7 @@ model Question {
   @@id([tenantId, id])
   @@index([subjectId])
   @@index([ownerUserId])
+  @@index([tenantId, questionBankId])
 }
 
 model QuestionContent {

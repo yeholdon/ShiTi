@@ -183,6 +183,7 @@ Additional rules for tenant kinds:
 
 Question design should support:
 
+- question-bank-level permission boundaries
 - stem blocks
 - explanation blocks
 - source metadata
@@ -197,6 +198,72 @@ Answer models should remain separated enough to preserve validation clarity:
 - choice answer
 - blank answer
 - solution answer
+
+### 7.1 Question bank as permission boundary
+
+Recommended direction:
+
+- introduce `QuestionBank` as the container above `Question`
+- keep `tenantId` as the workspace isolation root
+- add `questionBankId` to `Question`
+
+This creates a two-layer model:
+
+- `tenantId`
+  - personal workspace or organization workspace isolation
+- `questionBankId`
+  - actual question access boundary inside that workspace
+
+### 7.2 Question-bank storage modes
+
+Question-bank storage should distinguish:
+
+- `local`
+  - desktop-only
+  - private to the current user on the current desktop
+  - backed by a local database instance
+  - not accessible from mobile
+  - not part of tenant-sharing or remote ACL
+- `cloud`
+  - remote-service backed
+  - available on desktop and mobile
+  - supports explicit sharing and institution-level grants
+
+Initial backend execution direction:
+
+- backend APIs and Prisma schema should first support cloud question banks
+- desktop-local question banks may use the same logical model, but remain outside initial HTTP contracts
+
+### 7.3 Question-bank authorization
+
+Suggested access levels:
+
+- owner
+  - implicit full control
+- `read`
+- `write`
+
+Authorization rules:
+
+- personal local bank:
+  - creator only
+- personal cloud bank:
+  - owner always has full access
+  - explicit user grants may add `read / write`
+  - these grants do not create tenant membership
+- organization cloud bank:
+  - owner always has full access
+  - organization `admin / owner` may manage grants
+  - organization members need explicit bank grants unless a compatibility default is applied during migration
+
+### 7.4 Implication for RLS and guards
+
+Current RLS is tenant-wide.
+To support personal cloud sharing and organization bank-level authorization, future authorization must evolve toward:
+
+- tenant context still opened first
+- question-bank access checked second
+- question-owned rows eventually using `questionBankId` in app authorization and, later, RLS conditions
 
 ## 8. Document Model
 

@@ -974,3 +974,6 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `capture-edge-window.sh` 在判定为白屏后会主动 reload 当前 Edge 标签页再重拍，机构切换页这类偶发白屏的深链截图不再只是原地重试空白页。
 - [x] Tooling: `capture-edge-window.sh` 在白屏重拍前会重新等待 `loading=false + post-load delay`，文档页这类加载更慢的深链首屏不再因为 reload 后马上截图而持续落成白页。
 - [x] Tooling: `capture-edge-window.sh` 的图像采样改成不触发 Pillow 弃用告警的读法，Edge 桌面回归时终端不再持续刷 `getdata()` deprecation 噪声。
+- [x] Product/Architecture: 冻结题库权限系统方案，明确“题库实例”作为权限边界，个人工作区支持私有本地/云端题库，机构工作区题库按实例授权 `read / write`。
+- [x] Docs: 更新需求、系统设计、数据库设计、API 合约、Flutter IA、迁移计划，补齐题库权限系统与本地/云端模式说明。
+- [x] Runtime schema: 规划 Prisma 加法式引入 `QuestionBank`、`QuestionBankGrant`、`Question.questionBankId`，作为后续默认题库回填和 ACL 接口的起点。

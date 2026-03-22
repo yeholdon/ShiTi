@@ -45,6 +45,8 @@ Behavior rules:
 
 Core tables:
 
+- `question_banks`
+- `question_bank_grants`
 - `questions`
 - `question_contents`
 - `question_choice_answers`
@@ -58,6 +60,15 @@ Associated relation tables:
 - `question_grades`
 - `question_textbooks`
 - `question_chapters`
+
+Design intent:
+
+- `tenant_id` remains the workspace isolation root
+- `question_bank_id` becomes the permission and collaboration boundary
+- one question belongs to exactly one question bank
+- personal cloud banks may be shared directly to specified users
+- organization banks may be granted to organization members with `read / write`
+- personal local banks are desktop-local and do not depend on server-side ACL
 
 ## 4. Taxonomy Family
 

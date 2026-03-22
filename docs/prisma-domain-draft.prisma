@@ -28,6 +28,16 @@ enum TenantKind {
   organization
 }
 
+enum QuestionBankStorageMode {
+  local
+  cloud
+}
+
+enum QuestionBankAccessLevel {
+  read
+  write
+}
+
 enum QuestionType {
   choice
   blank
@@ -60,11 +70,14 @@ model User {
   lastLoginAt   DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  personalTenant Tenant?       @relation("PersonalTenantOwner")
-  memberships    TenantMember[]
-  createdQs      Question[]    @relation("QuestionCreatedBy")
-  updatedQs      Question[]    @relation("QuestionUpdatedBy")
-  auditLogs      AuditLog[]
+  personalTenant           Tenant?               @relation("PersonalTenantOwner")
+  memberships              TenantMember[]
+  ownedQuestionBanks       QuestionBank[]        @relation("QuestionBankOwner")
+  questionBankGrants       QuestionBankGrant[]   @relation("QuestionBankGrantedUser")
+  questionBankGrantChanges QuestionBankGrant[]   @relation("QuestionBankGrantedByUser")
+  createdQs                Question[]            @relation("QuestionCreatedBy")
+  updatedQs                Question[]            @relation("QuestionUpdatedBy")
+  auditLogs                AuditLog[]
 }
 
 model Tenant {
@@ -77,6 +90,41 @@ model Tenant {
   updatedAt           DateTime       @updatedAt
   personalOwner       User?          @relation("PersonalTenantOwner", fields: [personalOwnerUserId], references: [id], onDelete: SetNull)
   members             TenantMember[]
+  questionBanks       QuestionBank[]
+}
+
+model QuestionBank {
+  tenantId        String                  @db.Uuid
+  id              String                  @default(uuid()) @db.Uuid
+  name            String
+  storageMode     QuestionBankStorageMode @default(cloud)
+  ownerUserId     String                  @db.Uuid
+  description     String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  owner           User                    @relation("QuestionBankOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  grants          QuestionBankGrant[]
+  questions       Question[]
+
+  @@id([tenantId, id])
+}
+
+model QuestionBankGrant {
+  tenantId        String                  @db.Uuid
+  questionBankId  String                  @db.Uuid
+  userId          String                  @db.Uuid
+  accessLevel     QuestionBankAccessLevel
+  grantedByUserId String                  @db.Uuid
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  questionBank    QuestionBank            @relation(fields: [tenantId, questionBankId], references: [tenantId, id], onDelete: Cascade)
+  user            User                    @relation("QuestionBankGrantedUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy       User                    @relation("QuestionBankGrantedByUser", fields: [grantedByUserId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, questionBankId, userId])
 }
 
 model TenantMember {
@@ -96,6 +144,7 @@ model TenantMember {
 model Question {
   id            String               @id @default(uuid())
   tenantId      String
+  questionBankId String?
   type          QuestionType
   difficulty    Int
   defaultScore  Decimal              @db.Decimal(8, 2)
@@ -107,6 +156,7 @@ model Question {
 
   createdBy     User                 @relation("QuestionCreatedBy", fields: [createdById], references: [id])
   updatedBy     User                 @relation("QuestionUpdatedBy", fields: [updatedById], references: [id])
+  questionBank  QuestionBank?        @relation(fields: [tenantId, questionBankId], references: [tenantId, id])
   content       QuestionContent?
   choiceAnswer  QuestionChoiceAnswer?
   blankAnswer   QuestionBlankAnswer?

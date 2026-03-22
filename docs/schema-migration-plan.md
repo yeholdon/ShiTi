@@ -99,7 +99,45 @@ Why first:
 - it unlocks the target product model
 - it avoids later rewriting all tenant-scoped content tables
 
-## 4.1 Explanation block unification
+## 4.1 Question-bank permission boundary
+
+Current state:
+
+- `Question` is directly tenant-scoped
+- question access is effectively tenant-wide
+- no question-bank container or ACL exists
+
+Target state:
+
+- every question belongs to one `QuestionBank`
+- `tenantId` remains the workspace root
+- question access resolves through question-bank ownership or grants
+- personal local banks remain desktop-local
+- personal cloud banks and organization banks use explicit `read / write` grants
+
+Migration path:
+
+1. add `QuestionBank`
+2. add `QuestionBankGrant`
+3. add nullable `Question.questionBankId`
+4. backfill one default cloud bank per existing tenant
+5. attach historical questions to that default bank
+6. keep tenant-wide compatibility by granting existing organization members access to the default bank
+7. update question APIs to accept `questionBankId`
+8. later tighten `questionBankId` to required
+9. later evolve RLS and guards from tenant-wide question access toward bank-aware access
+
+Important compatibility rule:
+
+- initial backend runtime should focus on cloud banks
+- desktop-local bank support may begin in the Flutter desktop app without blocking server migration
+
+Why now:
+
+- personal cloud sharing and organization per-bank authorization both require this layer
+- without `questionBankId`, tenant-level ACL is too coarse
+
+## 4.2 Explanation block unification
 
 Recommended first runtime migration.
 
@@ -122,7 +160,7 @@ Why first:
 - high consistency payoff
 - useful for future Flutter editing experience
 
-## 4.2 Solution answer normalization
+## 4.3 Solution answer normalization
 
 Current state:
 
@@ -141,7 +179,7 @@ Risk:
 
 - low to medium
 
-## 4.3 Subject cardinality
+## 4.4 Subject cardinality
 
 Current state:
 
@@ -161,7 +199,7 @@ Action:
 - remove subject cardinality from runtime migration scope
 - express cross-discipline discoverability through tags and other taxonomy dimensions instead
 
-## 4.4 Grade and seed refinement
+## 4.5 Grade and seed refinement
 
 Current state:
 
@@ -177,7 +215,7 @@ Risk:
 
 - low
 
-## 4.5 Composite integrity tightening
+## 4.6 Composite integrity tightening
 
 Current state:
 

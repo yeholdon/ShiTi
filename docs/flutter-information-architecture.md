@@ -36,6 +36,8 @@ Recommended main tabs:
 
 ## 3.2 Questions
 
+- question bank switcher
+- question bank detail / permissions
 - question list
 - question filters sheet
 - question detail
@@ -69,6 +71,8 @@ Recommended main tabs:
 
 Secondary routes:
 
+- question bank share sheet
+- desktop-local bank setup
 - textbook/chapter picker
 - tag picker
 - asset picker
@@ -114,6 +118,7 @@ These should remain in the admin console first:
 Desktop Flutter should emphasize:
 
 - larger split-view layouts
+- local question-bank setup and connection flows
 - persistent question basket
 - side-by-side document composition
 - stronger keyboard support
@@ -124,5 +129,6 @@ Mobile Flutter should emphasize:
 
 - bottom-tab navigation
 - search-first entry points
+- cloud question-bank access only
 - lightweight detail screens
 - fast add-to-basket and add-to-document actions

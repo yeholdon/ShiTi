@@ -99,6 +99,19 @@ Flutter expectations:
 - question summary list for browse/search
 - detail view for editing and review
 - question basket selection
+- question-bank-aware browse and switch
+
+Expected evolution:
+
+- add `GET /question-banks`
+- add `POST /question-banks` for cloud-bank creation
+- add `PATCH /question-banks/:id`
+- add `POST /question-banks/:id/grants`
+- add `PATCH /question-banks/:id/grants/:userId`
+- add `DELETE /question-banks/:id/grants/:userId`
+- add `questionBankId` filter to `GET /questions`
+- require `questionBankId` on question create/import once migration completes
+- desktop-local banks remain outside initial HTTP contracts and are handled by the desktop client
 
 ## 5. Taxonomy and Tags
 

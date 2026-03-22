@@ -114,6 +114,7 @@ Additional expectations:
 
 The system must support:
 
+- question bank instances as first-class containers
 - question create, update, read, delete
 - question content blocks
 - explanation blocks
@@ -124,6 +125,29 @@ The system must support:
   - solution
 - question search and filtering
 - import questions in batch
+
+Question-bank access requirements:
+
+- one question belongs to exactly one question bank instance
+- a user may create private question banks inside the personal workspace
+- private question banks support two storage modes:
+  - local
+    - desktop only
+    - stored in a desktop-local database instance selected by the user
+    - mobile cannot create or access local banks
+    - local banks are private to the creator
+  - cloud
+    - stored on the remote service
+    - accessible from desktop and mobile
+    - default access is owner-only
+    - owner may grant specified users:
+      - read
+      - write
+- organization workspaces may host multiple question bank instances
+- organization admins and owners may grant organization members access to specific question banks
+  - access levels:
+    - read
+    - write
 
 ## 5.3 Taxonomy and tags
 
@@ -212,6 +236,7 @@ Primary objects:
 
 - personal workspace context
 - organization workspace context
+- question bank context
 - recent materials
 - question search
 - question basket

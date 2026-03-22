@@ -48,13 +48,48 @@ Recommended evolution:
 
 This lets one user own a private personal workspace while still joining multiple organizations, without introducing a second root workspace table.
 
-## 2.3 Questions
+## 2.3 Question banks
+
+Suggested tables:
+
+- `question_banks`
+  - `id`
+  - `tenant_id`
+  - `name`
+  - `storage_mode`
+    - `cloud`
+    - `local`
+  - `owner_user_id`
+  - `description`
+  - `created_at`
+  - `updated_at`
+
+- `question_bank_grants`
+  - `tenant_id`
+  - `question_bank_id`
+  - `user_id`
+  - `access_level`
+    - `read`
+    - `write`
+  - `granted_by_user_id`
+  - `created_at`
+  - `updated_at`
+
+Design intent:
+
+- `tenant_id` remains the workspace root boundary
+- `question_bank_id` becomes the collaboration and permission boundary
+- personal local banks stay desktop-local and do not depend on remote ACL
+- personal cloud banks and organization banks use explicit grants
+
+## 2.4 Questions
 
 Suggested tables:
 
 - `questions`
   - `id`
   - `tenant_id`
+  - `question_bank_id`
   - `type`
   - `difficulty`
   - `default_score`
@@ -75,7 +110,14 @@ Suggested tables:
   - `source_month`
   - `source_text`
 
-## 2.4 Answer tables
+Important note:
+
+- `questions.visibility` should no longer be treated as the primary permission boundary once question-bank ACL exists
+- actual access should resolve through:
+  - workspace context
+  - question-bank grants
+
+## 2.5 Answer tables
 
 Recommended split:
 
@@ -96,7 +138,7 @@ Recommended split:
   - `reference_answer_blocks`
   - `scoring_points_blocks`
 
-## 2.5 Taxonomy tables
+## 2.6 Taxonomy tables
 
 Suggested:
 
@@ -113,7 +155,7 @@ Recommended relationships:
 - `chapters.textbook_id -> textbooks.id`
 - question subject remains scalar via `questions.subject_id`; it is not modeled as many-to-many
 
-## 2.6 Question relation tables
+## 2.7 Question relation tables
 
 Suggested many-to-many tables:
 
@@ -127,7 +169,7 @@ Note:
 
 - subject is intentionally excluded here because the product rule is one question -> one subject
 
-## 2.7 Documents
+## 2.8 Documents
 
 Suggested tables:
 
@@ -155,7 +197,7 @@ Suggested tables:
   - `created_at`
   - `updated_at`
 
-## 2.8 Assets and exports
+## 2.9 Assets and exports
 
 Suggested tables:
 
@@ -178,7 +220,7 @@ Suggested tables:
   - `created_at`
   - `updated_at`
 
-## 2.9 Audit
+## 2.10 Audit
 
 Suggested table:
 
