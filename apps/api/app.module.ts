@@ -4,6 +4,7 @@ import { PrismaModule } from '../../src/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { QuestionsModule } from './questions/questions.module';
+import { QuestionBanksModule } from './question-banks/question-banks.module';
 import { TenantMembersModule } from './tenant-members/tenant-members.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { QuestionTagsModule } from './question-tags/question-tags.module';
@@ -36,6 +37,7 @@ import { AgentTeamModule } from './agent-team/agent-team.module';
     }),
     AuthModule,
     TenantsModule,
+    QuestionBanksModule,
     QuestionsModule,
     QuestionTagsModule,
     DocumentsModule,

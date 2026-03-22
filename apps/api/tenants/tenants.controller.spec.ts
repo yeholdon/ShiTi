@@ -42,9 +42,27 @@ describe('TenantsController', () => {
         findUnique: jest.fn().mockResolvedValue({ id: 'u1' }),
       },
     });
-    prisma.tenant.findUnique.mockResolvedValue(null);
+    prisma.tenant.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 't2',
+        kind: 'organization',
+        personalOwnerUserId: null,
+      });
     prisma.tenant.create.mockResolvedValue({ id: 't2', code: 'acme', name: 'ACME' });
-    prisma.withTenant.mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
+      const tx = {
+        tenantMember: {
+          create: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }),
+          findFirst: jest.fn().mockResolvedValue({ userId: 'u1' }),
+        },
+        questionBank: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue({ id: 'b1', name: '机构默认题库' }),
+        },
+      };
+      return fn(tx);
+    });
 
     const ctrl = new TenantsController(prisma);
     const res = await ctrl.createTenant(
@@ -68,9 +86,27 @@ describe('TenantsController', () => {
 
   it('createTenant auto-joins the authenticated creator as owner', async () => {
     const prisma = makePrisma();
-    prisma.tenant.findUnique.mockResolvedValue(null);
+    prisma.tenant.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 't2',
+        kind: 'organization',
+        personalOwnerUserId: null,
+      });
     prisma.tenant.create.mockResolvedValue({ id: 't2', code: 'acme', name: 'ACME' });
-    prisma.withTenant.mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
+      const tx = {
+        tenantMember: {
+          create: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }),
+          findFirst: jest.fn().mockResolvedValue({ userId: 'u1' }),
+        },
+        questionBank: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue({ id: 'b1', name: '机构默认题库' }),
+        },
+      };
+      return fn(tx);
+    });
 
     const ctrl = new TenantsController(prisma);
     const res = await ctrl.createTenant(
@@ -78,7 +114,7 @@ describe('TenantsController', () => {
       { code: 'acme', name: 'ACME' }
     );
 
-    expect(prisma.withTenant).toHaveBeenCalledTimes(1);
+    expect(prisma.withTenant).toHaveBeenCalledTimes(4);
     expect(res).toEqual({
       tenant: {
         id: 't2',

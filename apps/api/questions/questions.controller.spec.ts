@@ -2,6 +2,9 @@ import { QuestionsController } from './questions.controller';
 
 function makePrisma(overrides: Partial<any> = {}) {
   return {
+    tenant: {
+      findUnique: jest.fn()
+    },
     subject: {
       findFirst: jest.fn()
     },
@@ -34,10 +37,18 @@ describe('QuestionsController', () => {
 
   it('creates question using provided subjectId when it belongs to tenant/system subjects', async () => {
     const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 't1',
+      kind: 'organization',
+      personalOwnerUserId: null,
+    });
     prisma.subject.findFirst.mockResolvedValue({ id: 'sub-123' });
     prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
       const tx = {
         tenantMember: { findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }) },
+        questionBank: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'b1', tenantId: 't1' }),
+        },
         question: { create: jest.fn().mockResolvedValue({ id: 'q1' }) }
       };
       return fn(tx);
@@ -56,7 +67,7 @@ describe('QuestionsController', () => {
       },
       select: { id: true }
     });
-    expect(prisma.withTenant).toHaveBeenCalledTimes(2);
+    expect(prisma.withTenant).toHaveBeenCalledTimes(3);
     expect(res.question).toEqual({ id: 'q1' });
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -71,10 +82,18 @@ describe('QuestionsController', () => {
 
   it('throws when no system subject found and subjectId not provided', async () => {
     const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 't1',
+      kind: 'organization',
+      personalOwnerUserId: null,
+    });
     prisma.subject.findFirst.mockResolvedValue(null);
     prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
       const tx = {
         tenantMember: { findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }) },
+        questionBank: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'b1', tenantId: 't1' }),
+        },
         question: { create: jest.fn().mockResolvedValue({ id: 'q1' }) }
       };
       return fn(tx);

@@ -2,6 +2,7 @@ import { Body, ConflictException, Controller, Get, Headers, Post, Req, UseGuards
 import type { Request } from 'express';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { requireUserId } from '../../../src/tenant/tenant-guards';
+import { ensureDefaultCloudQuestionBank } from '../../../src/domain/questions/question-bank-access';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -84,6 +85,8 @@ export class TenantsController {
         },
       })
     );
+
+    await ensureDefaultCloudQuestionBank(this.prisma, tenant.id, userId);
 
     return {
       tenant: {

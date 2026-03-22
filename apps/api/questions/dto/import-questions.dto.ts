@@ -1,7 +1,16 @@
 import { Transform } from 'class-transformer';
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsOptional, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 
 export class ImportQuestionsDto {
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const normalized = value.trim();
+    return normalized || undefined;
+  })
+  @IsUUID('4', { message: 'Invalid questionBankId' })
+  questionBankId?: string;
+
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'boolean' ? value : value === 'true'))
   @IsBoolean({ message: 'Invalid dryRun' })

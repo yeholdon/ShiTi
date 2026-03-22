@@ -45,6 +45,11 @@ import {
 } from '../../../src/domain/questions/taxonomy-access';
 import { validateAssetReferences } from '../../../src/domain/assets/asset-reference-validation';
 import {
+  ensureDefaultCloudQuestionBank,
+  ensureReadableQuestionBank,
+  ensureWritableQuestionBank,
+} from '../../../src/domain/questions/question-bank-access';
+import {
   normalizeExplanationRecord,
   normalizeSolutionAnswerRecord,
   wrapLatexAsBlocks
@@ -91,6 +96,14 @@ export class QuestionsController {
     const tenantId = requireTenantId(req);
     const ownerUserId = requireUserId(req);
     await requireTenantRole(this.prisma, tenantId, ownerUserId, ['admin', 'owner']);
+    const questionBank = body.questionBankId
+      ? await ensureWritableQuestionBank(
+          this.prisma,
+          tenantId,
+          ownerUserId,
+          body.questionBankId,
+        )
+      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId);
 
     const subjectId = body.subjectId
       ? await ensureTenantOrSystemSubject(this.prisma, tenantId, body.subjectId)
@@ -104,6 +117,7 @@ export class QuestionsController {
       tx.question.create({
         data: {
           tenantId,
+          questionBankId: questionBank.id,
           type: 'single_choice',
           difficulty: 3,
           defaultScore: '5.00',
@@ -133,11 +147,20 @@ export class QuestionsController {
     const tenantId = requireTenantId(req);
     const ownerUserId = requireUserId(req);
     await requireTenantRole(this.prisma, tenantId, ownerUserId, ['admin', 'owner']);
+    const questionBank = body.questionBankId
+      ? await ensureWritableQuestionBank(
+          this.prisma,
+          tenantId,
+          ownerUserId,
+          body.questionBankId,
+        )
+      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId);
     this.validateImportBody(body);
 
     return this.questionsImport.importQuestions({
       tenantId,
       ownerUserId,
+      questionBankId: questionBank.id,
       dryRun: body?.dryRun,
       items: body.items as any
     });
@@ -163,6 +186,10 @@ export class QuestionsController {
     const gradeId = typeof query.gradeId === 'string' && query.gradeId.trim() ? query.gradeId.trim() : undefined;
     const textbookId = typeof query.textbookId === 'string' && query.textbookId.trim() ? query.textbookId.trim() : undefined;
     const chapterId = typeof query.chapterId === 'string' && query.chapterId.trim() ? query.chapterId.trim() : undefined;
+    const questionBankId =
+      typeof query.questionBankId === 'string' && query.questionBankId.trim()
+        ? query.questionBankId.trim()
+        : undefined;
     const type = typeof query.type === 'string' && query.type.trim() ? query.type.trim() : undefined;
     const visibility = typeof query.visibility === 'string' && query.visibility.trim() ? query.visibility.trim() : undefined;
     const subjectId = typeof query.subjectId === 'string' && query.subjectId.trim() ? query.subjectId.trim() : undefined;
@@ -180,6 +207,10 @@ export class QuestionsController {
     const orderBy = { [sortBy]: sortOrder } as Prisma.QuestionOrderByWithRelationInput;
 
     const where: Prisma.QuestionWhereInput = { tenantId };
+    if (questionBankId) {
+      await ensureReadableQuestionBank(this.prisma, tenantId, userId, questionBankId);
+      where.questionBankId = questionBankId;
+    }
     if (type) where.type = type as any;
     if (visibility) where.visibility = visibility as any;
     if (subjectId) where.subjectId = subjectId;
