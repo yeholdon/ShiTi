@@ -1,5 +1,6 @@
 import '../api/shiti_api_client.dart';
 import '../models/auth_session.dart';
+import '../models/password_reset_request_result.dart';
 import '../models/tenant_member_audit_event.dart';
 import '../models/tenant_member_summary.dart';
 import '../models/tenant_summary.dart';
@@ -15,6 +16,24 @@ abstract class SessionRepository {
     required String username,
     required String password,
   });
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
+  Future<PasswordResetRequestResult> requestPasswordReset({
+    required String username,
+    String deliveryMode = 'preview',
+  });
+
+  Future<void> resetPassword({
+    required String username,
+    required String resetToken,
+    required String newPassword,
+  });
+
+  Future<void> logout();
 
   Future<List<TenantSummary>> listTenants();
 
@@ -38,6 +57,12 @@ abstract class SessionRepository {
   Future<TenantMemberSummary> addTenantMember({
     required String tenantCode,
     required String username,
+    required String role,
+    String status = 'active',
+  });
+
+  Future<TenantMemberSummary> joinCurrentTenant({
+    required String tenantCode,
     required String role,
     String status = 'active',
   });
@@ -84,6 +109,46 @@ class FakeSessionRepository implements SessionRepository {
     required String password,
   }) {
     return _apiClient.register(username: username, password: password);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _apiClient.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
+  Future<PasswordResetRequestResult> requestPasswordReset({
+    required String username,
+    String deliveryMode = 'preview',
+  }) {
+    return _apiClient.requestPasswordReset(
+      username: username,
+      deliveryMode: deliveryMode,
+    );
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String username,
+    required String resetToken,
+    required String newPassword,
+  }) {
+    return _apiClient.resetPassword(
+      username: username,
+      resetToken: resetToken,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
+  Future<void> logout() {
+    return _apiClient.logout();
   }
 
   @override
@@ -146,6 +211,19 @@ class FakeSessionRepository implements SessionRepository {
   }
 
   @override
+  Future<TenantMemberSummary> joinCurrentTenant({
+    required String tenantCode,
+    required String role,
+    String status = 'active',
+  }) async {
+    return _apiClient.joinCurrentTenant(
+      tenantCode: tenantCode,
+      role: role,
+      status: status,
+    );
+  }
+
+  @override
   Future<TenantMemberSummary> updateTenantMemberStatus({
     required String tenantCode,
     required String memberId,
@@ -198,10 +276,12 @@ class RemoteSessionRepository implements SessionRepository {
   const RemoteSessionRepository(
     this._client, {
     this.onSessionUpdated,
+    this.currentSessionProvider,
   });
 
   final HttpJsonClient _client;
   final void Function(AuthSession session)? onSessionUpdated;
+  final AuthSession? Function()? currentSessionProvider;
 
   @override
   Future<AuthSession> login({
@@ -252,6 +332,69 @@ class RemoteSessionRepository implements SessionRepository {
   }
 
   @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _client.postObject(
+      '/auth/change-password',
+      body: <String, dynamic>{
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+    );
+  }
+
+  @override
+  Future<PasswordResetRequestResult> requestPasswordReset({
+    required String username,
+    String deliveryMode = 'preview',
+  }) async {
+    final object = await _client.postObject(
+      '/auth/request-password-reset',
+      body: <String, dynamic>{
+        'username': username,
+        'deliveryMode': deliveryMode,
+      },
+    );
+    return PasswordResetRequestResult(
+      deliveryMode: (object['deliveryMode'] ?? deliveryMode).toString(),
+      deliveryTransport: object['deliveryTransport']?.toString(),
+      deliveryTargetHint: object['deliveryTargetHint']?.toString(),
+      requestId: object['requestId']?.toString(),
+      resetTokenPreview: object['resetTokenPreview']?.toString(),
+      previewHint: object['previewHint']?.toString(),
+      cooldownSeconds: object['cooldownSeconds'] is num
+          ? (object['cooldownSeconds'] as num).toInt()
+          : null,
+    );
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String username,
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    await _client.postObject(
+      '/auth/reset-password',
+      body: <String, dynamic>{
+        'username': username,
+        'resetToken': resetToken,
+        'newPassword': newPassword,
+      },
+    );
+  }
+
+  @override
+  Future<void> logout() async {
+    await _client.postObject(
+      '/auth/logout',
+      body: const <String, dynamic>{},
+    );
+  }
+
+  @override
   Future<List<TenantSummary>> listTenants() async {
     final items = await _client.getList('/tenants', listKey: 'tenants');
     return items
@@ -260,8 +403,9 @@ class RemoteSessionRepository implements SessionRepository {
           (tenant) => TenantSummary(
             id: (tenant['id'] ?? '').toString(),
             code: (tenant['code'] ?? '').toString(),
-            name: (tenant['name'] ?? '未命名租户').toString(),
+            name: (tenant['name'] ?? '未命名机构').toString(),
             role: (tenant['role'] ?? 'member').toString(),
+            kind: (tenant['kind'] ?? 'organization').toString(),
           ),
         )
         .toList();
@@ -280,8 +424,9 @@ class RemoteSessionRepository implements SessionRepository {
     return TenantSummary(
       id: (tenant['id'] ?? '').toString(),
       code: (tenant['code'] ?? tenantCode).toString(),
-      name: (tenant['name'] ?? '未命名租户').toString(),
+      name: (tenant['name'] ?? '未命名机构').toString(),
       role: 'member',
+      kind: (tenant['kind'] ?? 'organization').toString(),
     );
   }
 
@@ -290,11 +435,16 @@ class RemoteSessionRepository implements SessionRepository {
     required String code,
     required String name,
   }) async {
+    final currentSession = currentSessionProvider?.call();
     final object = await _client.postObject(
       '/tenants',
       body: <String, dynamic>{
         'code': code,
         'name': name,
+        if ((currentSession?.userId ?? '').isNotEmpty)
+          'creatorUserId': currentSession!.userId,
+        if ((currentSession?.username ?? '').isNotEmpty)
+          'creatorUsername': currentSession!.username,
       },
     );
     final tenant = object['tenant'];
@@ -304,6 +454,7 @@ class RemoteSessionRepository implements SessionRepository {
         code: (tenant['code'] ?? code).toString(),
         name: (tenant['name'] ?? name).toString(),
         role: 'owner',
+        kind: (tenant['kind'] ?? 'organization').toString(),
       );
     }
     return TenantSummary(
@@ -311,6 +462,7 @@ class RemoteSessionRepository implements SessionRepository {
       code: code,
       name: name,
       role: 'owner',
+      kind: 'organization',
     );
   }
 
@@ -332,9 +484,10 @@ class RemoteSessionRepository implements SessionRepository {
             updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
                 ? null
                 : (member['updatedAt'] ?? '').toString(),
-            invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
-                ? null
-                : (member['invitationExpiresAt'] ?? '').toString(),
+            invitationExpiresAtIso:
+                (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                    ? null
+                    : (member['invitationExpiresAt'] ?? '').toString(),
           ),
         )
         .toList();
@@ -362,9 +515,10 @@ class RemoteSessionRepository implements SessionRepository {
         updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
             ? null
             : (member['updatedAt'] ?? '').toString(),
-        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
-            ? null
-            : (member['invitationExpiresAt'] ?? '').toString(),
+        invitationExpiresAtIso:
+            (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
       );
     }
     return TenantMemberSummary(
@@ -405,15 +559,58 @@ class RemoteSessionRepository implements SessionRepository {
         updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
             ? null
             : (member['updatedAt'] ?? '').toString(),
-        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
-            ? null
-            : (member['invitationExpiresAt'] ?? '').toString(),
+        invitationExpiresAtIso:
+            (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
       );
     }
     return TenantMemberSummary(
       id: '',
       userId: '',
       username: username,
+      role: role,
+      status: status,
+      createdAtLabel: '刚刚加入',
+    );
+  }
+
+  @override
+  Future<TenantMemberSummary> joinCurrentTenant({
+    required String tenantCode,
+    required String role,
+    String status = 'active',
+  }) async {
+    final object = await _client.postObject(
+      '/tenant-members',
+      body: <String, dynamic>{
+        'tenantCode': tenantCode,
+        'role': role,
+        'status': status,
+      },
+    );
+    final member = object['membership'];
+    if (member is Map<String, dynamic>) {
+      return TenantMemberSummary(
+        id: (member['id'] ?? '').toString(),
+        userId: (member['userId'] ?? '').toString(),
+        username: (member['username'] ?? 'current-user').toString(),
+        role: (member['role'] ?? role).toString(),
+        status: (member['status'] ?? status).toString(),
+        createdAtLabel: '刚刚加入',
+        updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
+            ? null
+            : (member['updatedAt'] ?? '').toString(),
+        invitationExpiresAtIso:
+            (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
+      );
+    }
+    return TenantMemberSummary(
+      id: '',
+      userId: '',
+      username: 'current-user',
       role: role,
       status: status,
       createdAtLabel: '刚刚加入',
@@ -442,9 +639,10 @@ class RemoteSessionRepository implements SessionRepository {
         updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
             ? null
             : (member['updatedAt'] ?? '').toString(),
-        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
-            ? null
-            : (member['invitationExpiresAt'] ?? '').toString(),
+        invitationExpiresAtIso:
+            (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
       );
     }
     return TenantMemberSummary(
@@ -478,9 +676,10 @@ class RemoteSessionRepository implements SessionRepository {
         updatedAtIso: (member['updatedAt'] ?? '').toString().isEmpty
             ? null
             : (member['updatedAt'] ?? '').toString(),
-        invitationExpiresAtIso: (member['invitationExpiresAt'] ?? '').toString().isEmpty
-            ? null
-            : (member['invitationExpiresAt'] ?? '').toString(),
+        invitationExpiresAtIso:
+            (member['invitationExpiresAt'] ?? '').toString().isEmpty
+                ? null
+                : (member['invitationExpiresAt'] ?? '').toString(),
       );
     }
     return TenantMemberSummary(
@@ -526,7 +725,9 @@ class RemoteSessionRepository implements SessionRepository {
         atLabel: at.isEmpty ? '-' : at,
         action: action,
         targetType: targetType,
-        detail: targetId.isEmpty ? '$action · $targetType' : '$action · $targetType · $targetId',
+        detail: targetId.isEmpty
+            ? '$action · $targetType'
+            : '$action · $targetType · $targetId',
       );
     }).toList();
   }

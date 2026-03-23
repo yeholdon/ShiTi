@@ -13,6 +13,8 @@ import '../../router/app_router.dart';
 import '../documents/create_document_dialog.dart';
 import '../shared/primary_navigation_bar.dart';
 import '../shared/primary_page_scroll_memory.dart';
+import '../shared/workspace_module_paths.dart';
+import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 
 bool _hasWorkspaceSession() => AppServices.instance.session != null;
@@ -481,212 +483,223 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final activeTenant = AppServices.instance.activeTenant;
     return Scaffold(
-      body: WorkspaceBackdrop(
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 900;
-              return Row(
+      body: WorkspaceModuleShell(
+        currentModule: WorkspaceModule.home,
+        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+        title: '拾题教研平台',
+        subtitle: '围绕题库、文档、学生、班级与课堂，组织统一的跨平台教研工作台。',
+        searchHint: '搜索题目、文档、学生、班级、课堂或导出记录',
+        statusWidgets: [
+          WorkspaceInfoPill(
+            label: '数据模式',
+            value: AppConfig.useMockData ? '样例数据' : '真实数据',
+          ),
+          WorkspaceInfoPill(
+            label: '当前场景',
+            value: activeTenant == null
+                ? '待选择机构'
+                : activeTenant.isPersonal
+                    ? '个人工作区'
+                    : '机构工作区',
+            highlight: activeTenant == null,
+          ),
+          WorkspaceInfoPill(
+            label: '当前机构',
+            value: activeTenant?.name ?? '未选择机构',
+            highlight: activeTenant == null,
+          ),
+        ],
+        trailing: IconButton.filledTonal(
+          onPressed: _reloadSnapshot,
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: '刷新工作台快照',
+        ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 960;
+            return workspaceConstrainedContent(
+              context,
+              child: ListView(
+                controller: _scrollController,
+                padding: workspacePagePadding(context),
                 children: [
-                  if (wide) const _WorkspaceRail(),
-                  Expanded(
-                    child: workspaceConstrainedContent(
-                      context,
-                      child: ListView(
-                        controller: _scrollController,
-                        padding: workspacePagePadding(context),
-                        children: [
-                          FutureBuilder<_WorkspaceSnapshot>(
-                            future: _snapshotFuture,
-                            builder: (context, snapshot) {
-                              return _HeroSection(
-                                wide: wide,
-                                snapshot: snapshot,
-                                onRefresh: _reloadSnapshot,
-                                onOpenLibrary: () => _openSectionFromEntry(
-                                  PrimaryAppSection.library,
-                                ),
-                                onOpenFocus: _openFocusTarget,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          const _WorkspaceContextStrip(),
-                          const SizedBox(height: 10),
-                          if (!AppConfig.useMockData)
-                            const _RemoteModeGuideCard(),
-                          if (!AppConfig.useMockData)
-                            const SizedBox(height: 12),
-                          if (!AppConfig.useMockData)
-                            const _RemoteWorkspaceProbeCard(),
-                          const SizedBox(height: 16),
-                          _WorkspaceEntryStrip(
-                            onCreateDocument: _createDocumentFromHome,
-                            onOpenBasket: _openBasketFromEntry,
-                            onOpenDocuments: () => _openSectionFromEntry(
-                              PrimaryAppSection.documents,
-                            ),
-                            onOpenExports: () => _openSectionFromEntry(
-                              PrimaryAppSection.exports,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          FutureBuilder<_WorkspaceSnapshot>(
-                            future: _snapshotFuture,
-                            builder: (context, snapshot) {
-                              final cards = snapshot.data?.cards ??
-                                  const <_SummaryCardData>[];
-                              final recentTasks =
-                                  snapshot.data?.tasks ?? const <_TaskData>[];
-                              final visibleRecentTasks = recentTasks
-                                  .where(
-                                    (task) =>
-                                        _recentTaskFilter ==
-                                            _RecentTaskFilter.all ||
-                                        task.action == _recentTaskFilter.action,
-                                  )
-                                  .toList(growable: false);
-                              final sortedRecentTasks = _applyRecentTaskSort(
-                                visibleRecentTasks,
-                              );
-
-                              return Column(
-                                children: [
-                                  if (snapshot.hasError)
-                                    _WorkspaceLoadWarning(
-                                      error: snapshot.error,
-                                      onRetry: _reloadSnapshot,
-                                    )
-                                  else if (!snapshot.hasData)
-                                    const _WorkspaceLoadingCard(),
-                                  if (cards.isNotEmpty) ...[
-                                    LayoutBuilder(
-                                      builder: (context, cardConstraints) {
-                                        final desktopCardRow =
-                                            cardConstraints.maxWidth >= 1180 &&
-                                                cards.length <= 3;
-                                        if (desktopCardRow) {
-                                          return Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              for (var index = 0;
-                                                  index < cards.length;
-                                                  index++) ...[
-                                                Expanded(
-                                                  child: _SummaryCard(
-                                                    card: cards[index],
-                                                    wide: false,
-                                                    onTap: cards[index].action ==
-                                                            _WorkspaceCardAction
-                                                                .none
-                                                        ? null
-                                                        : () =>
-                                                            _openSummaryCard(
-                                                              cards[index],
-                                                            ),
-                                                  ),
-                                                ),
-                                                if (index != cards.length - 1)
-                                                  const SizedBox(width: 16),
-                                              ],
-                                            ],
-                                          );
-                                        }
-                                        return Wrap(
-                                          spacing: 16,
-                                          runSpacing: 16,
-                                          children: cards
-                                              .map(
-                                                (card) => _SummaryCard(
-                                                  card: card,
-                                                  wide: wide,
-                                                  onTap: card.action ==
-                                                          _WorkspaceCardAction
-                                                              .none
-                                                      ? null
-                                                      : () =>
-                                                          _openSummaryCard(card),
-                                                ),
-                                              )
-                                              .toList(),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 24),
-                                  ],
-                                  if (wide)
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: _RecentTasksPanel(
-                                            tasks: recentTasks,
-                                            visibleTasks: sortedRecentTasks,
-                                            filter: _recentTaskFilter,
-                                            sort: _recentTaskSort,
-                                            onFilterChanged: (value) {
-                                              setState(() {
-                                                _recentTaskFilter = value;
-                                              });
-                                            },
-                                            onSortChanged: (value) {
-                                              setState(() {
-                                                _recentTaskSort = value;
-                                              });
-                                            },
-                                            onRefresh: _reloadSnapshot,
-                                            onOpenTask: _openTask,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        SizedBox(
-                                          width: constraints.maxWidth >= 1240
-                                              ? 344
-                                              : 320,
-                                          child: const _QuestionBasketPanel(),
-                                        ),
-                                      ],
-                                    )
-                                  else
-                                    Column(
-                                      children: [
-                                        _RecentTasksPanel(
-                                          tasks: recentTasks,
-                                          visibleTasks: sortedRecentTasks,
-                                          filter: _recentTaskFilter,
-                                          sort: _recentTaskSort,
-                                          onFilterChanged: (value) {
-                                            setState(() {
-                                              _recentTaskFilter = value;
-                                            });
-                                          },
-                                          onSortChanged: (value) {
-                                            setState(() {
-                                              _recentTaskSort = value;
-                                            });
-                                          },
-                                          onRefresh: _reloadSnapshot,
-                                          onOpenTask: _openTask,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const _QuestionBasketPanel(),
-                                      ],
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                  FutureBuilder<_WorkspaceSnapshot>(
+                    future: _snapshotFuture,
+                    builder: (context, snapshot) {
+                      return _HeroSection(
+                        wide: wide,
+                        snapshot: snapshot,
+                        onRefresh: _reloadSnapshot,
+                        onOpenLibrary: () => _openSectionFromEntry(
+                          PrimaryAppSection.library,
+                        ),
+                        onOpenFocus: _openFocusTarget,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const _WorkspaceContextStrip(),
+                  const SizedBox(height: 10),
+                  if (!AppConfig.useMockData) const _RemoteModeGuideCard(),
+                  if (!AppConfig.useMockData) const SizedBox(height: 12),
+                  if (!AppConfig.useMockData) const _RemoteWorkspaceProbeCard(),
+                  const SizedBox(height: 16),
+                  _WorkspaceEntryStrip(
+                    onCreateDocument: _createDocumentFromHome,
+                    onOpenBasket: _openBasketFromEntry,
+                    onOpenDocuments: () => _openSectionFromEntry(
+                      PrimaryAppSection.documents,
+                    ),
+                    onOpenExports: () => _openSectionFromEntry(
+                      PrimaryAppSection.exports,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<_WorkspaceSnapshot>(
+                    future: _snapshotFuture,
+                    builder: (context, snapshot) {
+                      final cards =
+                          snapshot.data?.cards ?? const <_SummaryCardData>[];
+                      final recentTasks =
+                          snapshot.data?.tasks ?? const <_TaskData>[];
+                      final visibleRecentTasks = recentTasks
+                          .where(
+                            (task) =>
+                                _recentTaskFilter == _RecentTaskFilter.all ||
+                                task.action == _recentTaskFilter.action,
+                          )
+                          .toList(growable: false);
+                      final sortedRecentTasks =
+                          _applyRecentTaskSort(visibleRecentTasks);
+
+                      return Column(
+                        children: [
+                          if (snapshot.hasError)
+                            _WorkspaceLoadWarning(
+                              error: snapshot.error,
+                              onRetry: _reloadSnapshot,
+                            )
+                          else if (!snapshot.hasData)
+                            const _WorkspaceLoadingCard(),
+                          if (cards.isNotEmpty) ...[
+                            LayoutBuilder(
+                              builder: (context, cardConstraints) {
+                                final desktopCardRow =
+                                    cardConstraints.maxWidth >= 1180 &&
+                                        cards.length <= 3;
+                                if (desktopCardRow) {
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      for (var index = 0;
+                                          index < cards.length;
+                                          index++) ...[
+                                        Expanded(
+                                          child: _SummaryCard(
+                                            card: cards[index],
+                                            wide: false,
+                                            onTap: cards[index].action ==
+                                                    _WorkspaceCardAction.none
+                                                ? null
+                                                : () => _openSummaryCard(
+                                                      cards[index],
+                                                    ),
+                                          ),
+                                        ),
+                                        if (index != cards.length - 1)
+                                          const SizedBox(width: 16),
+                                      ],
+                                    ],
+                                  );
+                                }
+                                return Wrap(
+                                  spacing: 16,
+                                  runSpacing: 16,
+                                  children: cards
+                                      .map(
+                                        (card) => _SummaryCard(
+                                          card: card,
+                                          wide: wide,
+                                          onTap: card.action ==
+                                                  _WorkspaceCardAction.none
+                                              ? null
+                                              : () => _openSummaryCard(card),
+                                        ),
+                                      )
+                                      .toList(),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (wide)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: _RecentTasksPanel(
+                                    tasks: recentTasks,
+                                    visibleTasks: sortedRecentTasks,
+                                    filter: _recentTaskFilter,
+                                    sort: _recentTaskSort,
+                                    onFilterChanged: (value) {
+                                      setState(() {
+                                        _recentTaskFilter = value;
+                                      });
+                                    },
+                                    onSortChanged: (value) {
+                                      setState(() {
+                                        _recentTaskSort = value;
+                                      });
+                                    },
+                                    onRefresh: _reloadSnapshot,
+                                    onOpenTask: _openTask,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                SizedBox(
+                                  width:
+                                      constraints.maxWidth >= 1240 ? 344 : 320,
+                                  child: const _QuestionBasketPanel(),
+                                ),
+                              ],
+                            )
+                          else
+                            Column(
+                              children: [
+                                _RecentTasksPanel(
+                                  tasks: recentTasks,
+                                  visibleTasks: sortedRecentTasks,
+                                  filter: _recentTaskFilter,
+                                  sort: _recentTaskSort,
+                                  onFilterChanged: (value) {
+                                    setState(() {
+                                      _recentTaskFilter = value;
+                                    });
+                                  },
+                                  onSortChanged: (value) {
+                                    setState(() {
+                                      _recentTaskSort = value;
+                                    });
+                                  },
+                                  onRefresh: _reloadSnapshot,
+                                  onOpenTask: _openTask,
+                                ),
+                                const SizedBox(height: 16),
+                                const _QuestionBasketPanel(),
+                              ],
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: MediaQuery.of(context).size.width < 900
@@ -1091,107 +1104,6 @@ class _ContextChip extends StatelessWidget {
           color: TelegramPalette.textStrong,
           fontWeight: FontWeight.w600,
         ),
-      ),
-    );
-  }
-}
-
-class _WorkspaceRail extends StatelessWidget {
-  const _WorkspaceRail();
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 260),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-        decoration: BoxDecoration(
-          color: TelegramPalette.shellDeep,
-          border: Border(
-            right: BorderSide(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'ShiTi',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '教研工作台',
-              style: TextStyle(color: Color(0xFF9FC7EA)),
-            ),
-            const SizedBox(height: 32),
-            ...const [
-              _RailItem(
-                  icon: Icons.dashboard_outlined, label: '工作台', active: true),
-              _RailItem(icon: Icons.search_outlined, label: '题库检索'),
-              _RailItem(
-                  icon: Icons.collections_bookmark_outlined, label: '选题篮'),
-              _RailItem(icon: Icons.description_outlined, label: '讲义与试卷'),
-              _RailItem(icon: Icons.cloud_outlined, label: '导出记录'),
-            ],
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: const Text(
-                '移动端、网页端、桌面端共用一套 Flutter 工作台交互。',
-                style: TextStyle(color: Colors.white70, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RailItem extends StatelessWidget {
-  const _RailItem({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: active ? TelegramPalette.accent : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(icon,
-              color: active ? Colors.white : TelegramPalette.borderAccent),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: TextStyle(
-              color: active ? Colors.white : TelegramPalette.surfaceAccent,
-              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1652,7 +1564,8 @@ class _HeroPanel extends StatelessWidget {
               const Expanded(
                 child: Text(
                   '当前聚焦',
-                  style: TextStyle(fontSize: 12, color: TelegramPalette.textSoft),
+                  style:
+                      TextStyle(fontSize: 12, color: TelegramPalette.textSoft),
                 ),
               ),
               OutlinedButton.icon(

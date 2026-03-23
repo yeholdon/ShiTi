@@ -5,6 +5,9 @@ import '../core/models/documents_page_args.dart';
 import '../core/models/export_detail_args.dart';
 import '../core/models/export_job_summary.dart';
 import '../core/models/exports_page_args.dart';
+import '../core/models/library_page_args.dart';
+import '../core/models/question_basket_page_args.dart';
+import '../features/account/account_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/basket/question_basket_page.dart';
 import '../features/documents/document_detail_page.dart';
@@ -12,15 +15,20 @@ import '../features/documents/documents_page.dart';
 import '../features/exports/export_detail_page.dart';
 import '../features/exports/exports_page.dart';
 import '../features/exports/export_result_page.dart';
+import '../features/classes/classes_page.dart';
 import '../features/home/home_page.dart';
 import '../features/library/library_page.dart';
 import '../features/library/question_detail_page.dart';
+import '../features/lessons/lessons_page.dart';
+import '../features/settings/settings_page.dart';
+import '../features/students/students_page.dart';
 import '../features/tenants/tenant_switch_page.dart';
 import '../features/tenants/tenant_members_page.dart';
 import '../core/models/question_detail_args.dart';
 
 class AppRouter {
   static const home = '/';
+  static const account = '/me';
   static const library = '/library';
   static const login = '/login';
   static const tenantSwitch = '/tenants';
@@ -32,6 +40,10 @@ class AppRouter {
   static const exports = '/exports';
   static const exportDetail = '/exports/detail';
   static const exportResult = '/exports/result';
+  static const students = '/students';
+  static const classes = '/classes';
+  static const lessons = '/lessons';
+  static const settings = '/settings';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -84,14 +96,35 @@ class AppRouter {
           settings: settings,
         );
       case basket:
+        final args = settings.arguments as QuestionBasketPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const QuestionBasketPage(),
+          builder: (_) => QuestionBasketPage(args: args),
           settings: settings,
         );
       case documents:
         final args = settings.arguments as DocumentsPageArgs?;
         return MaterialPageRoute<void>(
           builder: (_) => DocumentsPage(args: args),
+          settings: settings,
+        );
+      case students:
+        return MaterialPageRoute<void>(
+          builder: (_) => const StudentsPage(),
+          settings: settings,
+        );
+      case classes:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ClassesPage(),
+          settings: settings,
+        );
+      case lessons:
+        return MaterialPageRoute<void>(
+          builder: (_) => const LessonsPage(),
+          settings: settings,
+        );
+      case AppRouter.settings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const SettingsPage(),
           settings: settings,
         );
       case questionDetail:
@@ -107,6 +140,11 @@ class AppRouter {
           builder: (_) => const LoginPage(),
           settings: settings,
         );
+      case account:
+        return MaterialPageRoute<void>(
+          builder: (_) => const AccountPage(),
+          settings: settings,
+        );
       case tenantSwitch:
         return MaterialPageRoute<void>(
           builder: (_) => const TenantSwitchPage(),
@@ -118,8 +156,9 @@ class AppRouter {
           settings: settings,
         );
       case library:
+        final args = settings.arguments as LibraryPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const LibraryPage(),
+          builder: (_) => LibraryPage(args: args),
           settings: settings,
         );
       case home:
