@@ -4,6 +4,7 @@ import { PrismaService } from '../../../src/prisma/prisma.service';
 import { requireUserId } from '../../../src/tenant/tenant-guards';
 import { ensureDefaultCloudQuestionBank } from '../../../src/domain/questions/question-bank-access';
 import { ensureOrganizationMembershipCapacity } from '../../../src/domain/tenants/organization-membership-limits';
+import { ensurePersonalTenant } from '../../../src/domain/tenants/personal-tenant';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -105,6 +106,13 @@ export class TenantsController {
   @UseGuards(JwtAuthGuard)
   async listTenants(@Req() req: Request) {
     const userId = requireUserId(req);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true },
+    });
+    if (user?.username) {
+      await ensurePersonalTenant(this.prisma, user.id, user.username);
+    }
     const tenants = await this.prisma.tenant.findMany({
       orderBy: {
         createdAt: 'asc'
@@ -152,6 +160,7 @@ export class TenantsController {
         id: membership.tenant.id,
         code: membership.tenant.code,
         name: membership.tenant.name,
+        kind: membership.tenant.kind,
         role: membership.role
       }))
     };

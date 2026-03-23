@@ -4,11 +4,15 @@ function makePrisma(overrides: Partial<any> = {}) {
   return {
     tenant: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn()
     },
     tenantMember: {
       findMany: jest.fn().mockResolvedValue([]),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
     withTenant: jest.fn(),
     ...overrides
@@ -197,12 +201,31 @@ describe('TenantsController', () => {
 
   it('listTenants returns active memberships for the authenticated user', async () => {
     const prisma = makePrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', username: 'teacher-demo' });
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 'tp1',
+      code: 'personal-u1',
+      name: 'teacher-demo 的个人工作区',
+      kind: 'personal',
+      personalOwnerUserId: 'u1',
+    });
+    prisma.tenant.findFirst.mockResolvedValue({
+      id: 'tp1',
+      code: 'personal-u1',
+      name: 'teacher-demo 的个人工作区',
+      kind: 'personal',
+      personalOwnerUserId: 'u1',
+    });
     prisma.tenant.findMany.mockResolvedValue([
-      { id: 't1', code: 'acme', name: 'ACME' },
-      { id: 't2', code: 'beta', name: 'Beta' },
-      { id: 't3', code: 'gamma', name: 'Gamma' }
+      { id: 'tp1', code: 'personal-u1', name: 'teacher-demo 的个人工作区', kind: 'personal' },
+      { id: 't1', code: 'acme', name: 'ACME', kind: 'organization' },
+      { id: 't2', code: 'beta', name: 'Beta', kind: 'organization' },
+      { id: 't3', code: 'gamma', name: 'Gamma', kind: 'organization' }
     ]);
     prisma.withTenant
+      .mockResolvedValueOnce({}) // personal membership upsert from ensurePersonalTenant
+      .mockResolvedValueOnce({ id: 'b1' }) // default bank check
+      .mockResolvedValueOnce({ role: 'owner', status: 'active' })
       .mockResolvedValueOnce({ role: 'owner', status: 'active' })
       .mockResolvedValueOnce({ role: 'member', status: 'active' })
       .mockResolvedValueOnce({ role: 'member', status: 'disabled' });
@@ -215,11 +238,18 @@ describe('TenantsController', () => {
         createdAt: 'asc'
       }
     });
-    expect(prisma.withTenant).toHaveBeenCalledTimes(3);
+    expect(prisma.withTenant).toHaveBeenCalledTimes(6);
     expect(res).toEqual({
       tenants: [
-        { id: 't1', code: 'acme', name: 'ACME', role: 'owner' },
-        { id: 't2', code: 'beta', name: 'Beta', role: 'member' }
+        {
+          id: 'tp1',
+          code: 'personal-u1',
+          name: 'teacher-demo 的个人工作区',
+          kind: 'personal',
+          role: 'owner',
+        },
+        { id: 't1', code: 'acme', name: 'ACME', kind: 'organization', role: 'owner' },
+        { id: 't2', code: 'beta', name: 'Beta', kind: 'organization', role: 'member' }
       ]
     });
   });

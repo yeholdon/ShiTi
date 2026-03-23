@@ -15,6 +15,7 @@ import { RateLimit } from '../../../src/common/rate-limit/rate-limit.decorator';
 import { RateLimitGuard } from '../../../src/common/rate-limit/rate-limit.guard';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { requireUserId } from '../../../src/tenant/tenant-guards';
+import { ensurePersonalTenant } from '../../../src/domain/tenants/personal-tenant';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
@@ -177,6 +178,8 @@ export class AuthController {
       }
     }
 
+    await ensurePersonalTenant(this.prisma, user.id, user.username);
+
     const token = await this.auth.issueToken(user.id, user.sessionVersion ?? 0);
     return {
       ...token,
@@ -196,6 +199,8 @@ export class AuthController {
     if (!matches) {
       throw new UnauthorizedException('Invalid password');
     }
+
+    await ensurePersonalTenant(this.prisma, user.id, user.username);
 
     const token = await this.auth.issueToken(user.id, user.sessionVersion ?? 0);
     return {

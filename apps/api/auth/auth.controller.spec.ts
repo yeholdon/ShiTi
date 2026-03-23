@@ -11,7 +11,35 @@ describe('AuthController', () => {
           username: 'alice',
           sessionVersion: 0,
         }),
-      }
+      },
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({
+          id: 'tp1',
+          code: 'personal-u1',
+          name: 'alice 的个人工作区',
+          kind: 'personal',
+          personalOwnerUserId: 'u1',
+        }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tp1',
+          code: 'personal-u1',
+          name: 'alice 的个人工作区',
+          kind: 'personal',
+          personalOwnerUserId: 'u1',
+        }),
+      },
+      withTenant: jest.fn().mockImplementation(async (_tenantId: string, fn: any) =>
+        fn({
+          tenantMember: {
+            upsert: jest.fn().mockResolvedValue({}),
+          },
+          questionBank: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue({ id: 'bank-1' }),
+          },
+        }),
+      ),
     } as any;
     const auth = {
       issueToken: jest.fn().mockResolvedValue({ accessToken: 't' }),
@@ -28,6 +56,21 @@ describe('AuthController', () => {
 
     expect(prisma.user.create).toHaveBeenCalledWith({
       data: { username: 'alice', passwordHash: 'hashed-secret' }
+    });
+    expect(prisma.tenant.create).toHaveBeenCalledWith({
+      data: {
+        code: 'personal-u1',
+        name: 'alice 的个人工作区',
+        kind: 'personal',
+        personalOwnerUserId: 'u1',
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        kind: true,
+        personalOwnerUserId: true,
+      },
     });
     expect(auth.issueToken).toHaveBeenCalledWith('u1', 0);
     expect(res).toEqual({
@@ -47,7 +90,35 @@ describe('AuthController', () => {
           passwordHash: 'hashed',
           sessionVersion: 3
         })
-      }
+      },
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'tp2',
+          code: 'personal-u2',
+          name: 'bob 的个人工作区',
+          kind: 'personal',
+          personalOwnerUserId: 'u2',
+        }),
+        create: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tp2',
+          code: 'personal-u2',
+          name: 'bob 的个人工作区',
+          kind: 'personal',
+          personalOwnerUserId: 'u2',
+        }),
+      },
+      withTenant: jest.fn().mockImplementation(async (_tenantId: string, fn: any) =>
+        fn({
+          tenantMember: {
+            upsert: jest.fn().mockResolvedValue({}),
+          },
+          questionBank: {
+            findFirst: jest.fn().mockResolvedValue({ id: 'bank-2' }),
+            create: jest.fn(),
+          },
+        }),
+      ),
     } as any;
     const auth = {
       issueToken: jest.fn().mockResolvedValue({ accessToken: 't2' }),
@@ -64,6 +135,7 @@ describe('AuthController', () => {
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { username: 'bob' } });
     expect(auth.verifyPassword).toHaveBeenCalledWith('secret', 'hashed');
+    expect(prisma.tenant.create).not.toHaveBeenCalled();
     expect(auth.issueToken).toHaveBeenCalledWith('u2', 3);
     expect(res).toEqual({
       accessToken: 't2',
