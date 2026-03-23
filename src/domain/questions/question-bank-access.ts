@@ -177,9 +177,6 @@ export async function ensureReadableQuestionBank(
   if (!membership) {
     throw new ForbiddenException('Not a tenant member');
   }
-  if (membership.role === 'admin' || membership.role === 'owner') {
-    return bank;
-  }
   if (bank.ownerUserId === userId) {
     return bank;
   }
@@ -233,9 +230,6 @@ export async function ensureWritableQuestionBank(
   const membership = await getActiveMembership(prisma, tenantId, userId);
   if (!membership) {
     throw new ForbiddenException('Not a tenant member');
-  }
-  if (membership.role === 'admin' || membership.role === 'owner') {
-    return bank;
   }
   if (bank.ownerUserId === userId) {
     return bank;
@@ -297,9 +291,6 @@ export async function buildReadableQuestionWhere(
   const membership = await getActiveMembership(prisma, tenantId, userId);
   if (!membership) {
     throw new ForbiddenException('Not a tenant member');
-  }
-  if (membership.role === 'admin' || membership.role === 'owner') {
-    return { tenantId };
   }
 
   const accessibleBanks = await listAccessibleQuestionBanks(prisma, tenantId, userId);
@@ -394,15 +385,6 @@ export async function listAccessibleQuestionBanks(
   if (!membership) {
     throw new ForbiddenException('Not a tenant member');
   }
-  if (membership.role === 'admin' || membership.role === 'owner') {
-    return prisma.withTenant(tenantId, (tx) =>
-      tx.questionBank.findMany({
-        where: { tenantId },
-        orderBy: { createdAt: 'asc' },
-      }),
-    );
-  }
-
   return prisma.withTenant(tenantId, (tx) =>
     tx.questionBank.findMany({
       where: {

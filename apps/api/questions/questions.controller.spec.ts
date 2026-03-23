@@ -45,10 +45,20 @@ describe('QuestionsController', () => {
     prisma.subject.findFirst.mockResolvedValue({ id: 'sub-123' });
     prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
       const tx = {
-        tenantMember: { findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }) },
+        tenantMember: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }),
+          findUnique: jest.fn().mockResolvedValue({ role: 'owner', status: 'active' }),
+        },
         questionBank: {
           findFirst: jest.fn().mockResolvedValue({ id: 'b1', tenantId: 't1' }),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'b1',
+            tenantId: 't1',
+            storageMode: 'cloud',
+            ownerUserId: 'u1',
+          }),
         },
+        questionBankGrant: { findUnique: jest.fn().mockResolvedValue(null) },
         question: { create: jest.fn().mockResolvedValue({ id: 'q1' }) }
       };
       return fn(tx);
@@ -67,7 +77,7 @@ describe('QuestionsController', () => {
       },
       select: { id: true }
     });
-    expect(prisma.withTenant).toHaveBeenCalledTimes(3);
+    expect(prisma.withTenant).toHaveBeenCalledTimes(5);
     expect(res.question).toEqual({ id: 'q1' });
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -90,10 +100,20 @@ describe('QuestionsController', () => {
     prisma.subject.findFirst.mockResolvedValue(null);
     prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
       const tx = {
-        tenantMember: { findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }) },
+        tenantMember: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'owner', status: 'active' }),
+          findUnique: jest.fn().mockResolvedValue({ role: 'owner', status: 'active' }),
+        },
         questionBank: {
           findFirst: jest.fn().mockResolvedValue({ id: 'b1', tenantId: 't1' }),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'b1',
+            tenantId: 't1',
+            storageMode: 'cloud',
+            ownerUserId: 'u1',
+          }),
         },
+        questionBankGrant: { findUnique: jest.fn().mockResolvedValue(null) },
         question: { create: jest.fn().mockResolvedValue({ id: 'q1' }) }
       };
       return fn(tx);
@@ -103,5 +123,48 @@ describe('QuestionsController', () => {
     const req: any = { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } };
 
     await expect(ctrl.create(req, {} as any)).rejects.toThrow('No system subject found; run prisma seed');
+  });
+
+  it('does not let organization admins bypass bank write access through default-bank fallback', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 't1',
+      kind: 'organization',
+      personalOwnerUserId: null,
+    });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) => {
+      const tx = {
+        tenantMember: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'm1', role: 'admin', status: 'active' }),
+          findUnique: jest.fn().mockResolvedValue({ role: 'admin', status: 'active' }),
+        },
+        questionBank: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: 'b1',
+            tenantId: 't1',
+            storageMode: 'cloud',
+            ownerUserId: 'owner-1',
+          }),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'b1',
+            tenantId: 't1',
+            storageMode: 'cloud',
+            ownerUserId: 'owner-1',
+          }),
+        },
+        questionBankGrant: {
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+        question: { create: jest.fn() },
+      };
+      return fn(tx);
+    });
+
+    const ctrl = new QuestionsController(prisma, makeImportService(), makeAuditService());
+    const req: any = { tenant: { tenantId: 't1' }, auth: { userId: 'admin-1' } };
+
+    await expect(ctrl.create(req, {} as any)).rejects.toThrow(
+      'Question bank write access denied',
+    );
   });
 });

@@ -47,6 +47,35 @@ describe('question-bank-access', () => {
     });
   });
 
+  it('keeps organization admins scoped to owned or granted banks when listing readable questions', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 't1',
+      kind: 'organization',
+      personalOwnerUserId: null,
+    });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) =>
+      fn({
+        tenantMember: {
+          findUnique: jest.fn().mockResolvedValue({
+            role: 'admin',
+            status: 'active',
+          }),
+        },
+        questionBank: {
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+      }),
+    );
+
+    await expect(
+      buildReadableQuestionWhere(prisma, 't1', 'admin-1'),
+    ).resolves.toEqual({
+      tenantId: 't1',
+      questionBankId: null,
+    });
+  });
+
   it('allows granted users to read personal cloud bank questions', async () => {
     const prisma = makePrisma();
     prisma.tenant.findUnique.mockResolvedValue({
@@ -114,5 +143,46 @@ describe('question-bank-access', () => {
     await expect(
       ensureWritableQuestion(prisma, 't1', 'member-1', 'q1'),
     ).rejects.toThrow('Question write access denied');
+  });
+
+  it('denies organization admins reading bank questions without owner or grant access', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 't1',
+      kind: 'organization',
+      personalOwnerUserId: null,
+    });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) =>
+      fn({
+        question: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'q1',
+            tenantId: 't1',
+            questionBankId: 'bank-1',
+          }),
+        },
+        questionBank: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'bank-1',
+            tenantId: 't1',
+            storageMode: 'cloud',
+            ownerUserId: 'owner-1',
+          }),
+        },
+        tenantMember: {
+          findUnique: jest.fn().mockResolvedValue({
+            role: 'admin',
+            status: 'active',
+          }),
+        },
+        questionBankGrant: {
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+      }),
+    );
+
+    await expect(
+      ensureReadableQuestion(prisma, 't1', 'admin-1', 'q1'),
+    ).rejects.toThrow('Question bank access denied');
   });
 });

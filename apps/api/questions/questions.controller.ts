@@ -103,7 +103,10 @@ export class QuestionsController {
           ownerUserId,
           body.questionBankId,
         )
-      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId);
+      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId).then(
+          (bank) =>
+            ensureWritableQuestionBank(this.prisma, tenantId, ownerUserId, bank.id),
+        );
 
     const subjectId = body.subjectId
       ? await ensureTenantOrSystemSubject(this.prisma, tenantId, body.subjectId)
@@ -154,7 +157,10 @@ export class QuestionsController {
           ownerUserId,
           body.questionBankId,
         )
-      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId);
+      : await ensureDefaultCloudQuestionBank(this.prisma, tenantId, ownerUserId).then(
+          (bank) =>
+            ensureWritableQuestionBank(this.prisma, tenantId, ownerUserId, bank.id),
+        );
     this.validateImportBody(body);
 
     return this.questionsImport.importQuestions({
