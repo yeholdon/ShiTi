@@ -4,6 +4,7 @@ import { AuditLogService } from '../../../src/common/audit/audit-log.service';
 import { UuidIdParamDto } from '../../../src/common/dto/uuid-id-param.dto';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { requireTenantId, requireTenantRole, requireUserId } from '../../../src/tenant/tenant-guards';
+import { ensureOrganizationMembershipCapacity } from '../../../src/domain/tenants/organization-membership-limits';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { JoinTenantDto } from './dto/join-tenant.dto';
 import { UpdateTenantMemberRoleDto } from './dto/update-tenant-member-role.dto';
@@ -45,10 +46,11 @@ export class TenantMembersController {
 
     const role = body.role || 'member';
     const requestedStatus = body.status || 'active';
+    const activatesMembership = requestedStatus === 'active';
     const requestedUsername = body.username?.trim();
     let targetUserId = userId;
     const existingMembers = await this.prisma.withTenant(tenant.id, (tx) => tx.tenantMember.count({ where: { tenantId: tenant.id } }));
-    const currentMembership = await this.prisma.withTenant(tenant.id, (tx) =>
+    const actorMembership = await this.prisma.withTenant(tenant.id, (tx) =>
       tx.tenantMember.findUnique({
         where: {
           tenantId_userId: {
@@ -60,8 +62,8 @@ export class TenantMembersController {
     );
 
     if (requestedUsername) {
-      const actorMembership = await requireTenantRole(this.prisma, tenant.id, userId, ['admin', 'owner']);
-      if (role !== 'member' && actorMembership.role !== 'owner') {
+      const activeActorMembership = await requireTenantRole(this.prisma, tenant.id, userId, ['admin', 'owner']);
+      if (role !== 'member' && activeActorMembership.role !== 'owner') {
         throw new ForbiddenException('Only tenant owners can grant admin or owner roles');
       }
 
@@ -74,11 +76,33 @@ export class TenantMembersController {
       targetUserId = targetUser.id;
     }
 
+    const targetMembership =
+      targetUserId === userId
+        ? actorMembership
+        : await this.prisma.withTenant(tenant.id, (tx) =>
+            tx.tenantMember.findUnique({
+              where: {
+                tenantId_userId: {
+                  tenantId: tenant.id,
+                  userId: targetUserId,
+                },
+              },
+            })
+          );
+
     if (!requestedUsername && existingMembers > 0 && role !== 'member') {
-      const currentRole = currentMembership?.status === 'active' ? currentMembership.role : null;
+      const currentRole = actorMembership?.status === 'active' ? actorMembership.role : null;
       if (currentRole !== 'owner') {
         throw new BadRequestException('Only tenant owners can grant admin or owner roles');
       }
+    }
+
+    if (
+      tenant.kind === 'organization' &&
+      activatesMembership &&
+      targetMembership?.status !== 'active'
+    ) {
+      await ensureOrganizationMembershipCapacity(this.prisma, targetUserId, tenant.id);
     }
 
     let membership = null;
@@ -193,6 +217,8 @@ export class TenantMembersController {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
     const actorMembership = await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException('Tenant not found');
 
     const membership = await this.prisma.withTenant(tenantId, (tx) =>
       tx.tenantMember.findUnique({
@@ -217,6 +243,14 @@ export class TenantMembersController {
       if (activeOwners <= 1) {
         throw new BadRequestException('Cannot disable the last tenant owner');
       }
+    }
+
+    if (
+      tenant.kind === 'organization' &&
+      body.status === 'active' &&
+      membership.status !== 'active'
+    ) {
+      await ensureOrganizationMembershipCapacity(this.prisma, membership.userId, tenantId);
     }
 
     const updated = await this.prisma.withTenant(tenantId, (tx) =>

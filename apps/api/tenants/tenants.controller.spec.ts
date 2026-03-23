@@ -7,6 +7,9 @@ function makePrisma(overrides: Partial<any> = {}) {
       findMany: jest.fn(),
       create: jest.fn()
     },
+    tenantMember: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     withTenant: jest.fn(),
     ...overrides
   } as any;
@@ -147,6 +150,28 @@ describe('TenantsController', () => {
         role: 'owner',
       },
     });
+  });
+
+  it('createTenant rejects when creator already has 5 active organization memberships', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue(null);
+    prisma.tenantMember.findMany.mockResolvedValue([
+      { tenantId: 'o1' },
+      { tenantId: 'o2' },
+      { tenantId: 'o3' },
+      { tenantId: 'o4' },
+      { tenantId: 'o5' },
+    ]);
+
+    const ctrl = new TenantsController(prisma);
+
+    await expect(
+      ctrl.createTenant({ auth: { userId: 'u1' } } as any, {
+        code: 'acme',
+        name: 'ACME',
+      }),
+    ).rejects.toThrow('Organization membership limit reached');
+    expect(prisma.tenant.create).not.toHaveBeenCalled();
   });
 
   it('resolve returns null when tenantCode missing', async () => {

@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { requireUserId } from '../../../src/tenant/tenant-guards';
 import { ensureDefaultCloudQuestionBank } from '../../../src/domain/questions/question-bank-access';
+import { ensureOrganizationMembershipCapacity } from '../../../src/domain/tenants/organization-membership-limits';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -65,6 +66,10 @@ export class TenantsController {
       }
 
       throw new ConflictException('Tenant code already exists');
+    }
+
+    if (userId) {
+      await ensureOrganizationMembershipCapacity(this.prisma, userId);
     }
 
     const tenant = await this.prisma.tenant.create({

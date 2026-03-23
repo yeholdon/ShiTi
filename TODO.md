@@ -983,3 +983,4 @@ When work status changes, update this file in the same change.
 - [x] API: 补齐云端题库授权接口，先支持 `read / write` grant 的列表、授予、变更、移除；个人云端题库仅 owner 可授权，机构云端题库由 bank owner 或机构 `admin / owner` 管理授权。
 - [x] Backend: 题目列表、详情和编辑链路开始按题库 grant 生效；历史 `questionBankId = null` 数据保留 tenant 级兼容读取，避免在回填前切断旧题目访问。
 - [x] Backend: 机构成员（含管理员）对机构云端题库的访问改成题库 owner / grant 驱动；管理员保留题库授权管理权，但默认不再自动看见所有机构题库。
+- [x] Backend: 对组织机构成员关系增加应用层上限，用户最多保持 5 个 active 的 organization membership；创建机构、加入机构、激活邀请都走同一条限制。
