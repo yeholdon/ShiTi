@@ -3,7 +3,12 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import type { QuestionBank, TenantKind, TenantMemberRole } from '@prisma/client';
+import type {
+  QuestionBank,
+  QuestionBankAccessLevel,
+  TenantKind,
+  TenantMemberRole,
+} from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
 
 type WorkspaceTenant = {
@@ -307,6 +312,162 @@ export async function createCloudQuestionBank(
         description: data.description,
         storageMode: 'cloud',
         ownerUserId: userId,
+      },
+    }),
+  );
+}
+
+export async function ensureManageableQuestionBank(
+  prisma: PrismaService,
+  tenantId: string,
+  userId: string,
+  questionBankId: string,
+) {
+  const tenant = await getWorkspaceTenant(prisma, tenantId);
+  const bank = await getQuestionBank(prisma, tenantId, questionBankId);
+
+  if (bank.storageMode === 'local') {
+    throw new BadRequestException(
+      'Local question banks are desktop-local only and do not support cloud grants',
+    );
+  }
+
+  if (tenant.kind === 'personal') {
+    if (bank.ownerUserId !== userId) {
+      throw new ForbiddenException('Only the personal bank owner can manage grants');
+    }
+    return bank;
+  }
+
+  const membership = await getActiveMembership(prisma, tenantId, userId);
+  if (!membership) {
+    throw new ForbiddenException('Not a tenant member');
+  }
+  if (
+    membership.role === 'admin' ||
+    membership.role === 'owner' ||
+    bank.ownerUserId === userId
+  ) {
+    return bank;
+  }
+  throw new ForbiddenException('Question bank grant management denied');
+}
+
+export async function listQuestionBankGrants(
+  prisma: PrismaService,
+  tenantId: string,
+  userId: string,
+  questionBankId: string,
+) {
+  await ensureManageableQuestionBank(prisma, tenantId, userId, questionBankId);
+  return prisma.withTenant(tenantId, (tx) =>
+    tx.questionBankGrant.findMany({
+      where: { tenantId, questionBankId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        user: { select: { id: true, username: true } },
+        grantedBy: { select: { id: true, username: true } },
+      },
+    }),
+  );
+}
+
+export async function upsertQuestionBankGrant(
+  prisma: PrismaService,
+  tenantId: string,
+  actorUserId: string,
+  questionBankId: string,
+  targetUserId: string,
+  accessLevel: QuestionBankAccessLevel,
+) {
+  const tenant = await getWorkspaceTenant(prisma, tenantId);
+  const bank = await ensureManageableQuestionBank(
+    prisma,
+    tenantId,
+    actorUserId,
+    questionBankId,
+  );
+
+  if (targetUserId === bank.ownerUserId) {
+    throw new BadRequestException('Question bank owner does not need an explicit grant');
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, username: true },
+  });
+  if (!targetUser) {
+    throw new NotFoundException('Grant target user not found');
+  }
+
+  if (tenant.kind === 'organization') {
+    const targetMembership = await getActiveMembership(prisma, tenantId, targetUserId);
+    if (!targetMembership) {
+      throw new BadRequestException(
+        'Organization question bank grants require an active institution member',
+      );
+    }
+  }
+
+  return prisma.withTenant(tenantId, (tx) =>
+    tx.questionBankGrant.upsert({
+      where: {
+        tenantId_questionBankId_userId: {
+          tenantId,
+          questionBankId,
+          userId: targetUserId,
+        },
+      },
+      create: {
+        tenantId,
+        questionBankId,
+        userId: targetUserId,
+        accessLevel,
+        grantedByUserId: actorUserId,
+      },
+      update: {
+        accessLevel,
+        grantedByUserId: actorUserId,
+      },
+      include: {
+        user: { select: { id: true, username: true } },
+        grantedBy: { select: { id: true, username: true } },
+      },
+    }),
+  );
+}
+
+export async function removeQuestionBankGrant(
+  prisma: PrismaService,
+  tenantId: string,
+  actorUserId: string,
+  questionBankId: string,
+  targetUserId: string,
+) {
+  await ensureManageableQuestionBank(prisma, tenantId, actorUserId, questionBankId);
+  const existing = await prisma.withTenant(tenantId, (tx) =>
+    tx.questionBankGrant.findUnique({
+      where: {
+        tenantId_questionBankId_userId: {
+          tenantId,
+          questionBankId,
+          userId: targetUserId,
+        },
+      },
+    }),
+  );
+  if (!existing) {
+    throw new NotFoundException('Question bank grant not found');
+  }
+
+  return prisma.withTenant(tenantId, (tx) =>
+    tx.questionBankGrant.delete({
+      where: {
+        tenantId_questionBankId_userId: {
+          tenantId,
+          questionBankId,
+          userId: targetUserId,
+        },
       },
     }),
   );

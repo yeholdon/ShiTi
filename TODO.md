@@ -979,3 +979,4 @@ When work status changes, update this file in the same change.
 - [x] Runtime schema: 规划 Prisma 加法式引入 `QuestionBank`、`QuestionBankGrant`、`Question.questionBankId`，作为后续默认题库回填和 ACL 接口的起点。
 - [x] API: 新增 `question-banks` 基础接口，先支持当前工作区的云端题库列表和创建；本地题库明确保留为桌面本地能力，不走云端 API。
 - [x] Backend: 题目新建/批量导入开始接受 `questionBankId`，未指定时自动兜到底层默认云端题库；新创建机构时同步补齐默认云端题库。
+- [x] API: 补齐云端题库授权接口，先支持 `read / write` grant 的列表、授予、变更、移除；个人云端题库仅 owner 可授权，机构云端题库由 bank owner 或机构 `admin / owner` 管理授权。
