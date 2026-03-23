@@ -24,6 +24,46 @@ function makeAudit(overrides: Partial<any> = {}) {
 }
 
 describe('TenantMembersController', () => {
+  it('rejects adding another user into a personal workspace', async () => {
+    const prisma = makePrisma();
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 'tp1',
+      code: 'personal-u1',
+      kind: 'personal',
+      personalOwnerUserId: 'u1',
+    });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'u2',
+      username: 'guest',
+    });
+    prisma.withTenant.mockImplementation(async (_tenantId: string, fn: any) =>
+      fn({
+        tenantMember: {
+          count: jest.fn().mockResolvedValue(1),
+          findFirst: jest.fn().mockResolvedValue({
+            role: 'owner',
+            status: 'active',
+          }),
+          findUnique: jest.fn().mockResolvedValue({
+            tenantId: 'tp1',
+            userId: 'u1',
+            role: 'owner',
+            status: 'active',
+          }),
+        },
+      }),
+    );
+
+    const controller = new TenantMembersController(prisma, makeAudit());
+
+    await expect(
+      controller.join(
+        { auth: { userId: 'u1' } } as any,
+        { tenantCode: 'personal-u1', username: 'guest', status: 'invited' } as any,
+      ),
+    ).rejects.toThrow('Personal workspaces do not support additional members');
+  });
+
   it('rejects joining a sixth active organization membership', async () => {
     const prisma = makePrisma();
     prisma.tenant.findUnique.mockResolvedValue({

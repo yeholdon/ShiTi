@@ -985,3 +985,4 @@ When work status changes, update this file in the same change.
 - [x] Backend: 机构成员（含管理员）对机构云端题库的访问改成题库 owner / grant 驱动；管理员保留题库授权管理权，但默认不再自动看见所有机构题库。
 - [x] Backend: 对组织机构成员关系增加应用层上限，用户最多保持 5 个 active 的 organization membership；创建机构、加入机构、激活邀请都走同一条限制。
 - [x] Backend: 注册、登录、列出上下文时自动补齐 personal tenant（个人工作区）、owner membership 和默认云端题库；`GET /tenants` 开始显式返回 `kind = personal | organization`。
+- [x] Backend: personal tenant 只允许本人作为单一 owner 成员存在；`POST /tenant-members` 不再允许向个人工作区添加额外成员或邀请。

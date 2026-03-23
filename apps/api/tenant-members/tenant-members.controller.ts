@@ -44,9 +44,8 @@ export class TenantMembersController {
     const tenant = await this.prisma.tenant.findUnique({ where: { code: body.tenantCode } });
     if (!tenant) throw new NotFoundException('Tenant not found');
 
-    const role = body.role || 'member';
+    const requestedRole = body.role || 'member';
     const requestedStatus = body.status || 'active';
-    const activatesMembership = requestedStatus === 'active';
     const requestedUsername = body.username?.trim();
     let targetUserId = userId;
     const existingMembers = await this.prisma.withTenant(tenant.id, (tx) => tx.tenantMember.count({ where: { tenantId: tenant.id } }));
@@ -63,7 +62,7 @@ export class TenantMembersController {
 
     if (requestedUsername) {
       const activeActorMembership = await requireTenantRole(this.prisma, tenant.id, userId, ['admin', 'owner']);
-      if (role !== 'member' && activeActorMembership.role !== 'owner') {
+      if (requestedRole !== 'member' && activeActorMembership.role !== 'owner') {
         throw new ForbiddenException('Only tenant owners can grant admin or owner roles');
       }
 
@@ -75,6 +74,19 @@ export class TenantMembersController {
       }
       targetUserId = targetUser.id;
     }
+
+    if (tenant.kind === 'personal') {
+      if (!tenant.personalOwnerUserId) {
+        throw new BadRequestException('Personal tenant is missing owner');
+      }
+      if (targetUserId !== tenant.personalOwnerUserId) {
+        throw new BadRequestException('Personal workspaces do not support additional members');
+      }
+    }
+
+    const role = tenant.kind === 'personal' ? 'owner' : requestedRole;
+    const finalStatus = tenant.kind === 'personal' ? 'active' : requestedStatus;
+    const activatesMembership = finalStatus === 'active';
 
     const targetMembership =
       targetUserId === userId
@@ -117,13 +129,13 @@ export class TenantMembersController {
           },
           update: {
             role,
-            status: requestedUsername ? requestedStatus : 'active'
+            status: requestedUsername ? finalStatus : 'active'
           },
           create: {
             tenantId: tenant.id,
             userId: targetUserId,
             role,
-            status: requestedUsername ? requestedStatus : 'active'
+            status: requestedUsername ? finalStatus : 'active'
           },
           include: { user: true }
         })
