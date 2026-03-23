@@ -64,6 +64,50 @@ describe('QuestionBanksController', () => {
     ).rejects.toThrow('Local question banks are desktop-local only');
   });
 
+  it('lists shared question banks across workspaces for current user', async () => {
+    const prisma = makePrisma({
+      questionBankGrant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            tenantId: 't1',
+            questionBankId: 'b1',
+            accessLevel: 'read',
+            grantedByUserId: 'u9',
+            createdAt: 'c',
+            updatedAt: 'u',
+            grantedBy: { id: 'u9', username: 'owner-demo' },
+            questionBank: {
+              id: 'b1',
+              name: '高中数学精选',
+              storageMode: 'cloud',
+              description: '共享题库',
+              tenant: {
+                id: 't1',
+                code: 'teacher-home',
+                name: '张老师个人空间',
+                kind: 'personal',
+              },
+            },
+          },
+        ]),
+      },
+    });
+
+    const controller = new QuestionBanksController(prisma);
+    const result = await controller.listShared({
+      auth: { userId: 'u2' },
+    } as any);
+
+    expect(result.sharedQuestionBanks).toEqual([
+      expect.objectContaining({
+        tenantCode: 'teacher-home',
+        questionBankName: '高中数学精选',
+        accessLevel: 'read',
+        tenantKind: 'personal',
+      }),
+    ]);
+  });
+
   it('creates question-bank grant for organization admin', async () => {
     const prisma = makePrisma({
       user: {

@@ -507,6 +507,41 @@ export async function listQuestionBankGrants(
   );
 }
 
+export async function listSharedQuestionBanks(
+  prisma: PrismaService,
+  userId: string,
+) {
+  return prisma.questionBankGrant.findMany({
+    where: {
+      userId,
+      questionBank: {
+        storageMode: 'cloud',
+      },
+    },
+    orderBy: [
+      { updatedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
+    include: {
+      questionBank: {
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              kind: true,
+            },
+          },
+        },
+      },
+      grantedBy: {
+        select: { id: true, username: true },
+      },
+    },
+  });
+}
+
 export async function upsertQuestionBankGrant(
   prisma: PrismaService,
   tenantId: string,

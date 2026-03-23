@@ -19,6 +19,7 @@ import {
   createCloudQuestionBank,
   ensureDefaultCloudQuestionBank,
   listAccessibleQuestionBanks,
+  listSharedQuestionBanks,
   listQuestionBankGrants,
   removeQuestionBankGrant,
   upsertQuestionBankGrant,
@@ -32,6 +33,30 @@ import { UpdateQuestionBankGrantDto } from './dto/update-question-bank-grant.dto
 @UseGuards(JwtAuthGuard)
 export class QuestionBanksController {
   constructor(private readonly prisma: PrismaService) {}
+
+  @Get('shared')
+  async listShared(@Req() req: Request) {
+    const userId = requireUserId(req);
+    const grants = await listSharedQuestionBanks(this.prisma, userId);
+
+    return {
+      sharedQuestionBanks: grants.map((grant) => ({
+        tenantId: grant.tenantId,
+        tenantCode: grant.questionBank.tenant.code,
+        tenantName: grant.questionBank.tenant.name,
+        tenantKind: grant.questionBank.tenant.kind,
+        questionBankId: grant.questionBankId,
+        questionBankName: grant.questionBank.name,
+        accessLevel: grant.accessLevel,
+        storageMode: grant.questionBank.storageMode,
+        description: grant.questionBank.description,
+        grantedByUserId: grant.grantedByUserId,
+        grantedByUsername: grant.grantedBy.username,
+        createdAt: grant.createdAt,
+        updatedAt: grant.updatedAt,
+      })),
+    };
+  }
 
   @Get()
   async list(@Req() req: Request) {
