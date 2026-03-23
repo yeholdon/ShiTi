@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type {
+  Prisma,
   QuestionBank,
   QuestionBankAccessLevel,
   TenantKind,
@@ -188,6 +189,25 @@ export async function ensureReadableQuestionBank(
   throw new ForbiddenException('Question bank access denied');
 }
 
+async function ensureLegacyReadableQuestion(
+  prisma: PrismaService,
+  tenant: WorkspaceTenant,
+  tenantId: string,
+  userId: string,
+) {
+  if (tenant.kind === 'personal') {
+    if (tenant.personalOwnerUserId === userId) {
+      return;
+    }
+    throw new ForbiddenException('Question access denied');
+  }
+
+  const membership = await getActiveMembership(prisma, tenantId, userId);
+  if (!membership) {
+    throw new ForbiddenException('Not a tenant member');
+  }
+}
+
 export async function ensureWritableQuestionBank(
   prisma: PrismaService,
   tenantId: string,
@@ -224,6 +244,121 @@ export async function ensureWritableQuestionBank(
     return bank;
   }
   throw new ForbiddenException('Question bank write access denied');
+}
+
+async function ensureLegacyWritableQuestion(
+  prisma: PrismaService,
+  tenant: WorkspaceTenant,
+  tenantId: string,
+  userId: string,
+) {
+  if (tenant.kind === 'personal') {
+    if (tenant.personalOwnerUserId === userId) {
+      return;
+    }
+    throw new ForbiddenException('Question write access denied');
+  }
+
+  const membership = await getActiveMembership(prisma, tenantId, userId);
+  if (!membership) {
+    throw new ForbiddenException('Not a tenant member');
+  }
+  if (membership.role === 'admin' || membership.role === 'owner') {
+    return;
+  }
+  throw new ForbiddenException('Question write access denied');
+}
+
+export async function buildReadableQuestionWhere(
+  prisma: PrismaService,
+  tenantId: string,
+  userId: string,
+  questionBankId?: string,
+): Promise<Prisma.QuestionWhereInput> {
+  const tenant = await getWorkspaceTenant(prisma, tenantId);
+
+  if (questionBankId) {
+    await ensureReadableQuestionBank(prisma, tenantId, userId, questionBankId);
+    return { tenantId, questionBankId };
+  }
+
+  if (tenant.kind === 'personal') {
+    if (tenant.personalOwnerUserId === userId) {
+      return { tenantId };
+    }
+    const accessibleBanks = await listAccessibleQuestionBanks(prisma, tenantId, userId);
+    const bankIds = accessibleBanks.map((bank) => bank.id);
+    if (bankIds.length === 0) {
+      return { tenantId, id: { in: [] } };
+    }
+    return { tenantId, questionBankId: { in: bankIds } };
+  }
+
+  const membership = await getActiveMembership(prisma, tenantId, userId);
+  if (!membership) {
+    throw new ForbiddenException('Not a tenant member');
+  }
+  if (membership.role === 'admin' || membership.role === 'owner') {
+    return { tenantId };
+  }
+
+  const accessibleBanks = await listAccessibleQuestionBanks(prisma, tenantId, userId);
+  const bankIds = accessibleBanks.map((bank) => bank.id);
+  if (bankIds.length === 0) {
+    return { tenantId, questionBankId: null };
+  }
+  return {
+    tenantId,
+    OR: [{ questionBankId: null }, { questionBankId: { in: bankIds } }],
+  };
+}
+
+export async function ensureReadableQuestion(
+  prisma: PrismaService,
+  tenantId: string,
+  userId: string,
+  questionId: string,
+) {
+  const tenant = await getWorkspaceTenant(prisma, tenantId);
+  const question = await prisma.withTenant(tenantId, (tx) =>
+    tx.question.findUnique({
+      where: { tenantId_id: { tenantId, id: questionId } },
+    }),
+  );
+  if (!question) {
+    throw new NotFoundException('Question not found');
+  }
+
+  if (question.questionBankId) {
+    await ensureReadableQuestionBank(prisma, tenantId, userId, question.questionBankId);
+  } else {
+    await ensureLegacyReadableQuestion(prisma, tenant, tenantId, userId);
+  }
+  return question;
+}
+
+export async function ensureWritableQuestion(
+  prisma: PrismaService,
+  tenantId: string,
+  userId: string,
+  questionId: string,
+) {
+  const tenant = await getWorkspaceTenant(prisma, tenantId);
+  const question = await prisma.withTenant(tenantId, (tx) =>
+    tx.question.findUnique({
+      where: { tenantId_id: { tenantId, id: questionId } },
+    }),
+  );
+  if (!question) {
+    throw new NotFoundException('Question not found');
+  }
+
+  if (question.questionBankId) {
+    await ensureWritableQuestionBank(prisma, tenantId, userId, question.questionBankId);
+  } else {
+    await ensureLegacyWritableQuestion(prisma, tenant, tenantId, userId);
+  }
+  return question;
 }
 
 export async function listAccessibleQuestionBanks(

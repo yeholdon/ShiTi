@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -17,7 +16,6 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
-  requireActiveTenantMember,
   requireTenantId,
   requireTenantRole,
   requireUserId
@@ -45,8 +43,10 @@ import {
 } from '../../../src/domain/questions/taxonomy-access';
 import { validateAssetReferences } from '../../../src/domain/assets/asset-reference-validation';
 import {
+  buildReadableQuestionWhere,
   ensureDefaultCloudQuestionBank,
-  ensureReadableQuestionBank,
+  ensureReadableQuestion,
+  ensureWritableQuestion,
   ensureWritableQuestionBank,
 } from '../../../src/domain/questions/question-bank-access';
 import {
@@ -170,7 +170,6 @@ export class QuestionsController {
   async list(@Req() req: Request) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireActiveTenantMember(this.prisma, tenantId, userId);
 
     const query = (req as any)?.query || {};
     const includeParam = String(query.include || '');
@@ -206,11 +205,12 @@ export class QuestionsController {
     const sortOrder = sortOrderRaw === 'asc' ? 'asc' : 'desc';
     const orderBy = { [sortBy]: sortOrder } as Prisma.QuestionOrderByWithRelationInput;
 
-    const where: Prisma.QuestionWhereInput = { tenantId };
-    if (questionBankId) {
-      await ensureReadableQuestionBank(this.prisma, tenantId, userId, questionBankId);
-      where.questionBankId = questionBankId;
-    }
+    const where = await buildReadableQuestionWhere(
+      this.prisma,
+      tenantId,
+      userId,
+      questionBankId,
+    );
     if (type) where.type = type as any;
     if (visibility) where.visibility = visibility as any;
     if (subjectId) where.subjectId = subjectId;
@@ -405,13 +405,9 @@ export class QuestionsController {
   async getOne(@Req() req: Request, @Param() params: UuidIdParamDto) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireActiveTenantMember(this.prisma, tenantId, userId);
 
     const questionId = params.id;
-    const question = await this.prisma.withTenant(tenantId, (tx) =>
-      tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } })
-    );
-    if (!question) throw new NotFoundException('Question not found');
+    const question = await ensureReadableQuestion(this.prisma, tenantId, userId, questionId);
 
     const [
       content,
@@ -491,7 +487,7 @@ export class QuestionsController {
   async update(@Req() req: Request, @Param() params: UuidIdParamDto, @Body() body: UpdateQuestionDto) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const data: any = {};
     if (body.type) data.type = body.type;
@@ -525,7 +521,7 @@ export class QuestionsController {
   async remove(@Req() req: Request, @Param() params: UuidIdParamDto) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     await this.prisma.withTenant(tenantId, (tx) =>
       tx.question.delete({ where: { tenantId_id: { tenantId, id: params.id } } })
@@ -550,21 +546,18 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     await validateAssetReferences(this.prisma, tenantId, body.stemBlocks);
 
-    const content = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionContent.upsert({
+    const content = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionContent.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: { tenantId, questionId, stemBlocks: body.stemBlocks as Prisma.InputJsonValue },
         update: { stemBlocks: body.stemBlocks as Prisma.InputJsonValue }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
@@ -585,7 +578,7 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     await validateAssetReferences(
@@ -599,11 +592,8 @@ export class QuestionsController {
     const commentaryBlocks =
       (body.commentaryBlocks as Prisma.InputJsonValue | undefined) ?? wrapLatexAsBlocks(body.commentaryLatex);
 
-    const explanation = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionExplanation.upsert({
+    const explanation = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionExplanation.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: {
           tenantId,
@@ -621,8 +611,8 @@ export class QuestionsController {
           commentaryLatex: body.commentaryLatex ?? null,
           commentaryBlocks: commentaryBlocks ?? Prisma.JsonNull
         }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
@@ -643,15 +633,12 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
 
-    const source = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionSource.upsert({
+    const source = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionSource.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: {
           tenantId,
@@ -665,8 +652,8 @@ export class QuestionsController {
           month: body.month ?? null,
           sourceText: body.sourceText ?? null
         }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
@@ -687,16 +674,13 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     await validateAssetReferences(this.prisma, tenantId, body.optionsBlocks);
 
-    const choiceAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionAnswerChoice.upsert({
+    const choiceAnswer = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionAnswerChoice.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: {
           tenantId,
@@ -708,8 +692,8 @@ export class QuestionsController {
           optionsBlocks: body.optionsBlocks as Prisma.InputJsonValue,
           correct: body.correct as Prisma.InputJsonValue
         }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
@@ -730,19 +714,16 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
-    const blankAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionAnswerBlank.upsert({
+    const blankAnswer = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionAnswerBlank.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: { tenantId, questionId, blanks: body.blanks as Prisma.InputJsonValue },
         update: { blanks: body.blanks as Prisma.InputJsonValue }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
@@ -759,13 +740,10 @@ export class QuestionsController {
   async setTags(@Req() req: Request, @Param() params: UuidIdParamDto, @Body() body: SetQuestionTagsDto) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     const result = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
       const tagIds = Array.from(new Set(body.tagIds.filter(Boolean)));
       const existing = await tx.questionTag.findMany({ where: { tenantId, id: { in: tagIds } } });
 
@@ -807,7 +785,7 @@ export class QuestionsController {
   async setTaxonomy(@Req() req: Request, @Param() params: UuidIdParamDto, @Body() body: SetQuestionTaxonomyDto) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     const stageIds = Array.from(new Set((body?.stageIds || []).filter(Boolean)));
@@ -835,9 +813,6 @@ export class QuestionsController {
     }
 
     const result = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
       await Promise.all([
         tx.questionStage.deleteMany({ where: { tenantId, questionId } }),
         tx.questionGrade.deleteMany({ where: { tenantId, questionId } }),
@@ -917,7 +892,7 @@ export class QuestionsController {
   ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
-    await requireTenantRole(this.prisma, tenantId, userId, ['admin', 'owner']);
+    await ensureWritableQuestion(this.prisma, tenantId, userId, params.id);
 
     const questionId = params.id;
     await validateAssetReferences(
@@ -929,11 +904,8 @@ export class QuestionsController {
     const referenceAnswerBlocks =
       (body.referenceAnswerBlocks as Prisma.InputJsonValue | undefined) ?? wrapLatexAsBlocks(body.finalAnswerLatex);
     const scoringPointsBlocks = (body.scoringPointsBlocks as Prisma.InputJsonValue | undefined) ?? null;
-    const solutionAnswer = await this.prisma.withTenant(tenantId, async (tx) => {
-      const question = await tx.question.findUnique({ where: { tenantId_id: { tenantId, id: questionId } } });
-      if (!question) throw new NotFoundException('Question not found');
-
-      return tx.questionAnswerSolution.upsert({
+    const solutionAnswer = await this.prisma.withTenant(tenantId, async (tx) =>
+      tx.questionAnswerSolution.upsert({
         where: { tenantId_questionId: { tenantId, questionId } },
         create: {
           tenantId,
@@ -949,8 +921,8 @@ export class QuestionsController {
           scoringPoints: body.scoringPoints as Prisma.InputJsonValue,
           scoringPointsBlocks: scoringPointsBlocks ?? Prisma.JsonNull
         }
-      });
-    });
+      }),
+    );
 
     await this.audit.record({
       tenantId,
