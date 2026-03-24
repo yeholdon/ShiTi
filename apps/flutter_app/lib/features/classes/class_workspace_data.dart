@@ -8,6 +8,14 @@ class ClassTierRecord {
   final String label;
   final int studentCount;
   final String focus;
+
+  factory ClassTierRecord.fromJson(Map<String, dynamic> json) {
+    return ClassTierRecord(
+      label: json['label'] as String? ?? '',
+      studentCount: (json['studentCount'] as num?)?.toInt() ?? 0,
+      focus: json['focus'] as String? ?? '',
+    );
+  }
 }
 
 class ClassLessonTimelineRecord {
@@ -26,6 +34,17 @@ class ClassLessonTimelineRecord {
   final String focus;
   final String lessonId;
   final String actionLabel;
+
+  factory ClassLessonTimelineRecord.fromJson(Map<String, dynamic> json) {
+    return ClassLessonTimelineRecord(
+      label: json['label'] as String? ?? '',
+      scheduleLabel: json['scheduleLabel'] as String? ?? '',
+      statusLabel: json['statusLabel'] as String? ?? '',
+      focus: json['focus'] as String? ?? '',
+      lessonId: json['lessonId'] as String? ?? '',
+      actionLabel: json['actionLabel'] as String? ?? '',
+    );
+  }
 }
 
 class ClassAssetLinkRecord {
@@ -42,6 +61,16 @@ class ClassAssetLinkRecord {
   final String documentLabel;
   final String statusLabel;
   final String detail;
+
+  factory ClassAssetLinkRecord.fromJson(Map<String, dynamic> json) {
+    return ClassAssetLinkRecord(
+      label: json['label'] as String? ?? '',
+      documentId: json['documentId'] as String? ?? '',
+      documentLabel: json['documentLabel'] as String? ?? '',
+      statusLabel: json['statusLabel'] as String? ?? '',
+      detail: json['detail'] as String? ?? '',
+    );
+  }
 }
 
 class ClassWorkspaceRecord {
@@ -94,6 +123,63 @@ class ClassWorkspaceRecord {
   final String summary;
   final List<String> highlights;
   final String nextStep;
+
+  factory ClassWorkspaceRecord.fromJson(Map<String, dynamic> json) {
+    return ClassWorkspaceRecord(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      lessonId: json['lessonId'] as String? ?? '',
+      documentId: json['documentId'] as String? ?? '',
+      focusStudentId: json['focusStudentId'] as String? ?? '',
+      focusStudentName: json['focusStudentName'] as String? ?? '',
+      stageLabel: json['stageLabel'] as String? ?? '',
+      teacherLabel: json['teacherLabel'] as String? ?? '',
+      textbookLabel: json['textbookLabel'] as String? ?? '',
+      focusLabel: json['focusLabel'] as String? ?? '',
+      activityLabel: json['activityLabel'] as String? ?? '',
+      classSizeLabel: json['classSizeLabel'] as String? ?? '',
+      lessonFocusLabel: json['lessonFocusLabel'] as String? ?? '',
+      structureInsight: json['structureInsight'] as String? ?? '',
+      studentCount: (json['studentCount'] as num?)?.toInt() ?? 0,
+      weeklyLessonCount: (json['weeklyLessonCount'] as num?)?.toInt() ?? 0,
+      latestDocLabel: json['latestDocLabel'] as String? ?? '',
+      assetLinks: _decodeClassList(
+        json['assetLinks'],
+        (item) => ClassAssetLinkRecord.fromJson(item),
+      ),
+      memberTiers: _decodeClassList(
+        json['memberTiers'],
+        (item) => ClassTierRecord.fromJson(item),
+      ),
+      lessonTimeline: _decodeClassList(
+        json['lessonTimeline'],
+        (item) => ClassLessonTimelineRecord.fromJson(item),
+      ),
+      summary: json['summary'] as String? ?? '',
+      highlights: _decodeClassStringList(json['highlights']),
+      nextStep: json['nextStep'] as String? ?? '',
+    );
+  }
+}
+
+List<T> _decodeClassList<T>(
+  Object? raw,
+  T Function(Map<String, dynamic>) mapper,
+) {
+  if (raw is! List) {
+    return List<T>.empty(growable: false);
+  }
+  return raw
+      .whereType<Map>()
+      .map((item) => mapper(Map<String, dynamic>.from(item)))
+      .toList(growable: false);
+}
+
+List<String> _decodeClassStringList(Object? raw) {
+  if (raw is! List) {
+    return const <String>[];
+  }
+  return raw.whereType<String>().toList(growable: false);
 }
 
 const List<ClassWorkspaceRecord> sampleClassRecords = [

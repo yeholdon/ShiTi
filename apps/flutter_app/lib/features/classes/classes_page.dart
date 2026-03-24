@@ -39,6 +39,9 @@ class _ClassesPageState extends State<ClassesPage> {
   late _ClassFilter _filter;
   late String _selectedClassId;
   late final TextEditingController _queryController;
+  late List<ClassWorkspaceRecord> _records;
+  bool _isLoading = !AppConfig.useMockData;
+  String? _loadError;
 
   bool get _hasContextualEntry => widget.args?.focusClassId != null;
 
@@ -52,10 +55,14 @@ class _ClassesPageState extends State<ClassesPage> {
     _filter = !_hasContextualEntry && storedState != null
         ? _classFilterFromLabel(storedState.filter)
         : _ClassFilter.all;
+    _records = sampleClassRecords;
     _selectedClassId = widget.args?.focusClassId ??
         (!_hasContextualEntry && storedState != null
             ? storedState.selectedClassId
             : sampleClassRecords.first.id);
+    if (!AppConfig.useMockData) {
+      _loadClasses();
+    }
   }
 
   @override
@@ -74,7 +81,7 @@ class _ClassesPageState extends State<ClassesPage> {
 
   List<ClassWorkspaceRecord> _recordsForFilter(_ClassFilter filter) {
     final query = _queryController.text.trim().toLowerCase();
-    return sampleClassRecords
+    return _records
         .where((item) => switch (filter) {
               _ClassFilter.all => true,
               _ClassFilter.active => item.activityLabel == '本周活跃',
@@ -90,6 +97,37 @@ class _ClassesPageState extends State<ClassesPage> {
               item.focusLabel.toLowerCase().contains(query),
         )
         .toList(growable: false);
+  }
+
+  Future<void> _loadClasses() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final records = await AppServices.instance.classRepository.listClasses();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _records = records;
+        _isLoading = false;
+        _loadError = null;
+        if (_records.isNotEmpty &&
+            !_records.any((item) => item.id == _selectedClassId)) {
+          _selectedClassId = _records.first.id;
+        }
+        _rememberViewState();
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _loadError = error.toString();
+      });
+    }
   }
 
   void _openStudents(ClassWorkspaceRecord classroom) {
@@ -157,12 +195,12 @@ class _ClassesPageState extends State<ClassesPage> {
             ? '个人工作区'
             : '机构工作区';
     final filteredClasses = _recordsForFilter(_filter);
-    final selectedClass = filteredClasses.firstWhere(
-      (item) => item.id == _selectedClassId,
-      orElse: () => filteredClasses.isNotEmpty
-          ? filteredClasses.first
-          : sampleClassRecords.first,
-    );
+    final selectedClass = filteredClasses.isNotEmpty
+        ? filteredClasses.firstWhere(
+            (item) => item.id == _selectedClassId,
+            orElse: () => filteredClasses.first,
+          )
+        : (_records.isNotEmpty ? _records.first : null);
     final highlightTitle = widget.args?.highlightTitle;
     final highlightDetail = widget.args?.highlightDetail;
     final feedbackBadgeLabel = widget.args?.feedbackBadgeLabel;
@@ -200,16 +238,16 @@ class _ClassesPageState extends State<ClassesPage> {
                 padding: workspacePagePadding(context),
                 children: [
                   _ClassHeroSection(
-                    classCount: sampleClassRecords.length,
-                    studentCount: sampleClassRecords.fold<int>(
+                    classCount: _records.length,
+                    studentCount: _records.fold<int>(
                       0,
                       (sum, item) => sum + item.studentCount,
                     ),
-                    activeLessonCount: sampleClassRecords.fold<int>(
+                    activeLessonCount: _records.fold<int>(
                       0,
                       (sum, item) => sum + item.weeklyLessonCount,
                     ),
-                    linkedDocCount: sampleClassRecords
+                    linkedDocCount: _records
                         .map((item) => item.latestDocLabel)
                         .toSet()
                         .length,
@@ -242,7 +280,9 @@ class _ClassesPageState extends State<ClassesPage> {
                               )) {
                                 _selectedClassId = nextRecords.isNotEmpty
                                     ? nextRecords.first.id
-                                    : sampleClassRecords.first.id;
+                                    : (_records.isNotEmpty
+                                        ? _records.first.id
+                                        : _selectedClassId);
                               }
                               _rememberViewState();
                             });
@@ -266,7 +306,9 @@ class _ClassesPageState extends State<ClassesPage> {
                                       )) {
                                         _selectedClassId = nextRecords.isNotEmpty
                                             ? nextRecords.first.id
-                                            : sampleClassRecords.first.id;
+                                            : (_records.isNotEmpty
+                                                ? _records.first.id
+                                                : _selectedClassId);
                                       }
                                       _rememberViewState();
                                     });
@@ -279,6 +321,34 @@ class _ClassesPageState extends State<ClassesPage> {
                       ],
                     ),
                   ),
+                  if (_isLoading) ...[
+                    const SizedBox(height: 18),
+                    const WorkspaceMessageBanner.info(
+                      title: '正在加载班级数据',
+                      message: '正在从当前机构读取班级结构、课堂安排和资料联动。',
+                    ),
+                  ] else if (_loadError != null) ...[
+                    const SizedBox(height: 18),
+                    WorkspacePanel(
+                      padding: workspacePanelPadding(context),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: WorkspaceMessageBanner.warning(
+                              title: '班级数据加载失败',
+                              message: '当前无法读取班级列表，请稍后重试。',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _loadClasses,
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('重试'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if ((widget.args?.flashMessage ?? '').isNotEmpty) ...[
                     const SizedBox(height: 18),
                     WorkspaceMessageBanner.info(
@@ -286,9 +356,10 @@ class _ClassesPageState extends State<ClassesPage> {
                       message: widget.args!.flashMessage!,
                     ),
                   ],
-                  if ((highlightTitle?.trim().isNotEmpty ?? false) ||
+                  if (selectedClass != null &&
+                      ((highlightTitle?.trim().isNotEmpty ?? false) ||
                       (highlightDetail?.trim().isNotEmpty ?? false) ||
-                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false)) ...[
+                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false))) ...[
                     const SizedBox(height: 18),
                     WorkspacePanel(
                       padding: workspacePanelPadding(context),
@@ -375,56 +446,72 @@ class _ClassesPageState extends State<ClassesPage> {
                   ),
                   const SizedBox(height: 18),
                   if (showAside)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 7,
-                          child: _ClassListPanel(
-                            classes: filteredClasses,
-                            selectedClassId: selectedClass.id,
-                            onOpenDetail: _openDetail,
-                            onSelect: (classId) {
-                              setState(() {
-                                _selectedClassId = classId;
-                                _rememberViewState();
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 3,
-                          child: _ClassDetailRail(
-                            classroom: selectedClass,
-                            onOpenDetail: () => _openDetail(selectedClass),
-                            onOpenStudents: () => _openStudents(selectedClass),
-                            onOpenLesson: () => _openLesson(selectedClass),
-                            onOpenDocument: () => _openDocument(selectedClass),
-                          ),
-                        ),
-                      ],
-                    )
+                    selectedClass == null
+                        ? WorkspaceMessageBanner.warning(
+                            title: '当前没有班级数据',
+                            message: _isLoading
+                                ? '班级数据仍在加载中。'
+                                : '当前机构下还没有班级档案，请先新增班级或切换到有数据的机构。',
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 7,
+                                child: _ClassListPanel(
+                                  classes: filteredClasses,
+                                  selectedClassId: selectedClass.id,
+                                  onOpenDetail: _openDetail,
+                                  onSelect: (classId) {
+                                    setState(() {
+                                      _selectedClassId = classId;
+                                      _rememberViewState();
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 3,
+                                child: _ClassDetailRail(
+                                  classroom: selectedClass,
+                                  onOpenDetail: () => _openDetail(selectedClass),
+                                  onOpenStudents: () => _openStudents(selectedClass),
+                                  onOpenLesson: () => _openLesson(selectedClass),
+                                  onOpenDocument: () => _openDocument(selectedClass),
+                                ),
+                              ),
+                            ],
+                          )
                   else ...[
-                    _ClassDetailRail(
-                      classroom: selectedClass,
-                      onOpenDetail: () => _openDetail(selectedClass),
-                      onOpenStudents: () => _openStudents(selectedClass),
-                      onOpenLesson: () => _openLesson(selectedClass),
-                      onOpenDocument: () => _openDocument(selectedClass),
-                    ),
-                    const SizedBox(height: 16),
-                    _ClassListPanel(
-                      classes: filteredClasses,
-                      selectedClassId: selectedClass.id,
-                      onOpenDetail: _openDetail,
-                      onSelect: (classId) {
-                        setState(() {
-                          _selectedClassId = classId;
-                          _rememberViewState();
-                        });
-                      },
-                    ),
+                    if (selectedClass == null)
+                      WorkspaceMessageBanner.warning(
+                        title: '当前没有班级数据',
+                        message: _isLoading
+                            ? '班级数据仍在加载中。'
+                            : '当前机构下还没有班级档案，请先新增班级或切换到有数据的机构。',
+                      )
+                    else ...[
+                      _ClassDetailRail(
+                        classroom: selectedClass,
+                        onOpenDetail: () => _openDetail(selectedClass),
+                        onOpenStudents: () => _openStudents(selectedClass),
+                        onOpenLesson: () => _openLesson(selectedClass),
+                        onOpenDocument: () => _openDocument(selectedClass),
+                      ),
+                      const SizedBox(height: 16),
+                      _ClassListPanel(
+                        classes: filteredClasses,
+                        selectedClassId: selectedClass.id,
+                        onOpenDetail: _openDetail,
+                        onSelect: (classId) {
+                          setState(() {
+                            _selectedClassId = classId;
+                            _rememberViewState();
+                          });
+                        },
+                      ),
+                    ],
                   ],
                 ],
               ),

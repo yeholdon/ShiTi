@@ -1034,3 +1034,4 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `npm run local:restart` 的后台服务启动已改成 `python3 subprocess(start_new_session=True)` 脱离 `npm` 进程组，修复 `4111` 在脚本结束后立即消失的问题。
 - [x] Backend: 新增 `GET /students`、`GET /students/:id`、`GET /classes`、`GET /classes/:id`、`GET /lessons`、`GET /lessons/:id`，把学生/班级/课堂样例结构接进真实数据库只读接口。
 - [x] Flutter: 学生工作页和学生详情页已接入真实 `students` API，非 mock 模式下改为后端加载，补齐了加载态、失败态和空态。
+- [x] Flutter: 班级工作页已接入真实 `classes` API，非 mock 模式下改为后端加载，并补齐了加载态、失败态和空态。

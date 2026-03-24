@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import '../models/auth_session.dart';
 import '../models/tenant_summary.dart';
 import '../network/http_json_client.dart';
+import '../repositories/class_repository.dart';
 import '../repositories/document_repository.dart';
 import '../repositories/question_repository.dart';
 import '../repositories/session_repository.dart';
@@ -17,6 +18,7 @@ class AppServices {
     if (AppConfig.useMockData) {
       sessionRepository = FakeSessionRepository(apiClient);
       questionRepository = FakeQuestionRepository(apiClient);
+      classRepository = FakeClassRepository(apiClient);
       documentRepository = FakeDocumentRepository(apiClient);
       studentRepository = FakeStudentRepository(apiClient);
       taxonomyRepository = FakeTaxonomyRepository(apiClient);
@@ -34,6 +36,7 @@ class AppServices {
       currentSessionProvider: () => _session,
     );
     questionRepository = RemoteQuestionRepository(httpClient);
+    classRepository = RemoteClassRepository(httpClient);
     documentRepository = RemoteDocumentRepository(httpClient);
     studentRepository = RemoteStudentRepository(httpClient);
     taxonomyRepository = RemoteTaxonomyRepository(httpClient);
@@ -44,6 +47,7 @@ class AppServices {
   final ShiTiApiClient apiClient;
   late final SessionRepository sessionRepository;
   late final QuestionRepository questionRepository;
+  late final ClassRepository classRepository;
   late final DocumentRepository documentRepository;
   late final StudentRepository studentRepository;
   late final TaxonomyRepository taxonomyRepository;
