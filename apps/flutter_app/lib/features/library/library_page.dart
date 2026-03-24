@@ -19,6 +19,8 @@ import '../shared/question_workspace_context_card.dart';
 import '../shared/primary_navigation_bar.dart';
 import '../shared/primary_page_scroll_memory.dart';
 import '../shared/primary_page_view_state_memory.dart';
+import '../shared/workspace_module_paths.dart';
+import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 import 'question_summary_preview.dart';
 
@@ -47,10 +49,9 @@ class _LibraryPageState extends State<LibraryPage> {
   late final bool _forceInitialTopReset =
       PrimaryPageScrollMemory.consumePendingTopReset(_pageKey);
   late final ScrollController _scrollController = ScrollController(
-    initialScrollOffset:
-        _hasContextualEntry || _forceInitialTopReset
-            ? 0
-            : PrimaryPageScrollMemory.offsetFor(_pageKey),
+    initialScrollOffset: _hasContextualEntry || _forceInitialTopReset
+        ? 0
+        : PrimaryPageScrollMemory.offsetFor(_pageKey),
   );
 
   LibraryFilterState _filters = const LibraryFilterState();
@@ -723,73 +724,19 @@ class _LibraryPageState extends State<LibraryPage> {
     final showPrimaryNavigation = _preferredTargetDocument == null &&
         _insertAfterItemId == null &&
         (_insertAfterItemTitle ?? '').isEmpty;
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !showPrimaryNavigation,
-        leading: showPrimaryNavigation
-            ? IconButton(
-                tooltip: '返回工作台',
-                onPressed: _openWorkspace,
-                icon: const Icon(Icons.arrow_back_outlined),
-              )
-            : null,
-        title: const Text('题库检索'),
-        actions: [
-          if (showPrimaryNavigation)
-            TextButton.icon(
-              onPressed: _openWorkspace,
-              icon: const Icon(Icons.home_outlined),
-              label: Text(compact ? '工作台' : '返回工作台'),
-            ),
-          TextButton.icon(
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRouter.login);
-            },
-            icon: const Icon(Icons.login),
-            label: const Text('登录'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: WorkspaceBackdrop(
-        child: SafeArea(
-          child: workspaceConstrainedContent(
-            context,
-            child: ListView(
-              controller: _scrollController,
-              padding: workspacePagePadding(context),
+    final pageBody = workspaceConstrainedContent(
+      context,
+      child: ListView(
+        controller: _scrollController,
+        padding: workspacePagePadding(context),
+        children: [
+          if (wideDesktop)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (wideDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: _LibraryHeroSection(
-                          totalCount: _questions.length,
-                          visibleCount: visibleQuestions.length,
-                          selectedCount: _selectedQuestionIds.length,
-                          inBasketCount: _basketQuestionIds.length,
-                          inDocumentContext: _preferredTargetDocument != null,
-                          onOpenWorkspace: _openWorkspace,
-                        ),
-                      ),
-                      const SizedBox(width: 18),
-                      SizedBox(
-                        width: 320,
-                        child: _LibraryStatusCard(
-                          modeLabel: AppConfig.dataModeLabel,
-                          sessionLabel:
-                              AppServices.instance.session?.username ?? '未登录',
-                          tenantLabel:
-                              AppServices.instance.activeTenant?.code ??
-                                  '未选择机构',
-                        ),
-                      ),
-                    ],
-                  )
-                else ...[
-                  _LibraryHeroSection(
+                Expanded(
+                  flex: 5,
+                  child: _LibraryHeroSection(
                     totalCount: _questions.length,
                     visibleCount: visibleQuestions.length,
                     selectedCount: _selectedQuestionIds.length,
@@ -797,278 +744,345 @@ class _LibraryPageState extends State<LibraryPage> {
                     inDocumentContext: _preferredTargetDocument != null,
                     onOpenWorkspace: _openWorkspace,
                   ),
-                  const SizedBox(height: 16),
-                  _LibraryStatusCard(
+                ),
+                const SizedBox(width: 18),
+                SizedBox(
+                  width: 320,
+                  child: _LibraryStatusCard(
                     modeLabel: AppConfig.dataModeLabel,
                     sessionLabel:
                         AppServices.instance.session?.username ?? '未登录',
                     tenantLabel:
                         AppServices.instance.activeTenant?.code ?? '未选择机构',
                   ),
-                ],
-                const SizedBox(height: 16),
-                _FilterCard(
-                  filters: _filters,
-                  basketFilter: _basketFilter,
-                  gradeFilter: _gradeFilter,
-                  chapterFilter: _chapterFilter,
-                  sortBy: _sortBy,
-                  visibleQuestions: visibleQuestions,
-                  visibleInBasketCount: visibleQuestions
-                      .where((question) =>
-                          _basketQuestionIds.contains(question.id))
-                      .length,
-                  visibleOutOfBasketCount: visibleQuestions
-                      .where((question) =>
-                          !_basketQuestionIds.contains(question.id))
-                      .length,
-                  searchController: _searchController,
-                  subjectOptions: _subjectOptions,
-                  stageOptions: _stageOptions,
-                  textbookOptions: _textbookOptions,
-                  chapterOptions: _chapterOptions,
-                  onChanged: _updateFilters,
-                  onBasketFilterChanged: (value) {
-                    setState(() {
-                      _basketFilter = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onGradeFilterChanged: (value) {
-                    setState(() {
-                      _gradeFilter = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onChapterFilterChanged: (value) {
-                    setState(() {
-                      _chapterFilter = value;
-                    });
-                    _rememberViewState();
-                  },
-                  gradeOptions: _gradeOptions,
-                  onSortChanged: (value) {
-                    setState(() {
-                      _sortBy = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onClearFilters: _clearFilters,
                 ),
-                if (_preferredTargetDocument != null) ...[
-                  const SizedBox(height: 16),
-                  QuestionWorkspaceContextCard(
-                    documentName: _preferredTargetDocument!.name,
-                    insertAfterItemTitle: _insertAfterItemTitle,
-                    onOpenDocument: () {
-                      Navigator.of(context).pushNamed(
-                        AppRouter.documentDetail,
-                        arguments: DocumentDetailArgs(
-                          documentId: _preferredTargetDocument!.id,
-                          documentSnapshot: _preferredTargetDocument,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-                const SizedBox(height: 16),
-                if (_questions.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _LibrarySelectionBar(
-                      selectedCount: _selectedQuestionIds.length,
-                      selectedInBasketCount: _questions
-                          .where(
-                            (question) =>
-                                _selectedQuestionIds.contains(question.id) &&
-                                _basketQuestionIds.contains(question.id),
-                          )
-                          .length,
-                      selectedOutOfBasketCount: _questions
-                          .where(
-                            (question) =>
-                                _selectedQuestionIds.contains(question.id) &&
-                                !_basketQuestionIds.contains(question.id),
-                          )
-                          .length,
-                      selectedSubjectCount: _questions
-                          .where((question) =>
-                              _selectedQuestionIds.contains(question.id))
-                          .map((question) => question.subject.trim())
-                          .where((value) => value.isNotEmpty)
-                          .toSet()
-                          .length,
-                      selectedTextbookCount: _questions
-                          .where((question) =>
-                              _selectedQuestionIds.contains(question.id))
-                          .map((question) => question.textbook.trim())
-                          .where((value) => value.isNotEmpty)
-                          .toSet()
-                          .length,
-                      selectedChapterCount: _questions
-                          .where((question) =>
-                              _selectedQuestionIds.contains(question.id))
-                          .map((question) => question.chapter.trim())
-                          .where((value) => value.isNotEmpty)
-                          .toSet()
-                          .length,
-                      selectedStageCount: _questions
-                          .where((question) =>
-                              _selectedQuestionIds.contains(question.id))
-                          .map((question) => question.stage.trim())
-                          .where((value) => value.isNotEmpty)
-                          .toSet()
-                          .length,
-                      selectedGradeCount: _questions
-                          .where((question) =>
-                              _selectedQuestionIds.contains(question.id))
-                          .map((question) => question.grade.trim())
-                          .where((value) => value.isNotEmpty)
-                          .toSet()
-                          .length,
-                      totalCount: visibleQuestions.length,
-                      selectedVisibleCount: visibleQuestions
-                          .where(
-                            (question) =>
-                                _selectedQuestionIds.contains(question.id),
-                          )
-                          .length,
-                      allSelected: _allVisibleQuestionsSelected,
-                      showOnlySelected: _showOnlySelectedQuestions,
-                      inBasketVisibleCount: inBasketVisibleCount,
-                      outOfBasketVisibleCount: outOfBasketVisibleCount,
-                      addingToBasket: _addingSelectedToBasket,
-                      removingFromBasket: _removingSelectedFromBasket,
-                      addingToDocument: _addingSelectedToDocument,
-                      creatingDocumentAndAdding:
-                          _creatingDocumentAndAddingSelected,
-                      preferredTargetDocumentName:
-                          _preferredTargetDocument?.name,
-                      onSelectAll: _selectAllVisibleQuestions,
-                      onSelectInBasket: () =>
-                          _selectQuestionsByBasketMembership(true),
-                      onSelectOutOfBasket: () =>
-                          _selectQuestionsByBasketMembership(false),
-                      onInvertSelection: _invertVisibleQuestionsSelection,
-                      onToggleShowOnlySelected: (value) {
-                        setState(() {
-                          _showOnlySelectedQuestions = value;
-                        });
-                        _rememberViewState();
-                      },
-                      onClearSelection: _clearSelection,
-                      onAddToBasket: _addSelectedQuestionsToBasket,
-                      onRemoveFromBasket: _removeSelectedQuestionsFromBasket,
-                      onAddToDocument: _addSelectedQuestionsToDocument,
-                      onCreateDocumentAndAdd:
-                          _createDocumentAndAddSelectedQuestions,
-                    ),
-                  ),
-                if (_loadError != null)
-                  _LibraryErrorCard(
-                    message: _loadError is HttpJsonException
-                        ? '题库加载失败：${(_loadError as HttpJsonException).message}（HTTP ${(_loadError as HttpJsonException).statusCode}）'
-                        : '题库加载失败：$_loadError',
-                    onRetry: _reloadWithGuard,
-                  )
-                else if (_loading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_questions.isEmpty || visibleQuestions.isEmpty)
-                  WorkspacePanel(
-                    padding: EdgeInsets.all(compact ? 14 : 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _showOnlySelectedQuestions
-                              ? '当前没有已选中的题目可展示。'
-                              : _hasActiveFilters
-                                  ? '当前筛选条件下没有匹配的题目。'
-                                  : '当前没有可展示的题目。',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: TelegramPalette.textStrong,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _showOnlySelectedQuestions
-                              ? '可以先退出“只看已选”，或重新选择一批题目后再批量处理。'
-                              : _hasActiveFilters
-                                  ? '可以调整关键词、学科、学段、年级、教材或章节筛选，或者直接清空筛选后重新查看题库。'
-                                  : AppConfig.useMockData
-                                      ? '当前使用样例数据，可以直接从本地演示题目开始挑题。'
-                                      : '当前还没有可展示的题目。先登录并选择机构，再回来查看真实题库。',
-                          style: TextStyle(
-                            height: 1.5,
-                            color: TelegramPalette.textMuted,
-                          ),
-                        ),
-                        if (_showOnlySelectedQuestions ||
-                            _hasActiveFilters) ...[
-                          const SizedBox(height: 14),
-                          TextButton.icon(
-                            onPressed: _showOnlySelectedQuestions
-                                ? () {
-                                    setState(() {
-                                      _showOnlySelectedQuestions = false;
-                                    });
-                                    _rememberViewState();
-                                  }
-                                : _clearFilters,
-                            icon: const Icon(Icons.filter_alt_off_outlined),
-                            label: Text(
-                              _showOnlySelectedQuestions
-                                  ? '退出只看已选'
-                                  : (compact ? '清空' : '清空筛选'),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )
-                else
-                  Column(
-                    children: visibleQuestions
-                        .map(
-                          (question) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _QuestionPreviewCard(
-                              question: question,
-                              isInBasket:
-                                  _basketQuestionIds.contains(question.id),
-                              isSelected:
-                                  _selectedQuestionIds.contains(question.id),
-                              preferredTargetDocument: _preferredTargetDocument,
-                              insertAfterItemId: _insertAfterItemId,
-                              insertAfterItemTitle: _insertAfterItemTitle,
-                              onBasketChanged: (isInBasket) {
-                                _setBasketMembership(question.id, isInBasket);
-                              },
-                              onSelectionChanged: (selected) {
-                                _setSelection(question.id, selected);
-                              },
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
               ],
+            )
+          else ...[
+            _LibraryHeroSection(
+              totalCount: _questions.length,
+              visibleCount: visibleQuestions.length,
+              selectedCount: _selectedQuestionIds.length,
+              inBasketCount: _basketQuestionIds.length,
+              inDocumentContext: _preferredTargetDocument != null,
+              onOpenWorkspace: _openWorkspace,
             ),
+            const SizedBox(height: 16),
+            _LibraryStatusCard(
+              modeLabel: AppConfig.dataModeLabel,
+              sessionLabel: AppServices.instance.session?.username ?? '未登录',
+              tenantLabel: AppServices.instance.activeTenant?.code ?? '未选择机构',
+            ),
+          ],
+          const SizedBox(height: 16),
+          _FilterCard(
+            filters: _filters,
+            basketFilter: _basketFilter,
+            gradeFilter: _gradeFilter,
+            chapterFilter: _chapterFilter,
+            sortBy: _sortBy,
+            visibleQuestions: visibleQuestions,
+            visibleInBasketCount: visibleQuestions
+                .where((question) => _basketQuestionIds.contains(question.id))
+                .length,
+            visibleOutOfBasketCount: visibleQuestions
+                .where((question) => !_basketQuestionIds.contains(question.id))
+                .length,
+            searchController: _searchController,
+            subjectOptions: _subjectOptions,
+            stageOptions: _stageOptions,
+            textbookOptions: _textbookOptions,
+            chapterOptions: _chapterOptions,
+            onChanged: _updateFilters,
+            onBasketFilterChanged: (value) {
+              setState(() {
+                _basketFilter = value;
+              });
+              _rememberViewState();
+            },
+            onGradeFilterChanged: (value) {
+              setState(() {
+                _gradeFilter = value;
+              });
+              _rememberViewState();
+            },
+            onChapterFilterChanged: (value) {
+              setState(() {
+                _chapterFilter = value;
+              });
+              _rememberViewState();
+            },
+            gradeOptions: _gradeOptions,
+            onSortChanged: (value) {
+              setState(() {
+                _sortBy = value;
+              });
+              _rememberViewState();
+            },
+            onClearFilters: _clearFilters,
+          ),
+          if (_preferredTargetDocument != null) ...[
+            const SizedBox(height: 16),
+            QuestionWorkspaceContextCard(
+              documentName: _preferredTargetDocument!.name,
+              insertAfterItemTitle: _insertAfterItemTitle,
+              onOpenDocument: () {
+                Navigator.of(context).pushNamed(
+                  AppRouter.documentDetail,
+                  arguments: DocumentDetailArgs(
+                    documentId: _preferredTargetDocument!.id,
+                    documentSnapshot: _preferredTargetDocument,
+                  ),
+                );
+              },
+            ),
+          ],
+          const SizedBox(height: 16),
+          if (_questions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _LibrarySelectionBar(
+                selectedCount: _selectedQuestionIds.length,
+                selectedInBasketCount: _questions
+                    .where(
+                      (question) =>
+                          _selectedQuestionIds.contains(question.id) &&
+                          _basketQuestionIds.contains(question.id),
+                    )
+                    .length,
+                selectedOutOfBasketCount: _questions
+                    .where(
+                      (question) =>
+                          _selectedQuestionIds.contains(question.id) &&
+                          !_basketQuestionIds.contains(question.id),
+                    )
+                    .length,
+                selectedSubjectCount: _questions
+                    .where((question) =>
+                        _selectedQuestionIds.contains(question.id))
+                    .map((question) => question.subject.trim())
+                    .where((value) => value.isNotEmpty)
+                    .toSet()
+                    .length,
+                selectedTextbookCount: _questions
+                    .where((question) =>
+                        _selectedQuestionIds.contains(question.id))
+                    .map((question) => question.textbook.trim())
+                    .where((value) => value.isNotEmpty)
+                    .toSet()
+                    .length,
+                selectedChapterCount: _questions
+                    .where((question) =>
+                        _selectedQuestionIds.contains(question.id))
+                    .map((question) => question.chapter.trim())
+                    .where((value) => value.isNotEmpty)
+                    .toSet()
+                    .length,
+                selectedStageCount: _questions
+                    .where((question) =>
+                        _selectedQuestionIds.contains(question.id))
+                    .map((question) => question.stage.trim())
+                    .where((value) => value.isNotEmpty)
+                    .toSet()
+                    .length,
+                selectedGradeCount: _questions
+                    .where((question) =>
+                        _selectedQuestionIds.contains(question.id))
+                    .map((question) => question.grade.trim())
+                    .where((value) => value.isNotEmpty)
+                    .toSet()
+                    .length,
+                totalCount: visibleQuestions.length,
+                selectedVisibleCount: visibleQuestions
+                    .where(
+                      (question) => _selectedQuestionIds.contains(question.id),
+                    )
+                    .length,
+                allSelected: _allVisibleQuestionsSelected,
+                showOnlySelected: _showOnlySelectedQuestions,
+                inBasketVisibleCount: inBasketVisibleCount,
+                outOfBasketVisibleCount: outOfBasketVisibleCount,
+                addingToBasket: _addingSelectedToBasket,
+                removingFromBasket: _removingSelectedFromBasket,
+                addingToDocument: _addingSelectedToDocument,
+                creatingDocumentAndAdding: _creatingDocumentAndAddingSelected,
+                preferredTargetDocumentName: _preferredTargetDocument?.name,
+                onSelectAll: _selectAllVisibleQuestions,
+                onSelectInBasket: () =>
+                    _selectQuestionsByBasketMembership(true),
+                onSelectOutOfBasket: () =>
+                    _selectQuestionsByBasketMembership(false),
+                onInvertSelection: _invertVisibleQuestionsSelection,
+                onToggleShowOnlySelected: (value) {
+                  setState(() {
+                    _showOnlySelectedQuestions = value;
+                  });
+                  _rememberViewState();
+                },
+                onClearSelection: _clearSelection,
+                onAddToBasket: _addSelectedQuestionsToBasket,
+                onRemoveFromBasket: _removeSelectedQuestionsFromBasket,
+                onAddToDocument: _addSelectedQuestionsToDocument,
+                onCreateDocumentAndAdd: _createDocumentAndAddSelectedQuestions,
+              ),
+            ),
+          if (_loadError != null)
+            _LibraryErrorCard(
+              message: _loadError is HttpJsonException
+                  ? '题库加载失败：${(_loadError as HttpJsonException).message}（HTTP ${(_loadError as HttpJsonException).statusCode}）'
+                  : '题库加载失败：$_loadError',
+              onRetry: _reloadWithGuard,
+            )
+          else if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_questions.isEmpty || visibleQuestions.isEmpty)
+            WorkspacePanel(
+              padding: EdgeInsets.all(compact ? 14 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _showOnlySelectedQuestions
+                        ? '当前没有已选中的题目可展示。'
+                        : _hasActiveFilters
+                            ? '当前筛选条件下没有匹配的题目。'
+                            : '当前没有可展示的题目。',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: TelegramPalette.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _showOnlySelectedQuestions
+                        ? '可以先退出“只看已选”，或重新选择一批题目后再批量处理。'
+                        : _hasActiveFilters
+                            ? '可以调整关键词、学科、学段、年级、教材或章节筛选，或者直接清空筛选后重新查看题库。'
+                            : AppConfig.useMockData
+                                ? '当前使用样例数据，可以直接从本地演示题目开始挑题。'
+                                : '当前还没有可展示的题目。先登录并选择机构，再回来查看真实题库。',
+                    style: TextStyle(
+                      height: 1.5,
+                      color: TelegramPalette.textMuted,
+                    ),
+                  ),
+                  if (_showOnlySelectedQuestions || _hasActiveFilters) ...[
+                    const SizedBox(height: 14),
+                    TextButton.icon(
+                      onPressed: _showOnlySelectedQuestions
+                          ? () {
+                              setState(() {
+                                _showOnlySelectedQuestions = false;
+                              });
+                              _rememberViewState();
+                            }
+                          : _clearFilters,
+                      icon: const Icon(Icons.filter_alt_off_outlined),
+                      label: Text(
+                        _showOnlySelectedQuestions
+                            ? '退出只看已选'
+                            : (compact ? '清空' : '清空筛选'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            )
+          else
+            Column(
+              children: visibleQuestions
+                  .map(
+                    (question) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _QuestionPreviewCard(
+                        question: question,
+                        isInBasket: _basketQuestionIds.contains(question.id),
+                        isSelected: _selectedQuestionIds.contains(question.id),
+                        preferredTargetDocument: _preferredTargetDocument,
+                        insertAfterItemId: _insertAfterItemId,
+                        insertAfterItemTitle: _insertAfterItemTitle,
+                        onBasketChanged: (isInBasket) {
+                          _setBasketMembership(question.id, isInBasket);
+                        },
+                        onSelectionChanged: (selected) {
+                          _setSelection(question.id, selected);
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+    if (!showPrimaryNavigation) {
+      return Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: true,
+          title: const Text('题库检索'),
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(AppRouter.login);
+              },
+              icon: const Icon(Icons.login),
+              label: const Text('登录'),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: WorkspaceBackdrop(
+          child: SafeArea(
+            child: pageBody,
           ),
         ),
+      );
+    }
+    final activeTenant = AppServices.instance.activeTenant;
+    return Scaffold(
+      body: WorkspaceModuleShell(
+        currentModule: WorkspaceModule.library,
+        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+        title: '题库',
+        subtitle: '围绕题目内容、答案解析、标签、题库授权与文档投递，组织统一的检索与选题工作台。',
+        searchHint: '搜索题目内容、章节、题型、教材、出处或题库实例',
+        statusWidgets: [
+          WorkspaceInfoPill(
+            label: '数据模式',
+            value: AppConfig.dataModeLabel,
+          ),
+          WorkspaceInfoPill(
+            label: '当前场景',
+            value: activeTenant == null
+                ? '待选择机构'
+                : activeTenant.isPersonal
+                    ? '个人工作区'
+                    : '机构工作区',
+            highlight: activeTenant == null,
+          ),
+          WorkspaceInfoPill(
+            label: '当前机构',
+            value: activeTenant?.name ?? '未选择机构',
+            highlight: activeTenant == null,
+          ),
+        ],
+        trailing: IconButton.filledTonal(
+          onPressed: _openWorkspace,
+          tooltip: '返回工作台',
+          icon: const Icon(Icons.home_outlined),
+        ),
+        body: pageBody,
       ),
-      bottomNavigationBar:
-          MediaQuery.of(context).size.width < 900 && showPrimaryNavigation
-              ? const PrimaryNavigationBar(
-                  currentSection: PrimaryAppSection.library,
-                )
-              : null,
+      bottomNavigationBar: MediaQuery.of(context).size.width < 900
+          ? const PrimaryNavigationBar(
+              currentSection: PrimaryAppSection.library,
+            )
+          : null,
     );
   }
 }
@@ -1477,7 +1491,8 @@ class _FilterCard extends StatelessWidget {
                 color: TelegramPalette.textMuted,
               ),
             ),
-          if (desktopWide && activeFilterChips.isEmpty) const SizedBox(height: 8),
+          if (desktopWide && activeFilterChips.isEmpty)
+            const SizedBox(height: 8),
           if (!desktopWide)
             Wrap(
               spacing: compact ? 8 : 10,
@@ -2011,8 +2026,7 @@ class _LibrarySelectionBar extends StatelessWidget {
             label: Text(compact ? '反选结果' : '反选当前结果'),
           ),
           WorkspaceFilterPill(
-            label:
-                showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
+            label: showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
             selected: showOnlySelected,
             onTap: selectedCount == 0
                 ? null

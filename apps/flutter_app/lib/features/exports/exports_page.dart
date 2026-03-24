@@ -17,6 +17,8 @@ import '../documents/create_document_dialog.dart';
 import '../shared/primary_page_scroll_memory.dart';
 import '../shared/primary_page_view_state_memory.dart';
 import '../shared/primary_navigation_bar.dart';
+import '../shared/workspace_module_paths.dart';
+import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 
 class ExportsPage extends StatefulWidget {
@@ -710,44 +712,79 @@ class _ExportsPageState extends State<ExportsPage> {
     final hasReturnDocumentContext = widget.args?.documentSnapshot != null ||
         ((widget.args?.focusDocumentName ?? '').isNotEmpty);
     final showPrimaryNavigation = !hasReturnDocumentContext;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('导出记录'),
-        leading: hasReturnDocumentContext
-            ? BackButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(currentDocumentSnapshot),
-              )
-            : null,
-      ),
-      body: WorkspaceBackdrop(
-        child: SafeArea(
-          child: hasReturnDocumentContext
-              ? PopScope(
-                  canPop: false,
-                  onPopInvokedWithResult: (_, __) {
-                    if (!mounted) {
-                      return;
-                    }
-                    Navigator.of(context).pop(_currentDocumentSnapshot());
-                  },
-                  child: _buildPageBody(
-                    currentDocumentSnapshot: currentDocumentSnapshot,
-                    filteredJobs: filteredJobs,
-                  ),
-                )
-              : _buildPageBody(
-                  currentDocumentSnapshot: currentDocumentSnapshot,
-                  filteredJobs: filteredJobs,
-                ),
+    final pageBody = hasReturnDocumentContext
+        ? PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (_, __) {
+              if (!mounted) {
+                return;
+              }
+              Navigator.of(context).pop(_currentDocumentSnapshot());
+            },
+            child: _buildPageBody(
+              currentDocumentSnapshot: currentDocumentSnapshot,
+              filteredJobs: filteredJobs,
+            ),
+          )
+        : _buildPageBody(
+            currentDocumentSnapshot: currentDocumentSnapshot,
+            filteredJobs: filteredJobs,
+          );
+    if (!showPrimaryNavigation) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('导出记录'),
+          leading: BackButton(
+            onPressed: () => Navigator.of(context).pop(currentDocumentSnapshot),
+          ),
         ),
+        body: WorkspaceBackdrop(
+          child: SafeArea(
+            child: pageBody,
+          ),
+        ),
+      );
+    }
+    final activeTenant = AppServices.instance.activeTenant;
+    return Scaffold(
+      body: WorkspaceModuleShell(
+        currentModule: WorkspaceModule.exports,
+        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+        title: '导出',
+        subtitle: '围绕导出任务、结果回看、文档回跳与批量处理，组织统一的导出时间线工作台。',
+        searchHint: '搜索导出任务、文档名称、格式、状态或最近更新时间',
+        statusWidgets: [
+          WorkspaceInfoPill(
+            label: '数据模式',
+            value: AppConfig.dataModeLabel,
+          ),
+          WorkspaceInfoPill(
+            label: '当前场景',
+            value: activeTenant == null
+                ? '待选择机构'
+                : activeTenant.isPersonal
+                    ? '个人工作区'
+                    : '机构工作区',
+            highlight: activeTenant == null,
+          ),
+          WorkspaceInfoPill(
+            label: '当前机构',
+            value: activeTenant?.name ?? '未选择机构',
+            highlight: activeTenant == null,
+          ),
+        ],
+        trailing: IconButton.filledTonal(
+          onPressed: _openWorkspace,
+          tooltip: '返回工作台',
+          icon: const Icon(Icons.home_outlined),
+        ),
+        body: pageBody,
       ),
-      bottomNavigationBar:
-          MediaQuery.of(context).size.width < 900 && showPrimaryNavigation
-              ? const PrimaryNavigationBar(
-                  currentSection: PrimaryAppSection.exports,
-                )
-              : null,
+      bottomNavigationBar: MediaQuery.of(context).size.width < 900
+          ? const PrimaryNavigationBar(
+              currentSection: PrimaryAppSection.exports,
+            )
+          : null,
     );
   }
 
@@ -1532,8 +1569,7 @@ class _ExportsSelectionBar extends StatelessWidget {
             label: Text(compact ? '清空' : '清空选择'),
           ),
           WorkspaceFilterPill(
-            label:
-                showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
+            label: showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
             selected: showOnlySelected,
             onTap: selectedCount == 0
                 ? null
@@ -2222,9 +2258,7 @@ class _ExportsHeader extends StatelessWidget {
                   ? WorkspaceFilterPill(
                       label: showOnlyCurrentDocument
                           ? '只看当前文档'
-                          : (compact
-                              ? '当前文档'
-                              : '当前文档：${currentDocumentName!}'),
+                          : (compact ? '当前文档' : '当前文档：${currentDocumentName!}'),
                       selected: showOnlyCurrentDocument,
                       onTap: () => onShowOnlyCurrentDocumentChanged(
                         !showOnlyCurrentDocument,

@@ -989,3 +989,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 接入 `TenantSummary.kind = personal | organization`，为个人工作区 / 机构工作区展示切换做前端数据准备。
 - [x] Flutter: 新增共享桌面工作台壳层，补齐题库、文档管理、学生管理、班级管理、课堂管理、导出、个人中心、设置的左侧模块导航与顶部搜索状态条。
 - [x] Flutter: 新增学生、班级、课堂、设置四个首版概览页，并把首页接入新版桌面工作台壳层，形成与 stitch 原型一致的第一批信息架构。
+- [x] Flutter: 第二批把题库页与导出页的独立总览模式接入新版桌面工作台壳层，保留上下文返回链路不变，只迁移独立浏览态的左侧导航与顶部状态条。
