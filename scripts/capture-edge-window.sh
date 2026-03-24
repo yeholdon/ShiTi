@@ -20,6 +20,11 @@ window_left="${CAPTURE_WINDOW_LEFT:-160}"
 window_top="${CAPTURE_WINDOW_TOP:-96}"
 window_right="${CAPTURE_WINDOW_RIGHT:-1520}"
 window_bottom="${CAPTURE_WINDOW_BOTTOM:-1040}"
+maximize_window="${CAPTURE_WINDOW_MAXIMIZE:-0}"
+window_margin_left="${CAPTURE_WINDOW_MARGIN_LEFT:-0}"
+window_margin_top="${CAPTURE_WINDOW_MARGIN_TOP:-24}"
+window_margin_right="${CAPTURE_WINDOW_MARGIN_RIGHT:-0}"
+window_margin_bottom="${CAPTURE_WINDOW_MARGIN_BOTTOM:-0}"
 lock_dir="${CAPTURE_LOCK_DIR:-/tmp/shiti-edge-capture.lock}"
 
 mkdir -p "$(dirname "$output_path")"
@@ -55,10 +60,24 @@ fi
 
 window_payload="$(
   osascript <<APPLESCRIPT
+tell application "Finder"
+  set desktopBounds to bounds of window of desktop
+end tell
+
+set desktopLeft to item 1 of desktopBounds
+set desktopTop to item 2 of desktopBounds
+set desktopRight to item 3 of desktopBounds
+set desktopBottom to item 4 of desktopBounds
+set desktopWindowBounds to {desktopLeft + ${window_margin_left}, desktopTop + ${window_margin_top}, desktopRight - ${window_margin_right}, desktopBottom - ${window_margin_bottom}}
+
 tell application "Microsoft Edge"
   activate
   set targetWindow to make new window
-  set bounds of targetWindow to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
+  if "${maximize_window}" is "1" then
+    set bounds of targetWindow to desktopWindowBounds
+  else
+    set bounds of targetWindow to {${window_left}, ${window_top}, ${window_right}, ${window_bottom}}
+  end if
   set URL of active tab of targetWindow to "$normalized_url"
   set activeTabId to id of active tab of targetWindow
   repeat while (count of tabs of targetWindow) > 1
