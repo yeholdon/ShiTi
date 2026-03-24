@@ -58,7 +58,10 @@ class AppRouter {
   static const settings = '/settings';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
+    final routeUri = Uri.tryParse(settings.name ?? home);
+    final routePath = routeUri?.path.isNotEmpty == true ? routeUri!.path : home;
+
+    switch (routePath) {
       case exports:
         final args = settings.arguments as ExportsPageArgs?;
         return _workspaceModuleRoute(
@@ -101,9 +104,13 @@ class AppRouter {
         );
       case documentDetail:
         final args = settings.arguments as DocumentDetailArgs?;
+        final documentId =
+            routeUri?.queryParameters['documentId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['documentId']!.trim()
+                : 'doc-1';
         return MaterialPageRoute<void>(
           builder: (_) => DocumentDetailPage.fromArgs(
-            args ?? const DocumentDetailArgs(documentId: 'doc-1'),
+            args ?? DocumentDetailArgs(documentId: documentId),
           ),
           settings: settings,
         );
@@ -127,9 +134,13 @@ class AppRouter {
         );
       case studentDetail:
         final args = settings.arguments as StudentDetailArgs?;
+        final studentId =
+            routeUri?.queryParameters['studentId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['studentId']!.trim()
+                : 'student-1';
         return MaterialPageRoute<void>(
           builder: (_) => StudentDetailPage.fromArgs(
-            args ?? const StudentDetailArgs(studentId: 'student-1'),
+            args ?? StudentDetailArgs(studentId: studentId),
           ),
           settings: settings,
         );
@@ -141,9 +152,13 @@ class AppRouter {
         );
       case classDetail:
         final args = settings.arguments as ClassDetailArgs?;
+        final classId =
+            routeUri?.queryParameters['classId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['classId']!.trim()
+                : 'class-1';
         return MaterialPageRoute<void>(
           builder: (_) => ClassDetailPage.fromArgs(
-            args ?? const ClassDetailArgs(classId: 'class-1'),
+            args ?? ClassDetailArgs(classId: classId),
           ),
           settings: settings,
         );
@@ -155,9 +170,13 @@ class AppRouter {
         );
       case lessonDetail:
         final args = settings.arguments as LessonDetailArgs?;
+        final lessonId =
+            routeUri?.queryParameters['lessonId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['lessonId']!.trim()
+                : 'lesson-1';
         return MaterialPageRoute<void>(
           builder: (_) => LessonDetailPage.fromArgs(
-            args ?? const LessonDetailArgs(lessonId: 'lesson-1'),
+            args ?? LessonDetailArgs(lessonId: lessonId),
           ),
           settings: settings,
         );
@@ -168,9 +187,13 @@ class AppRouter {
         );
       case questionDetail:
         final args = settings.arguments as QuestionDetailArgs?;
+        final questionId =
+            routeUri?.queryParameters['questionId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['questionId']!.trim()
+                : 'q-1';
         return MaterialPageRoute<void>(
           builder: (_) => QuestionDetailPage.fromArgs(
-            args ?? const QuestionDetailArgs(questionId: 'q-1'),
+            args ?? QuestionDetailArgs(questionId: questionId),
           ),
           settings: settings,
         );
