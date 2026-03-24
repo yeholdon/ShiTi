@@ -350,6 +350,62 @@ class StudentDetailPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          '关联对象',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: TelegramPalette.textStrong,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.classDetail,
+                                  arguments: ClassDetailArgs(
+                                    classId: student.classId,
+                                    flashMessage:
+                                        '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.groups_outlined, size: 18),
+                              label: Text(student.className),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.lessonDetail,
+                                  arguments: LessonDetailArgs(
+                                    lessonId: student.lessonId,
+                                    flashMessage:
+                                        '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.schedule_outlined, size: 18),
+                              label: const Text('当前课堂'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.documentDetail,
+                                  arguments: DocumentDetailArgs(
+                                    documentId: student.documentId,
+                                  ),
+                                );
+                              },
+                              icon:
+                                  const Icon(Icons.description_outlined, size: 18),
+                              label: Text(student.documentName),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );

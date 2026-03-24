@@ -344,6 +344,62 @@ class ClassDetailPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          '关联对象',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: TelegramPalette.textStrong,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.studentDetail,
+                                  arguments: StudentDetailArgs(
+                                    studentId: classroom.focusStudentId,
+                                    flashMessage:
+                                        '已从 ${classroom.name} 的班级档案进入 ${classroom.focusStudentName}，可继续回看学生画像。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.school_outlined, size: 18),
+                              label: Text(classroom.focusStudentName),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.lessonDetail,
+                                  arguments: LessonDetailArgs(
+                                    lessonId: classroom.lessonId,
+                                    flashMessage:
+                                        '已从 ${classroom.name} 的班级档案进入 ${classroom.lessonFocusLabel}，可继续回看课堂资料与反馈。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.schedule_outlined, size: 18),
+                              label: Text(classroom.lessonFocusLabel),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.documentDetail,
+                                  arguments: DocumentDetailArgs(
+                                    documentId: classroom.documentId,
+                                  ),
+                                );
+                              },
+                              icon:
+                                  const Icon(Icons.description_outlined, size: 18),
+                              label: Text(classroom.latestDocLabel),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );

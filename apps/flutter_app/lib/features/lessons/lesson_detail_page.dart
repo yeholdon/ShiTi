@@ -345,6 +345,62 @@ class LessonDetailPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          '关联对象',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: TelegramPalette.textStrong,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.classDetail,
+                                  arguments: ClassDetailArgs(
+                                    classId: lesson.classId,
+                                    flashMessage:
+                                        '已从 ${lesson.title} 的课堂档案进入 ${lesson.classScopeLabel}，可继续回看班级安排。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.groups_outlined, size: 18),
+                              label: Text(lesson.classScopeLabel),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.studentDetail,
+                                  arguments: StudentDetailArgs(
+                                    studentId: lesson.focusStudentId,
+                                    flashMessage:
+                                        '已从 ${lesson.title} 的课堂档案进入 ${lesson.focusStudentName}，可继续回看学生反馈。',
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.school_outlined, size: 18),
+                              label: Text(lesson.focusStudentName),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  AppRouter.documentDetail,
+                                  arguments: DocumentDetailArgs(
+                                    documentId: lesson.documentId,
+                                  ),
+                                );
+                              },
+                              icon:
+                                  const Icon(Icons.description_outlined, size: 18),
+                              label: Text(lesson.documentFocus),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );
