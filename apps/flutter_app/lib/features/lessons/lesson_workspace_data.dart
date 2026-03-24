@@ -1,3 +1,15 @@
+class LessonFeedbackRecord {
+  const LessonFeedbackRecord({
+    required this.label,
+    required this.status,
+    required this.detail,
+  });
+
+  final String label;
+  final String status;
+  final String detail;
+}
+
 class LessonWorkspaceRecord {
   const LessonWorkspaceRecord({
     required this.id,
@@ -15,6 +27,7 @@ class LessonWorkspaceRecord {
     required this.feedbackStatus,
     required this.followUpLabel,
     required this.feedbackInsight,
+    required this.feedbackRecords,
     required this.summary,
     required this.highlights,
     required this.nextStep,
@@ -35,6 +48,7 @@ class LessonWorkspaceRecord {
   final String feedbackStatus;
   final String followUpLabel;
   final String feedbackInsight;
+  final List<LessonFeedbackRecord> feedbackRecords;
   final String summary;
   final List<String> highlights;
   final String nextStep;
@@ -57,6 +71,23 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
     feedbackStatus: '待回收',
     followUpLabel: '补讲义',
     feedbackInsight: '本节课后要重点回收压轴题口头讲解、错题订正和课堂参与反馈，方便回写学生画像。',
+    feedbackRecords: [
+      LessonFeedbackRecord(
+        label: '口头讲解回收',
+        status: '待回收',
+        detail: '需要回收 5 名重点学生的压轴题口头讲解录入。',
+      ),
+      LessonFeedbackRecord(
+        label: '错题订正',
+        status: '部分完成',
+        detail: '当前已收回一半订正稿，仍需补齐函数压轴题订正。',
+      ),
+      LessonFeedbackRecord(
+        label: '课堂参与',
+        status: '待整理',
+        detail: '课堂追问记录已在教师侧完成，待沉淀到学生画像。',
+      ),
+    ],
     summary: '这节课会先复盘周测卷，再补一页压轴题拆解讲义，课后需要回收错题与口头讲解反馈。',
     highlights: [
       '主资料是试卷 + 补充讲义，课堂结构更像复盘课。',
@@ -81,6 +112,23 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
     feedbackStatus: '已回收',
     followUpLabel: '短测跟进',
     feedbackInsight: '讲义反馈已收齐，下一轮重点是把课堂追问和课后短测结果重新沉淀到班级分层任务里。',
+    feedbackRecords: [
+      LessonFeedbackRecord(
+        label: '讲义反馈',
+        status: '已收齐',
+        detail: '课堂追问和板书提示反馈已经整理完成。',
+      ),
+      LessonFeedbackRecord(
+        label: '短测结果',
+        status: '待沉淀',
+        detail: '分层短测已完成，待回写到班级分层任务。',
+      ),
+      LessonFeedbackRecord(
+        label: '课堂追问',
+        status: '已整理',
+        detail: '高频卡点已提炼，可直接回流到下轮讲义。',
+      ),
+    ],
     summary: '本节以讲义推进为主，重点看例题拆解、课堂追问和课后短测之间的衔接。',
     highlights: [
       '讲义版式已经稳定，重点优化课堂追问节奏。',
@@ -105,6 +153,23 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
     feedbackStatus: '待回收',
     followUpLabel: '资料待排版',
     feedbackInsight: '这节课的反馈重点是图像信息提取、模型识别和讲义图示是否足够清晰，适合先跑课堂样例。',
+    feedbackRecords: [
+      LessonFeedbackRecord(
+        label: '图像题反馈',
+        status: '待回收',
+        detail: '需要重点确认学生对图像辨析段落的理解情况。',
+      ),
+      LessonFeedbackRecord(
+        label: '资料清晰度',
+        status: '待确认',
+        detail: '讲义图示还在排版，课堂后需确认图示是否足够清晰。',
+      ),
+      LessonFeedbackRecord(
+        label: '模型识别',
+        status: '样例跟进',
+        detail: '本节先跑样例课堂，验证反馈能否回流到个人工作区。',
+      ),
+    ],
     summary: '课堂重点是把模型图像和文字描述拆开讲，当前最需要把讲义中的示意图和板书节奏补完整。',
     highlights: [
       '当前资料还在排版阶段，课堂前需完成最终导出。',

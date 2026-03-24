@@ -278,6 +278,73 @@ class LessonDetailPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
+                              '反馈明细',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...lesson.feedbackRecords.map(
+                              (record) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: TelegramPalette.border,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              record.label,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: TelegramPalette.text,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              record.detail,
+                                              style: const TextStyle(
+                                                height: 1.5,
+                                                color: TelegramPalette.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      WorkspaceMetricPill(
+                                        label: '状态',
+                                        value: record.status,
+                                        highlight: record.status.contains('待'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
                               '后续动作',
                               style: TextStyle(
                                 fontSize: 22,
