@@ -240,6 +240,16 @@ class _HomePageState extends State<HomePage> {
         ),
     ];
 
+    final focusTitle = activeExports.isNotEmpty
+        ? activeExports.first.documentName
+        : lessons.isNotEmpty
+            ? lessons.first.title
+            : classes.isNotEmpty
+                ? classes.first.name
+                : students.isNotEmpty
+                    ? students.first.name
+                    : topDocument?.name ?? '开始新的讲义或试卷';
+
     return _WorkspaceSnapshot(
       cards: cards,
       tasks: tasks.isEmpty
@@ -250,7 +260,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ]
           : tasks.take(6).toList(),
-      focusTitle: topDocument?.name ?? '开始新的讲义或试卷',
+      focusTitle: focusTitle,
       focusBasketLabel: '$basketCount 题',
       focusDocumentLabel: '$documentCount 份',
       focusExportLabel: latestExport?.updatedAtLabel ?? '暂无导出',
