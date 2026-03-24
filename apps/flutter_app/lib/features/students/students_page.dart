@@ -39,6 +39,9 @@ class _StudentsPageState extends State<StudentsPage> {
   late _StudentFilter _filter;
   late String _selectedStudentId;
   late final TextEditingController _queryController;
+  late List<StudentWorkspaceRecord> _records;
+  bool _isLoading = !AppConfig.useMockData;
+  String? _loadError;
 
   bool get _hasContextualEntry => widget.args?.focusStudentId != null;
 
@@ -52,10 +55,14 @@ class _StudentsPageState extends State<StudentsPage> {
     _filter = !_hasContextualEntry && storedState != null
         ? _studentFilterFromLabel(storedState.filter)
         : _StudentFilter.all;
+    _records = sampleStudentRecords;
     _selectedStudentId = widget.args?.focusStudentId ??
         (!_hasContextualEntry && storedState != null
             ? storedState.selectedStudentId
             : sampleStudentRecords.first.id);
+    if (!AppConfig.useMockData) {
+      _loadStudents();
+    }
   }
 
   @override
@@ -74,7 +81,7 @@ class _StudentsPageState extends State<StudentsPage> {
 
   List<StudentWorkspaceRecord> _recordsForFilter(_StudentFilter filter) {
     final query = _queryController.text.trim().toLowerCase();
-    return sampleStudentRecords
+    return _records
         .where((student) => switch (filter) {
               _StudentFilter.all => true,
               _StudentFilter.risk => student.followUpLevel == '重点跟进',
@@ -90,6 +97,38 @@ class _StudentsPageState extends State<StudentsPage> {
               student.habitTag.toLowerCase().contains(query),
         )
         .toList(growable: false);
+  }
+
+  Future<void> _loadStudents() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final records = await AppServices.instance.studentRepository.listStudents();
+      if (!mounted) {
+        return;
+      }
+      final nextRecords = records.isNotEmpty ? records : <StudentWorkspaceRecord>[];
+      setState(() {
+        _records = nextRecords;
+        _isLoading = false;
+        _loadError = null;
+        if (_records.isNotEmpty &&
+            !_records.any((student) => student.id == _selectedStudentId)) {
+          _selectedStudentId = _records.first.id;
+        }
+        _rememberViewState();
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _loadError = error.toString();
+      });
+    }
   }
 
   void _openClass(StudentWorkspaceRecord student) {
@@ -156,12 +195,12 @@ class _StudentsPageState extends State<StudentsPage> {
             ? '个人工作区'
             : '机构工作区';
     final filteredRecords = _recordsForFilter(_filter);
-    final selectedRecord = filteredRecords.firstWhere(
-      (student) => student.id == _selectedStudentId,
-      orElse: () => filteredRecords.isNotEmpty
-          ? filteredRecords.first
-          : sampleStudentRecords.first,
-    );
+    final selectedRecord = filteredRecords.isNotEmpty
+        ? filteredRecords.firstWhere(
+            (student) => student.id == _selectedStudentId,
+            orElse: () => filteredRecords.first,
+          )
+        : (_records.isNotEmpty ? _records.first : null);
     final highlightTitle = widget.args?.highlightTitle;
     final highlightDetail = widget.args?.highlightDetail;
     final feedbackBadgeLabel = widget.args?.feedbackBadgeLabel;
@@ -199,15 +238,15 @@ class _StudentsPageState extends State<StudentsPage> {
                 padding: workspacePagePadding(context),
                 children: [
                   _StudentHeroSection(
-                    totalCount: sampleStudentRecords.length,
-                    riskCount: sampleStudentRecords
+                    totalCount: _records.length,
+                    riskCount: _records
                         .where((student) => student.followUpLevel == '重点跟进')
                         .length,
-                    linkedClassCount: sampleStudentRecords
+                    linkedClassCount: _records
                         .map((student) => student.className)
                         .toSet()
                         .length,
-                    trackedWrongCount: sampleStudentRecords.fold<int>(
+                    trackedWrongCount: _records.fold<int>(
                       0,
                       (sum, student) => sum + student.wrongCount,
                     ),
@@ -240,7 +279,9 @@ class _StudentsPageState extends State<StudentsPage> {
                               )) {
                                 _selectedStudentId = nextRecords.isNotEmpty
                                     ? nextRecords.first.id
-                                    : sampleStudentRecords.first.id;
+                                    : (_records.isNotEmpty
+                                        ? _records.first.id
+                                        : _selectedStudentId);
                               }
                               _rememberViewState();
                             });
@@ -265,7 +306,9 @@ class _StudentsPageState extends State<StudentsPage> {
                                       )) {
                                         _selectedStudentId = nextRecords.isNotEmpty
                                             ? nextRecords.first.id
-                                            : sampleStudentRecords.first.id;
+                                            : (_records.isNotEmpty
+                                                ? _records.first.id
+                                                : _selectedStudentId);
                                       }
                                       _rememberViewState();
                                     });
@@ -278,6 +321,34 @@ class _StudentsPageState extends State<StudentsPage> {
                       ],
                     ),
                   ),
+                  if (_isLoading) ...[
+                    const SizedBox(height: 18),
+                    const WorkspaceMessageBanner.info(
+                      title: '正在加载学生数据',
+                      message: '正在从当前机构读取学生档案、课堂反馈和错题跟进。',
+                    ),
+                  ] else if (_loadError != null) ...[
+                    const SizedBox(height: 18),
+                    WorkspacePanel(
+                      padding: workspacePanelPadding(context),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: WorkspaceMessageBanner.warning(
+                              title: '学生数据加载失败',
+                              message: '当前无法读取学生列表，请稍后重试。',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _loadStudents,
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('重试'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if ((widget.args?.flashMessage ?? '').isNotEmpty) ...[
                     const SizedBox(height: 18),
                     WorkspaceMessageBanner.info(
@@ -285,9 +356,10 @@ class _StudentsPageState extends State<StudentsPage> {
                       message: widget.args!.flashMessage!,
                     ),
                   ],
-                  if ((highlightTitle?.trim().isNotEmpty ?? false) ||
+                  if (selectedRecord != null &&
+                      ((highlightTitle?.trim().isNotEmpty ?? false) ||
                       (highlightDetail?.trim().isNotEmpty ?? false) ||
-                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false)) ...[
+                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false))) ...[
                     const SizedBox(height: 18),
                     WorkspacePanel(
                       padding: workspacePanelPadding(context),
@@ -374,56 +446,72 @@ class _StudentsPageState extends State<StudentsPage> {
                   ),
                   const SizedBox(height: 18),
                   if (showAside)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 7,
-                          child: _StudentRosterPanel(
-                            records: filteredRecords,
-                            selectedStudentId: selectedRecord.id,
-                            onOpenDetail: _openDetail,
-                            onSelect: (studentId) {
-                              setState(() {
-                                _selectedStudentId = studentId;
-                                _rememberViewState();
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 3,
-                          child: _StudentDetailRail(
-                            student: selectedRecord,
-                            onOpenDetail: () => _openDetail(selectedRecord),
-                            onOpenClass: () => _openClass(selectedRecord),
-                            onOpenLesson: () => _openLesson(selectedRecord),
-                            onOpenDocument: () => _openDocument(selectedRecord),
-                          ),
-                        ),
-                      ],
-                    )
+                    selectedRecord == null
+                        ? WorkspaceMessageBanner.warning(
+                            title: '当前没有学生数据',
+                            message: _isLoading
+                                ? '学生数据仍在加载中。'
+                                : '当前机构下还没有学生档案，请先新增学生或切换到有数据的机构。',
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 7,
+                                child: _StudentRosterPanel(
+                                  records: filteredRecords,
+                                  selectedStudentId: selectedRecord.id,
+                                  onOpenDetail: _openDetail,
+                                  onSelect: (studentId) {
+                                    setState(() {
+                                      _selectedStudentId = studentId;
+                                      _rememberViewState();
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 3,
+                                child: _StudentDetailRail(
+                                  student: selectedRecord,
+                                  onOpenDetail: () => _openDetail(selectedRecord),
+                                  onOpenClass: () => _openClass(selectedRecord),
+                                  onOpenLesson: () => _openLesson(selectedRecord),
+                                  onOpenDocument: () => _openDocument(selectedRecord),
+                                ),
+                              ),
+                            ],
+                          )
                   else ...[
-                    _StudentDetailRail(
-                      student: selectedRecord,
-                      onOpenDetail: () => _openDetail(selectedRecord),
-                      onOpenClass: () => _openClass(selectedRecord),
-                      onOpenLesson: () => _openLesson(selectedRecord),
-                      onOpenDocument: () => _openDocument(selectedRecord),
-                    ),
-                    const SizedBox(height: 16),
-                    _StudentRosterPanel(
-                      records: filteredRecords,
-                      selectedStudentId: selectedRecord.id,
-                      onOpenDetail: _openDetail,
-                      onSelect: (studentId) {
-                        setState(() {
-                          _selectedStudentId = studentId;
-                          _rememberViewState();
-                        });
-                      },
-                    ),
+                    if (selectedRecord == null)
+                      WorkspaceMessageBanner.warning(
+                        title: '当前没有学生数据',
+                        message: _isLoading
+                            ? '学生数据仍在加载中。'
+                            : '当前机构下还没有学生档案，请先新增学生或切换到有数据的机构。',
+                      )
+                    else ...[
+                      _StudentDetailRail(
+                        student: selectedRecord,
+                        onOpenDetail: () => _openDetail(selectedRecord),
+                        onOpenClass: () => _openClass(selectedRecord),
+                        onOpenLesson: () => _openLesson(selectedRecord),
+                        onOpenDocument: () => _openDocument(selectedRecord),
+                      ),
+                      const SizedBox(height: 16),
+                      _StudentRosterPanel(
+                        records: filteredRecords,
+                        selectedStudentId: selectedRecord.id,
+                        onOpenDetail: _openDetail,
+                        onSelect: (studentId) {
+                          setState(() {
+                            _selectedStudentId = studentId;
+                            _rememberViewState();
+                          });
+                        },
+                      ),
+                    ],
                   ],
                 ],
               ),

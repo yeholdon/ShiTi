@@ -10,6 +10,15 @@ class StudentScoreRecord {
   final int score;
   final int totalScore;
   final String insight;
+
+  factory StudentScoreRecord.fromJson(Map<String, dynamic> json) {
+    return StudentScoreRecord(
+      label: json['label'] as String? ?? '',
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      totalScore: (json['totalScore'] as num?)?.toInt() ?? 0,
+      insight: json['insight'] as String? ?? '',
+    );
+  }
 }
 
 class StudentWrongQuestionRecord {
@@ -22,6 +31,14 @@ class StudentWrongQuestionRecord {
   final String label;
   final String status;
   final String followUp;
+
+  factory StudentWrongQuestionRecord.fromJson(Map<String, dynamic> json) {
+    return StudentWrongQuestionRecord(
+      label: json['label'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      followUp: json['followUp'] as String? ?? '',
+    );
+  }
 }
 
 class StudentFeedbackRecord {
@@ -34,6 +51,14 @@ class StudentFeedbackRecord {
   final String label;
   final String status;
   final String detail;
+
+  factory StudentFeedbackRecord.fromJson(Map<String, dynamic> json) {
+    return StudentFeedbackRecord(
+      label: json['label'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      detail: json['detail'] as String? ?? '',
+    );
+  }
 }
 
 class StudentWorkspaceRecord {
@@ -88,6 +113,64 @@ class StudentWorkspaceRecord {
   final List<StudentWrongQuestionRecord> wrongQuestionRecords;
   final List<String> highlights;
   final String nextStep;
+
+  factory StudentWorkspaceRecord.fromJson(Map<String, dynamic> json) {
+    return StudentWorkspaceRecord(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      classId: json['classId'] as String? ?? '',
+      className: json['className'] as String? ?? '',
+      lessonId: json['lessonId'] as String? ?? '',
+      documentId: json['documentId'] as String? ?? '',
+      documentName: json['documentName'] as String? ?? '',
+      gradeLabel: json['gradeLabel'] as String? ?? '',
+      subjectLabel: json['subjectLabel'] as String? ?? '',
+      textbookLabel: json['textbookLabel'] as String? ?? '',
+      trendLabel: json['trendLabel'] as String? ?? '',
+      habitTag: json['habitTag'] as String? ?? '',
+      habitInsight: json['habitInsight'] as String? ?? '',
+      followUpLevel: json['followUpLevel'] as String? ?? '',
+      summary: json['summary'] as String? ?? '',
+      scoreLabel: json['scoreLabel'] as String? ?? '',
+      historyTrendLabel: json['historyTrendLabel'] as String? ?? '',
+      wrongCountLabel: json['wrongCountLabel'] as String? ?? '',
+      wrongCount: (json['wrongCount'] as num?)?.toInt() ?? 0,
+      scoreRecords: _decodeList(
+        json['scoreRecords'],
+        (item) => StudentScoreRecord.fromJson(item),
+      ),
+      feedbackRecords: _decodeList(
+        json['feedbackRecords'],
+        (item) => StudentFeedbackRecord.fromJson(item),
+      ),
+      wrongQuestionRecords: _decodeList(
+        json['wrongQuestionRecords'],
+        (item) => StudentWrongQuestionRecord.fromJson(item),
+      ),
+      highlights: _decodeStringList(json['highlights']),
+      nextStep: json['nextStep'] as String? ?? '',
+    );
+  }
+}
+
+List<T> _decodeList<T>(
+  Object? raw,
+  T Function(Map<String, dynamic>) mapper,
+) {
+  if (raw is! List) {
+    return List<T>.empty(growable: false);
+  }
+  return raw
+      .whereType<Map>()
+      .map((item) => mapper(Map<String, dynamic>.from(item)))
+      .toList(growable: false);
+}
+
+List<String> _decodeStringList(Object? raw) {
+  if (raw is! List) {
+    return const <String>[];
+  }
+  return raw.whereType<String>().toList(growable: false);
 }
 
 const List<StudentWorkspaceRecord> sampleStudentRecords = [
