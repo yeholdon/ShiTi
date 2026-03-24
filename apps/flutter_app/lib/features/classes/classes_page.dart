@@ -42,7 +42,9 @@ class _ClassesPageState extends State<ClassesPage> {
       AppRouter.students,
       (route) => false,
       arguments: StudentsPageArgs(
-        flashMessage: '已从 ${classroom.name} 进入学生页，可继续筛选重点跟进学生。',
+        focusStudentId: classroom.focusStudentId,
+        flashMessage:
+            '已定位到 ${classroom.focusStudentName}，可继续结合 ${classroom.name} 的节奏跟进学生画像。',
       ),
     );
   }
@@ -565,7 +567,7 @@ class _ClassDetailRail extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenStudents,
                 icon: const Icon(Icons.school_outlined, size: 18),
-                label: const Text('回看重点学生'),
+                label: Text('查看${classroom.focusStudentName}'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenLesson,
@@ -596,6 +598,8 @@ class _ClassRecord {
     required this.name,
     required this.lessonId,
     required this.documentId,
+    required this.focusStudentId,
+    required this.focusStudentName,
     required this.stageLabel,
     required this.teacherLabel,
     required this.textbookLabel,
@@ -616,6 +620,8 @@ class _ClassRecord {
   final String name;
   final String lessonId;
   final String documentId;
+  final String focusStudentId;
+  final String focusStudentName;
   final String stageLabel;
   final String teacherLabel;
   final String textbookLabel;
@@ -638,6 +644,8 @@ const List<_ClassRecord> _classRecords = [
     name: '九年级尖子班',
     lessonId: 'lesson-1',
     documentId: 'doc-2',
+    focusStudentId: 'student-1',
+    focusStudentName: '林之涵',
     stageLabel: '初中 · 冲刺组',
     teacherLabel: '主讲：陈老师',
     textbookLabel: '浙教版',
@@ -662,6 +670,8 @@ const List<_ClassRecord> _classRecords = [
     name: '九年级提高班',
     lessonId: 'lesson-2',
     documentId: 'doc-1',
+    focusStudentId: 'student-2',
+    focusStudentName: '徐若楠',
     stageLabel: '初中 · 提高组',
     teacherLabel: '主讲：沈老师',
     textbookLabel: '浙教版',
@@ -686,6 +696,8 @@ const List<_ClassRecord> _classRecords = [
     name: '高一物理培优班',
     lessonId: 'lesson-3',
     documentId: 'doc-1',
+    focusStudentId: 'student-3',
+    focusStudentName: '陈嘉言',
     stageLabel: '高中 · 培优组',
     teacherLabel: '主讲：周老师',
     textbookLabel: '人教版',

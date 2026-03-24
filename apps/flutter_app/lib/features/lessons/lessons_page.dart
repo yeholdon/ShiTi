@@ -53,7 +53,9 @@ class _LessonsPageState extends State<LessonsPage> {
       AppRouter.students,
       (route) => false,
       arguments: StudentsPageArgs(
-        flashMessage: '已从 ${lesson.title} 进入学生页，可继续回写课堂反馈。',
+        focusStudentId: lesson.focusStudentId,
+        flashMessage:
+            '已定位到 ${lesson.focusStudentName}，可继续把 ${lesson.title} 的课堂反馈回写到学生画像。',
       ),
     );
   }
@@ -568,7 +570,7 @@ class _LessonDetailRail extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenStudents,
                 icon: const Icon(Icons.school_outlined, size: 18),
-                label: const Text('回写学生反馈'),
+                label: Text('回看${lesson.focusStudentName}'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenDocument,
@@ -594,6 +596,8 @@ class _LessonRecord {
     required this.title,
     required this.classId,
     required this.className,
+    required this.focusStudentId,
+    required this.focusStudentName,
     required this.teacherLabel,
     required this.scheduleLabel,
     required this.scheduleTag,
@@ -612,6 +616,8 @@ class _LessonRecord {
   final String title;
   final String classId;
   final String className;
+  final String focusStudentId;
+  final String focusStudentName;
   final String teacherLabel;
   final String scheduleLabel;
   final String scheduleTag;
@@ -632,6 +638,8 @@ const List<_LessonRecord> _lessonRecords = [
     title: '二次函数专题复盘课',
     classId: 'class-1',
     className: '九年级尖子班',
+    focusStudentId: 'student-1',
+    focusStudentName: '林之涵',
     teacherLabel: '主讲：陈老师',
     scheduleLabel: '周三 19:00 - 20:30',
     scheduleTag: '本周进行',
@@ -654,6 +662,8 @@ const List<_LessonRecord> _lessonRecords = [
     title: '相似三角形讲义推进课',
     classId: 'class-2',
     className: '九年级提高班',
+    focusStudentId: 'student-2',
+    focusStudentName: '徐若楠',
     teacherLabel: '主讲：沈老师',
     scheduleLabel: '周四 18:30 - 20:00',
     scheduleTag: '本周进行',
@@ -676,6 +686,8 @@ const List<_LessonRecord> _lessonRecords = [
     title: '高一力学模型拆解课',
     classId: 'class-3',
     className: '高一物理培优班',
+    focusStudentId: 'student-3',
+    focusStudentName: '陈嘉言',
     teacherLabel: '主讲：周老师',
     scheduleLabel: '下周一 19:30 - 21:00',
     scheduleTag: '待准备',
