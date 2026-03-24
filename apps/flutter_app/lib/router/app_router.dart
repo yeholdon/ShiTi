@@ -7,6 +7,7 @@ import '../core/models/documents_page_args.dart';
 import '../core/models/export_detail_args.dart';
 import '../core/models/export_job_summary.dart';
 import '../core/models/exports_page_args.dart';
+import '../core/models/lesson_detail_args.dart';
 import '../core/models/library_page_args.dart';
 import '../core/models/lessons_page_args.dart';
 import '../core/models/question_basket_page_args.dart';
@@ -25,6 +26,7 @@ import '../features/classes/class_detail_page.dart';
 import '../features/home/home_page.dart';
 import '../features/library/library_page.dart';
 import '../features/library/question_detail_page.dart';
+import '../features/lessons/lesson_detail_page.dart';
 import '../features/lessons/lessons_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/students/student_detail_page.dart';
@@ -52,6 +54,7 @@ class AppRouter {
   static const classes = '/classes';
   static const classDetail = '/classes/detail';
   static const lessons = '/lessons';
+  static const lessonDetail = '/lessons/detail';
   static const settings = '/settings';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -148,6 +151,14 @@ class AppRouter {
         final args = settings.arguments as LessonsPageArgs?;
         return MaterialPageRoute<void>(
           builder: (_) => LessonsPage(args: args),
+          settings: settings,
+        );
+      case lessonDetail:
+        final args = settings.arguments as LessonDetailArgs?;
+        return MaterialPageRoute<void>(
+          builder: (_) => LessonDetailPage.fromArgs(
+            args ?? const LessonDetailArgs(lessonId: 'lesson-1'),
+          ),
           settings: settings,
         );
       case AppRouter.settings:
