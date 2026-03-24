@@ -157,8 +157,37 @@ class AppRouter {
         );
       case students:
         final args = settings.arguments as StudentsPageArgs?;
+        final focusStudentId =
+            routeUri?.queryParameters['focusStudentId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['focusStudentId']!.trim()
+                : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel =
+            routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
-          builder: (_) => StudentsPage(args: args),
+          builder: (_) => StudentsPage(
+            args: args ??
+                StudentsPageArgs(
+                  focusStudentId: focusStudentId,
+                  flashMessage: flashMessage,
+                  highlightTitle: highlightTitle,
+                  highlightDetail: highlightDetail,
+                  feedbackBadgeLabel: feedbackBadgeLabel,
+                ),
+          ),
           settings: settings,
         );
       case studentDetail:
@@ -175,8 +204,37 @@ class AppRouter {
         );
       case classes:
         final args = settings.arguments as ClassesPageArgs?;
+        final focusClassId =
+            routeUri?.queryParameters['focusClassId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['focusClassId']!.trim()
+                : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel =
+            routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
-          builder: (_) => ClassesPage(args: args),
+          builder: (_) => ClassesPage(
+            args: args ??
+                ClassesPageArgs(
+                  focusClassId: focusClassId,
+                  flashMessage: flashMessage,
+                  highlightTitle: highlightTitle,
+                  highlightDetail: highlightDetail,
+                  feedbackBadgeLabel: feedbackBadgeLabel,
+                ),
+          ),
           settings: settings,
         );
       case classDetail:
@@ -193,8 +251,37 @@ class AppRouter {
         );
       case lessons:
         final args = settings.arguments as LessonsPageArgs?;
+        final focusLessonId =
+            routeUri?.queryParameters['focusLessonId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['focusLessonId']!.trim()
+                : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel =
+            routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
-          builder: (_) => LessonsPage(args: args),
+          builder: (_) => LessonsPage(
+            args: args ??
+                LessonsPageArgs(
+                  focusLessonId: focusLessonId,
+                  flashMessage: flashMessage,
+                  highlightTitle: highlightTitle,
+                  highlightDetail: highlightDetail,
+                  feedbackBadgeLabel: feedbackBadgeLabel,
+                ),
+          ),
           settings: settings,
         );
       case lessonDetail:
