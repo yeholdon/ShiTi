@@ -6,6 +6,9 @@ import '../../core/models/document_summary.dart';
 import '../../core/models/exports_page_args.dart';
 import '../../core/models/library_filter_state.dart';
 import '../../core/models/question_summary.dart';
+import '../../core/models/classes_page_args.dart';
+import '../../core/models/lessons_page_args.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
@@ -208,6 +211,27 @@ class _HomePageState extends State<HomePage> {
           action: _TaskAction.document,
           document: topDocument,
         ),
+      if (lessons.isNotEmpty)
+        _TaskData(
+          title: lessons.first.title,
+          detail: '${lessons.first.className} · ${lessons.first.scheduleLabel}',
+          action: _TaskAction.lesson,
+          recordId: lessons.first.id,
+        ),
+      if (classes.isNotEmpty)
+        _TaskData(
+          title: classes.first.name,
+          detail: '${classes.first.studentCount} 人 · ${classes.first.lessonFocusLabel}',
+          action: _TaskAction.classroom,
+          recordId: classes.first.id,
+        ),
+      if (students.isNotEmpty)
+        _TaskData(
+          title: students.first.name,
+          detail: '${students.first.className} · ${students.first.trendLabel}',
+          action: _TaskAction.student,
+          recordId: students.first.id,
+        ),
       if (basketCount > 0)
         _TaskData(
           title: '当前选题篮',
@@ -363,6 +387,36 @@ class _HomePageState extends State<HomePage> {
       case _TaskAction.basket:
         await Navigator.of(context).pushNamed(AppRouter.basket);
         break;
+      case _TaskAction.student:
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.students,
+          (route) => false,
+          arguments: StudentsPageArgs(
+            focusStudentId: task.recordId,
+            flashMessage: '已从工作台定位到当前学生，可继续查看学生画像。',
+          ),
+        );
+        return;
+      case _TaskAction.classroom:
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.classes,
+          (route) => false,
+          arguments: ClassesPageArgs(
+            focusClassId: task.recordId,
+            flashMessage: '已从工作台定位到当前班级，可继续查看班级结构。',
+          ),
+        );
+        return;
+      case _TaskAction.lesson:
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.lessons,
+          (route) => false,
+          arguments: LessonsPageArgs(
+            focusLessonId: task.recordId,
+            flashMessage: '已从工作台定位到当前课堂，可继续查看课堂资料与反馈。',
+          ),
+        );
+        return;
       case _TaskAction.none:
         return;
     }
@@ -791,8 +845,14 @@ class _HomePageState extends State<HomePage> {
         return 1;
       case _TaskAction.basket:
         return 2;
-      case _TaskAction.none:
+      case _TaskAction.student:
         return 3;
+      case _TaskAction.classroom:
+        return 4;
+      case _TaskAction.lesson:
+        return 5;
+      case _TaskAction.none:
+        return 6;
     }
   }
 }
@@ -2178,13 +2238,19 @@ enum _TaskAction {
   document,
   exports,
   basket,
+  student,
+  classroom,
+  lesson,
 }
 
 enum _RecentTaskFilter {
   all('全部'),
   document('文档'),
   exports('导出'),
-  basket('选题篮');
+  basket('选题篮'),
+  student('学生'),
+  classroom('班级'),
+  lesson('课堂');
 
   const _RecentTaskFilter(this.label);
 
@@ -2200,6 +2266,12 @@ enum _RecentTaskFilter {
         return _TaskAction.exports;
       case _RecentTaskFilter.basket:
         return _TaskAction.basket;
+      case _RecentTaskFilter.student:
+        return _TaskAction.student;
+      case _RecentTaskFilter.classroom:
+        return _TaskAction.classroom;
+      case _RecentTaskFilter.lesson:
+        return _TaskAction.lesson;
     }
   }
 }
@@ -2276,6 +2348,7 @@ class _TaskData {
     this.action = _TaskAction.none,
     this.document,
     this.focusJobId,
+    this.recordId,
   });
 
   final String title;
@@ -2283,6 +2356,7 @@ class _TaskData {
   final _TaskAction action;
   final DocumentSummary? document;
   final String? focusJobId;
+  final String? recordId;
 }
 
 class _WorkspaceSnapshot {
