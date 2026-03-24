@@ -1040,3 +1040,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页工作台摘要已接入真实学生、班级、课堂数量与重点对象，非 mock 模式下不再只展示题库/文档/导出三块规模卡。
 - [x] Flutter: 首页“最近任务”已接入真实学生、班级、课堂对象，非 mock 模式下可直接从工作台跳到真实学生/班级/课堂上下文。
 - [x] Flutter: 首页“当前聚焦”已扩展到真实学生、班级、课堂对象，非 mock 模式下可直接从工作台聚焦栏跳入这三类真实上下文。
+- [x] Tooling: 新增 `scripts/capture-live-workspace-audit.sh`，可通过 `auth_bridge.html` 一次性产出首页、学生/班级/课堂详情、文档详情和课堂资料文档页的 live 整页验收图。
