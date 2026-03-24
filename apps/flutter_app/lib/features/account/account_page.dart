@@ -7,6 +7,8 @@ import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 import '../shared/primary_navigation_bar.dart';
 import '../shared/primary_page_scroll_memory.dart';
+import '../shared/workspace_module_paths.dart';
+import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 
 class AccountPage extends StatefulWidget {
@@ -230,229 +232,248 @@ class _AccountPageState extends State<AccountPage> {
     final activeTenant = AppServices.instance.activeTenant;
     final canManageTenantMembers = (activeTenant?.role ?? '') == 'owner' ||
         (activeTenant?.role ?? '') == 'admin';
+    final tenantScope = activeTenant == null
+        ? '未选择机构'
+        : activeTenant.isPersonal
+            ? '个人工作区'
+            : '机构工作区';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('我的')),
-      body: WorkspaceBackdrop(
-        child: SafeArea(
-          child: workspaceConstrainedContent(
-            context,
-            child: ListView(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(
-                pagePadding.left,
-                16,
-                pagePadding.right,
-                pagePadding.bottom,
+      body: WorkspaceModuleShell(
+        currentModule: WorkspaceModule.account,
+        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+        title: '个人中心',
+        subtitle: '确认当前账号、机构与安全状态，并决定下一步回到哪条工作链继续推进。',
+        searchHint: '搜索账号状态、机构上下文、成员权限或安全设置',
+        statusWidgets: [
+          WorkspaceInfoPill(label: '数据模式', value: AppConfig.dataModeLabel),
+          WorkspaceInfoPill(label: '当前场景', value: tenantScope),
+          WorkspaceInfoPill(
+            label: '当前机构',
+            value: activeTenant?.name ?? '未选择机构',
+            highlight: activeTenant == null,
+          ),
+        ],
+        trailing: FilledButton.tonalIcon(
+          onPressed: () {
+            Navigator.of(context).pushNamed(AppRouter.tenantSwitch);
+          },
+          icon: const Icon(Icons.swap_horiz_outlined),
+          label: Text(activeTenant == null ? '选择机构' : '切换机构'),
+        ),
+        body: workspaceConstrainedContent(
+          context,
+          child: ListView(
+            controller: _scrollController,
+            padding: EdgeInsets.fromLTRB(
+              pagePadding.left,
+              18,
+              pagePadding.right,
+              pagePadding.bottom,
+            ),
+            children: [
+              _AccountHeroSection(
+                modeLabel: AppConfig.dataModeLabel,
+                username: session?.username,
+                tenantName: activeTenant?.name,
+                tenantRole: activeTenant?.role,
               ),
-              children: [
-                _AccountHeroSection(
-                  modeLabel: AppConfig.dataModeLabel,
-                  username: session?.username,
-                  tenantName: activeTenant?.name,
-                  tenantRole: activeTenant?.role,
-                ),
-                const SizedBox(height: 18),
-                WorkspacePanel(
-                  padding: workspacePagePadding(context),
-                  borderRadius: 28,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const WorkspaceEyebrow(
-                        label: '账号中心',
-                        icon: Icons.person_outline,
+              const SizedBox(height: 18),
+              WorkspacePanel(
+                padding: workspacePagePadding(context),
+                borderRadius: 28,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const WorkspaceEyebrow(
+                      label: '账号中心',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      '确认当前账号、当前机构，以及接下来回哪里继续。',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '这里用来确认当前是谁、正在哪个机构，以及是否需要切换账号或切换机构。',
+                      style: TextStyle(
+                        height: 1.5,
+                        color: TelegramPalette.textMuted,
+                      ),
+                    ),
+                    if (_errorMessage != null) ...[
                       const SizedBox(height: 14),
-                      const Text(
-                        '确认当前账号、当前机构，以及接下来回哪里继续。',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: TelegramPalette.errorSurface,
+                          borderRadius: BorderRadius.circular(16),
+                          border:
+                              Border.all(color: TelegramPalette.errorBorder),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '这里用来确认当前是谁、正在哪个机构，以及是否需要切换账号或切换机构。',
-                        style: TextStyle(
-                          height: 1.5,
-                          color: TelegramPalette.textMuted,
-                        ),
-                      ),
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 14),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: TelegramPalette.errorSurface,
-                            borderRadius: BorderRadius.circular(16),
-                            border:
-                                Border.all(color: TelegramPalette.errorBorder),
-                          ),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: TelegramPalette.errorText,
-                              height: 1.4,
-                            ),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: TelegramPalette.errorText,
+                            height: 1.4,
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 18),
-                      if (!wideDesktop) ...[
-                        _AccountInfoCard(
-                          title: '当前账号',
-                          icon: Icons.badge_outlined,
-                          emptyMessage: '当前还没有登录会话。先登录，再选择机构。',
-                          items: [
-                            if (session != null) ('用户名', session.username),
-                            if (session != null) ('访问级别', session.accessLevel),
-                            if (session != null) ('令牌预览', session.tokenPreview),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _AccountInfoCard(
-                          title: '当前机构',
-                          icon: Icons.apartment_outlined,
-                          emptyMessage: '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
-                          items: [
-                            if (activeTenant != null) ('机构名称', activeTenant.name),
-                            if (activeTenant != null) ('机构代码', activeTenant.code),
-                            if (activeTenant != null) ('当前角色', activeTenant.role),
-                          ],
-                        ),
-                      ] else
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _AccountInfoCard(
-                                title: '当前账号',
-                                icon: Icons.badge_outlined,
-                                emptyMessage: '当前还没有登录会话。先登录，再选择机构。',
-                                items: [
-                                  if (session != null) ('用户名', session.username),
-                                  if (session != null)
-                                    ('访问级别', session.accessLevel),
-                                  if (session != null)
-                                    ('令牌预览', session.tokenPreview),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: _AccountInfoCard(
-                                title: '当前机构',
-                                icon: Icons.apartment_outlined,
-                                emptyMessage:
-                                    '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
-                                items: [
-                                  if (activeTenant != null)
-                                    ('机构名称', activeTenant.name),
-                                  if (activeTenant != null)
-                                    ('机构代码', activeTenant.code),
-                                  if (activeTenant != null)
-                                    ('当前角色', activeTenant.role),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 14),
-                      _AccountSecurityCard(
-                        hasSession: session != null,
-                        onChangePassword:
-                            session == null ? null : _showChangePasswordDialog,
-                        onGoToLogin: () {
-                          Navigator.of(context).pushNamed(AppRouter.login);
-                        },
-                      ),
-                      const SizedBox(height: 18),
-                      Wrap(
-                        spacing: compact ? 8 : 12,
-                        runSpacing: compact ? 8 : 12,
-                        children: [
-                          FilledButton.tonalIcon(
-                            onPressed: () {
-                              Navigator.of(context).pushNamed(AppRouter.login);
-                            },
-                            icon: Icon(
-                              session == null
-                                  ? Icons.login
-                                  : Icons.manage_accounts_outlined,
-                            ),
-                            label: Text(
-                              session == null
-                                  ? '去登录'
-                                  : (compact ? '账号会话' : '账号与会话'),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: () {
-                              Navigator.of(context)
-                                  .pushNamed(AppRouter.tenantSwitch);
-                            },
-                            icon: const Icon(Icons.swap_horiz_outlined),
-                            label: Text(
-                              activeTenant == null
-                                  ? '选择机构'
-                                  : (compact ? '机构' : '切换机构'),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: () {
-                              PrimaryNavigationBar.navigateToSection(
-                                context,
-                                PrimaryAppSection.home,
-                              );
-                            },
-                            icon: const Icon(Icons.home_outlined),
-                            label: Text(compact ? '工作台' : '返回工作台'),
-                          ),
-                          if (canManageTenantMembers)
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).pushNamed(
-                                  AppRouter.tenantMembers,
-                                );
-                              },
-                              icon: const Icon(Icons.group_outlined),
-                              label: Text(compact ? '成员权限' : '成员与权限'),
-                            ),
-                          if (session != null)
-                            OutlinedButton.icon(
-                              onPressed: _loggingOut ? null : _logout,
-                              icon: _loggingOut
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    )
-                                  : const Icon(Icons.logout),
-                              label: Text(
-                                _loggingOut
-                                    ? '退出中...'
-                                    : (compact ? '退出' : '退出登录'),
-                              ),
-                            ),
-                        ],
                       ),
                     ],
-                  ),
+                    const SizedBox(height: 18),
+                    if (!wideDesktop) ...[
+                      _AccountInfoCard(
+                        title: '当前账号',
+                        icon: Icons.badge_outlined,
+                        emptyMessage: '当前还没有登录会话。先登录，再选择机构。',
+                        items: [
+                          if (session != null) ('用户名', session.username),
+                          if (session != null) ('访问级别', session.accessLevel),
+                          if (session != null) ('令牌预览', session.tokenPreview),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      _AccountInfoCard(
+                        title: '当前机构',
+                        icon: Icons.apartment_outlined,
+                        emptyMessage: '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
+                        items: [
+                          if (activeTenant != null) ('机构名称', activeTenant.name),
+                          if (activeTenant != null) ('机构代码', activeTenant.code),
+                          if (activeTenant != null) ('当前角色', activeTenant.role),
+                        ],
+                      ),
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _AccountInfoCard(
+                              title: '当前账号',
+                              icon: Icons.badge_outlined,
+                              emptyMessage: '当前还没有登录会话。先登录，再选择机构。',
+                              items: [
+                                if (session != null) ('用户名', session.username),
+                                if (session != null)
+                                  ('访问级别', session.accessLevel),
+                                if (session != null)
+                                  ('令牌预览', session.tokenPreview),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _AccountInfoCard(
+                              title: '当前机构',
+                              icon: Icons.apartment_outlined,
+                              emptyMessage:
+                                  '当前还没有选择机构。先解析或创建机构，再进入题库和文档。',
+                              items: [
+                                if (activeTenant != null)
+                                  ('机构名称', activeTenant.name),
+                                if (activeTenant != null)
+                                  ('机构代码', activeTenant.code),
+                                if (activeTenant != null)
+                                  ('当前角色', activeTenant.role),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 14),
+                    _AccountSecurityCard(
+                      hasSession: session != null,
+                      onChangePassword:
+                          session == null ? null : _showChangePasswordDialog,
+                      onGoToLogin: () {
+                        Navigator.of(context).pushNamed(AppRouter.login);
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: compact ? 8 : 12,
+                      runSpacing: compact ? 8 : 12,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(AppRouter.login);
+                          },
+                          icon: Icon(
+                            session == null
+                                ? Icons.login
+                                : Icons.manage_accounts_outlined,
+                          ),
+                          label: Text(
+                            session == null
+                                ? '去登录'
+                                : (compact ? '账号会话' : '账号与会话'),
+                          ),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            Navigator.of(context)
+                                .pushNamed(AppRouter.tenantSwitch);
+                          },
+                          icon: const Icon(Icons.swap_horiz_outlined),
+                          label: Text(
+                            activeTenant == null
+                                ? '选择机构'
+                                : (compact ? '机构' : '切换机构'),
+                          ),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            PrimaryNavigationBar.navigateToSection(
+                              context,
+                              PrimaryAppSection.home,
+                            );
+                          },
+                          icon: const Icon(Icons.home_outlined),
+                          label: Text(compact ? '工作台' : '返回工作台'),
+                        ),
+                        if (canManageTenantMembers)
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pushNamed(
+                                AppRouter.tenantMembers,
+                              );
+                            },
+                            icon: const Icon(Icons.group_outlined),
+                            label: Text(compact ? '成员权限' : '成员与权限'),
+                          ),
+                        if (session != null)
+                          OutlinedButton.icon(
+                            onPressed: _loggingOut ? null : _logout,
+                            icon: _loggingOut
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.logout),
+                            label: Text(
+                              _loggingOut
+                                  ? '退出中...'
+                                  : (compact ? '退出' : '退出登录'),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-      bottomNavigationBar: MediaQuery.of(context).size.width < 900
-          ? const PrimaryNavigationBar(
-              currentSection: PrimaryAppSection.account,
-            )
-          : null,
     );
   }
 }
