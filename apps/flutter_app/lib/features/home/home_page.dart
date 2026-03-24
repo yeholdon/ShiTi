@@ -1016,18 +1016,17 @@ class _WorkspaceContextStrip extends StatelessWidget {
           workspacePanelPadding(context, mobile: 14, tablet: 16, desktop: 14),
       child: desktopWide
           ? Row(
-              children: entries
-                  .map(
-                    (entry) => Expanded(
-                      child: _ContextInlineItem(
-                        label: entry.$1,
-                        value: entry.$2,
-                      ),
+              children: [
+                for (var index = 0; index < entries.length; index++) ...[
+                  Expanded(
+                    child: _ContextInlineItem(
+                      label: entries[index].$1,
+                      value: entries[index].$2,
                     ),
-                  )
-                  .expand((widget) => [widget, const SizedBox(width: 14)])
-                  .toList(growable: false)
-                ..removeLast(),
+                  ),
+                  if (index != entries.length - 1) const SizedBox(width: 14),
+                ],
+              ],
             )
           : Wrap(
               spacing: compact ? 8 : 12,
