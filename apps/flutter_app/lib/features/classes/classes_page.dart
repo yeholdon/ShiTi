@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
@@ -132,6 +133,38 @@ class _ClassesPageState extends State<ClassesPage> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 18),
+                  const WorkspaceFlowPanel(
+                    currentModule: WorkspaceModule.classes,
+                    title: '联动工作流',
+                    subtitle: '班级是学生、课堂和资料之间的组织层，通常要在这三块之间来回切换。',
+                    actions: [
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.students,
+                        icon: Icons.school_outlined,
+                        label: '回看学生画像',
+                        description: '根据班级分层结果，继续查看重点学生的成绩、错题和习惯。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.lessons,
+                        icon: Icons.schedule_outlined,
+                        label: '安排课堂节奏',
+                        description: '把班级当前资料和教学目标，继续推进到课堂时间线里。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.documents,
+                        icon: Icons.description_outlined,
+                        label: '整理讲义试卷',
+                        description: '回到文档页继续整理这批班级当前使用的讲义与试卷。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.classes,
+                        icon: Icons.view_list_outlined,
+                        label: '当前仍在班级页',
+                        description: '先整理班级规模、教材与课堂焦点，再继续切到其他模块。',
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 18),
                   if (showAside)

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
@@ -138,6 +139,38 @@ class _StudentsPageState extends State<StudentsPage> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 18),
+                  const WorkspaceFlowPanel(
+                    currentModule: WorkspaceModule.students,
+                    title: '联动工作流',
+                    subtitle: '学生画像不是孤立名册，下一步通常要回到班级、课堂和文档资料里继续推进。',
+                    actions: [
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.classes,
+                        icon: Icons.groups_outlined,
+                        label: '查看关联班级',
+                        description: '回到班级管理，确认班级规模、教材版本和当前课堂节奏。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.lessons,
+                        icon: Icons.schedule_outlined,
+                        label: '回看课堂反馈',
+                        description: '把本次课堂表现和课后反馈重新挂回学生画像。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.documents,
+                        icon: Icons.description_outlined,
+                        label: '整理文档资料',
+                        description: '继续调整讲义或试卷，让学生跟进任务真正落到资料里。',
+                      ),
+                      WorkspaceFlowAction(
+                        module: WorkspaceModule.students,
+                        icon: Icons.person_search_outlined,
+                        label: '当前仍在学生页',
+                        description: '先筛出重点跟进学生，再决定回流到班级、课堂或文档。',
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 18),
                   if (showAside)
