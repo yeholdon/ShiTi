@@ -1,3 +1,17 @@
+class StudentScoreRecord {
+  const StudentScoreRecord({
+    required this.label,
+    required this.score,
+    required this.totalScore,
+    required this.insight,
+  });
+
+  final String label;
+  final int score;
+  final int totalScore;
+  final String insight;
+}
+
 class StudentWorkspaceRecord {
   const StudentWorkspaceRecord({
     required this.id,
@@ -19,6 +33,7 @@ class StudentWorkspaceRecord {
     required this.historyTrendLabel,
     required this.wrongCountLabel,
     required this.wrongCount,
+    required this.scoreRecords,
     required this.highlights,
     required this.nextStep,
   });
@@ -42,6 +57,7 @@ class StudentWorkspaceRecord {
   final String historyTrendLabel;
   final String wrongCountLabel;
   final int wrongCount;
+  final List<StudentScoreRecord> scoreRecords;
   final List<String> highlights;
   final String nextStep;
 }
@@ -67,6 +83,26 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
     historyTrendLabel: '86 → 89 → 92',
     wrongCountLabel: '6 道',
     wrongCount: 6,
+    scoreRecords: [
+      StudentScoreRecord(
+        label: '函数专题周测',
+        score: 86,
+        totalScore: 100,
+        insight: '二次函数图像题失分较多，综合压轴题表达偏保守。',
+      ),
+      StudentScoreRecord(
+        label: '相似综合复盘',
+        score: 89,
+        totalScore: 100,
+        insight: '证明题结构更稳定，但开放题表达还可以再展开。',
+      ),
+      StudentScoreRecord(
+        label: '二次函数压轴卷',
+        score: 92,
+        totalScore: 100,
+        insight: '压轴题拆解明显进步，课堂讲解后复盘效果较好。',
+      ),
+    ],
     highlights: [
       '相似三角形与二次函数综合题开始具备完整表达。',
       '课堂互动积极，课后讲义订正完成度高。',
@@ -94,6 +130,26 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
     historyTrendLabel: '78 → 69 → 71',
     wrongCountLabel: '14 道',
     wrongCount: 14,
+    scoreRecords: [
+      StudentScoreRecord(
+        label: '函数图像小测',
+        score: 78,
+        totalScore: 100,
+        insight: '基础代入题稳定，但表格与图像联动题停顿不足。',
+      ),
+      StudentScoreRecord(
+        label: '讲义复盘测',
+        score: 69,
+        totalScore: 100,
+        insight: '审题过快导致条件漏看，证明链条中断明显。',
+      ),
+      StudentScoreRecord(
+        label: '课堂追问短测',
+        score: 71,
+        totalScore: 100,
+        insight: '分步作答开始改善，但图像信息提取仍需专项跟进。',
+      ),
+    ],
     highlights: [
       '函数图像题和表格信息题错误集中。',
       '错题订正完成，但口头复述仍不稳定。',
@@ -121,6 +177,26 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
     historyTrendLabel: '81 → 83 → 84',
     wrongCountLabel: '9 道',
     wrongCount: 9,
+    scoreRecords: [
+      StudentScoreRecord(
+        label: '力学模型起始测',
+        score: 81,
+        totalScore: 100,
+        insight: '受力分析稳定，但图像信息转化速度偏慢。',
+      ),
+      StudentScoreRecord(
+        label: '图像辨析短练',
+        score: 83,
+        totalScore: 100,
+        insight: '图像题识别提升，讲义边注回看开始产生效果。',
+      ),
+      StudentScoreRecord(
+        label: '课堂反馈复盘',
+        score: 84,
+        totalScore: 100,
+        insight: '课堂反馈和错题回看已形成闭环，适合继续稳定推进。',
+      ),
+    ],
     highlights: [
       '习惯在课后回看错题与讲义边注。',
       '需要强化图像信息提取和物理量转化。',

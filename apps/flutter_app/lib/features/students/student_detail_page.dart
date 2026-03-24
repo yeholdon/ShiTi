@@ -249,6 +249,74 @@ class StudentDetailPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
+                              '成绩记录',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...student.scoreRecords.map(
+                              (record) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: TelegramPalette.border,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              record.label,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: TelegramPalette.text,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              record.insight,
+                                              style: const TextStyle(
+                                                height: 1.5,
+                                                color: TelegramPalette.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      WorkspaceMetricPill(
+                                        label: '得分',
+                                        value:
+                                            '${record.score} / ${record.totalScore}',
+                                        highlight: record.score >= 90,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
                               '学习习惯与跟进重点',
                               style: TextStyle(
                                 fontSize: 22,
