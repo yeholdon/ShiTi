@@ -11,10 +11,7 @@ url="$1"
 output_path="$2"
 edge_executable="${EDGE_EXECUTABLE:-/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge}"
 post_load_delay_ms="${CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS:-2500}"
-window_margin_left="${CAPTURE_WINDOW_MARGIN_LEFT:-0}"
-window_margin_top="${CAPTURE_WINDOW_MARGIN_TOP:-24}"
-window_margin_right="${CAPTURE_WINDOW_MARGIN_RIGHT:-0}"
-window_margin_bottom="${CAPTURE_WINDOW_MARGIN_BOTTOM:-0}"
+max_blank_retries="${CAPTURE_FULLPAGE_BLANK_RETRIES:-4}"
 tmp_profile_dir="$(mktemp -d /tmp/shiti-edge-fullpage-profile.XXXXXX)"
 debug_port="$(
   python3 - <<'PY'
@@ -37,6 +34,44 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$(dirname "$output_path")"
+
+proxyless_env=(
+  env
+  -u http_proxy
+  -u https_proxy
+  -u HTTP_PROXY
+  -u HTTPS_PROXY
+  -u all_proxy
+  -u ALL_PROXY
+)
+
+capture_is_blank() {
+  local image_path="$1"
+  python3 - "$image_path" <<'PY'
+from PIL import Image
+import sys
+
+image_path = sys.argv[1]
+image = Image.open(image_path).convert("RGB")
+samples_x = 40
+samples_y = 40
+darkish = 0
+
+for xi in range(samples_x):
+    for yi in range(samples_y):
+        x = round((image.width - 1) * (xi / max(1, samples_x - 1)))
+        y = round((image.height - 1) * (yi / max(1, samples_y - 1)))
+        r, g, b = image.getpixel((x, y))
+        if min(r, g, b) < 248:
+            darkish += 1
+
+sys.exit(0 if darkish == 0 else 1)
+PY
+}
+
+reload_active_tab() {
+  sleep 1
+}
 
 normalized_url="$url"
 expected_hash=""
@@ -67,37 +102,30 @@ fi
 edge_pid=$!
 
 for _ in {1..40}; do
-  if curl -fsS "http://127.0.0.1:${debug_port}/json/version" >/dev/null 2>&1; then
+  if "${proxyless_env[@]}" curl -fsS "http://127.0.0.1:${debug_port}/json/version" >/dev/null 2>&1; then
     break
   fi
   sleep 0.25
 done
 
-osascript <<APPLESCRIPT >/dev/null
-tell application "Finder"
-  set desktopBounds to bounds of window of desktop
-end tell
+for ((attempt = 1; attempt <= max_blank_retries; attempt += 1)); do
+  "${proxyless_env[@]}" node /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.js \
+    "http://127.0.0.1:${debug_port}" \
+    "$normalized_url" \
+    "$output_path" \
+    "$expected_hash" \
+    "$post_load_delay_ms"
 
-set desktopLeft to item 1 of desktopBounds
-set desktopTop to item 2 of desktopBounds
-set desktopRight to item 3 of desktopBounds
-set desktopBottom to item 4 of desktopBounds
-set desktopWindowBounds to {desktopLeft + ${window_margin_left}, desktopTop + ${window_margin_top}, desktopRight - ${window_margin_right}, desktopBottom - ${window_margin_bottom}}
+  if ! capture_is_blank "$output_path"; then
+    echo "$output_path"
+    exit 0
+  fi
 
-tell application "Microsoft Edge"
-  activate
-  delay 0.6
-  if (count of windows) > 0 then
-    set bounds of front window to desktopWindowBounds
-  end if
-end tell
-APPLESCRIPT
+  if (( attempt < max_blank_retries )); then
+    reload_active_tab
+    sleep 1
+  fi
+done
 
-node /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.js \
-  "http://127.0.0.1:${debug_port}" \
-  "$normalized_url" \
-  "$output_path" \
-  "$expected_hash" \
-  "$post_load_delay_ms"
-
-echo "$output_path"
+echo "captured screenshot remained blank after ${max_blank_retries} attempts" >&2
+exit 1

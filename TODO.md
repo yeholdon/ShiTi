@@ -1022,6 +1022,7 @@ When work status changes, update this file in the same change.
 - [x] Tooling: Edge 桌面截图脚本改成默认拉起最大化窗口后再整窗裁切，避免固定小窗口把页面下方内容长期截掉。
 - [x] Tooling: 新增 Edge 全页截图链路，直接通过浏览器调试协议抓整页内容，不再受显示器屏高限制。
 - [x] Tooling: `capture-edge-fullpage.js` 的 CDP readiness 改成等待 Flutter 视图节点真正挂载，再叠加一档温和的虚拟高视窗后抓 `fromSurface` 全页图；学生详情和课堂详情深链已能稳定抓到包含下半区分段的整页截图。
+- [x] Tooling: `capture-edge-fullpage.sh` 已去掉对真实 Edge 窗口最大化的依赖，CDP 全页截图现在走纯调试链路，不再需要先操作浏览器窗口尺寸。
 - [x] Flutter: 班级详情页新增“重点学生”分区，开始把班级对象直接落到学生对象层，而不是只停在成员分层统计。
 - [x] Flutter: 课堂详情页新增“反馈学生”分区，开始把课堂反馈直接落到具体学生对象，而不是只停在反馈状态与任务描述。
 - [x] Flutter: 学生详情页新增“资料承接”分区，把当前班级、课堂和资料链路拉进正文层，而不只停在摘要 rail 和后续动作。
