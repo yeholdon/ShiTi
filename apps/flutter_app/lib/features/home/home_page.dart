@@ -77,12 +77,23 @@ class _HomePageState extends State<HomePage> {
       return _buildEntrySnapshot();
     }
     final services = AppServices.instance;
-    final questions = await services.questionRepository.listQuestions(
+    final questionsFuture = services.questionRepository.listQuestions(
       filters: const LibraryFilterState(),
     );
-    final documents = await services.documentRepository.listDocuments();
-    final exports = await services.documentRepository.listExportJobs();
-    final basket = await services.questionRepository.listBasketQuestions();
+    final documentsFuture = services.documentRepository.listDocuments();
+    final exportsFuture = services.documentRepository.listExportJobs();
+    final basketFuture = services.questionRepository.listBasketQuestions();
+    final studentsFuture = services.studentRepository.listStudents();
+    final classesFuture = services.classRepository.listClasses();
+    final lessonsFuture = services.lessonRepository.listLessons();
+
+    final questions = await questionsFuture;
+    final documents = await documentsFuture;
+    final exports = await exportsFuture;
+    final basket = await basketFuture;
+    final students = await studentsFuture;
+    final classes = await classesFuture;
+    final lessons = await lessonsFuture;
 
     final questionCount = questions.length;
     final documentCount = documents.length;
@@ -139,6 +150,30 @@ class _HomePageState extends State<HomePage> {
                 : '最近导出：${latestExport.documentName} · ${_exportStatusLabel(latestExport.status)}')
             : '当前有 ${activeExports.length} 个导出任务处理中',
         action: _WorkspaceCardAction.exports,
+      ),
+      _SummaryCardData(
+        title: '学生档案',
+        value: '${students.length}',
+        detail: students.isEmpty
+            ? '当前还没有学生档案。'
+            : '当前重点学生：${students.first.name}',
+        action: _WorkspaceCardAction.students,
+      ),
+      _SummaryCardData(
+        title: '班级',
+        value: '${classes.length}',
+        detail: classes.isEmpty
+            ? '当前还没有班级。'
+            : '当前班级重点：${classes.first.name}',
+        action: _WorkspaceCardAction.classes,
+      ),
+      _SummaryCardData(
+        title: '课堂',
+        value: '${lessons.length}',
+        detail: lessons.isEmpty
+            ? '当前还没有课堂安排。'
+            : '最近课堂：${lessons.first.title}',
+        action: _WorkspaceCardAction.lessons,
       ),
     ];
 
@@ -365,6 +400,15 @@ class _HomePageState extends State<HomePage> {
           PrimaryAppSection.exports,
           resetScrollOffset: true,
         );
+        return;
+      case _WorkspaceCardAction.students:
+        navigateToWorkspaceModule(context, WorkspaceModule.students);
+        return;
+      case _WorkspaceCardAction.classes:
+        navigateToWorkspaceModule(context, WorkspaceModule.classes);
+        return;
+      case _WorkspaceCardAction.lessons:
+        navigateToWorkspaceModule(context, WorkspaceModule.lessons);
         return;
       case _WorkspaceCardAction.none:
         return;
@@ -1747,6 +1791,12 @@ class _SummaryCard extends StatelessWidget {
         return '打开文档';
       case _WorkspaceCardAction.exports:
         return '打开导出记录';
+      case _WorkspaceCardAction.students:
+        return '打开学生管理';
+      case _WorkspaceCardAction.classes:
+        return '打开班级管理';
+      case _WorkspaceCardAction.lessons:
+        return '打开课堂管理';
       case _WorkspaceCardAction.none:
         return null;
     }
@@ -1821,6 +1871,9 @@ enum _WorkspaceCardAction {
   library,
   documents,
   exports,
+  students,
+  classes,
+  lessons,
 }
 
 class _RecentTasksPanel extends StatelessWidget {
