@@ -45,6 +45,10 @@ class _ClassesPageState extends State<ClassesPage> {
         focusStudentId: classroom.focusStudentId,
         flashMessage:
             '已定位到 ${classroom.focusStudentName}，可继续结合 ${classroom.name} 的节奏跟进学生画像。',
+        highlightTitle: '当前班级重点学生',
+        highlightDetail:
+            '${classroom.focusStudentName} 正处在 ${classroom.name} 的当前跟进节奏里，可继续结合班级资料与课堂安排回看画像。',
+        feedbackBadgeLabel: '班级回看',
       ),
     );
   }

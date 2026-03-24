@@ -96,6 +96,9 @@ class _StudentsPageState extends State<StudentsPage> {
           ? filteredRecords.first
           : _studentRecords.first,
     );
+    final highlightTitle = widget.args?.highlightTitle;
+    final highlightDetail = widget.args?.highlightDetail;
+    final feedbackBadgeLabel = widget.args?.feedbackBadgeLabel;
 
     return Scaffold(
       body: WorkspaceModuleShell(
@@ -190,6 +193,61 @@ class _StudentsPageState extends State<StudentsPage> {
                     WorkspaceMessageBanner.info(
                       title: '当前上下文',
                       message: widget.args!.flashMessage!,
+                    ),
+                  ],
+                  if ((highlightTitle?.trim().isNotEmpty ?? false) ||
+                      (highlightDetail?.trim().isNotEmpty ?? false) ||
+                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 18),
+                    WorkspacePanel(
+                      padding: workspacePanelPadding(context),
+                      backgroundColor: TelegramPalette.surfaceAccent,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              if (feedbackBadgeLabel != null &&
+                                  feedbackBadgeLabel.trim().isNotEmpty)
+                                WorkspaceInfoPill(
+                                  label: '当前来源',
+                                  value: feedbackBadgeLabel,
+                                  highlight: true,
+                                ),
+                              WorkspaceInfoPill(
+                                label: '当前学生',
+                                value: selectedRecord.name,
+                              ),
+                              WorkspaceInfoPill(
+                                label: '当前班级',
+                                value: selectedRecord.className,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            highlightTitle ?? '当前学生上下文',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: TelegramPalette.text,
+                            ),
+                          ),
+                          if (highlightDetail != null &&
+                              highlightDetail.trim().isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              highlightDetail,
+                              style: const TextStyle(
+                                height: 1.5,
+                                color: TelegramPalette.textStrong,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                   const SizedBox(height: 18),

@@ -56,6 +56,10 @@ class _LessonsPageState extends State<LessonsPage> {
         focusStudentId: lesson.focusStudentId,
         flashMessage:
             '已定位到 ${lesson.focusStudentName}，可继续把 ${lesson.title} 的课堂反馈回写到学生画像。',
+        highlightTitle: '当前课堂反馈学生',
+        highlightDetail:
+            '${lesson.focusStudentName} 正承接 ${lesson.title} 的课堂反馈，可继续回看错题、习惯与课后任务跟进。',
+        feedbackBadgeLabel: '课堂回看',
       ),
     );
   }
