@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/models/class_detail_args.dart';
 import '../core/models/classes_page_args.dart';
 import '../core/models/document_detail_args.dart';
 import '../core/models/documents_page_args.dart';
@@ -20,6 +21,7 @@ import '../features/exports/export_detail_page.dart';
 import '../features/exports/exports_page.dart';
 import '../features/exports/export_result_page.dart';
 import '../features/classes/classes_page.dart';
+import '../features/classes/class_detail_page.dart';
 import '../features/home/home_page.dart';
 import '../features/library/library_page.dart';
 import '../features/library/question_detail_page.dart';
@@ -48,6 +50,7 @@ class AppRouter {
   static const students = '/students';
   static const studentDetail = '/students/detail';
   static const classes = '/classes';
+  static const classDetail = '/classes/detail';
   static const lessons = '/lessons';
   static const settings = '/settings';
 
@@ -131,6 +134,14 @@ class AppRouter {
         final args = settings.arguments as ClassesPageArgs?;
         return MaterialPageRoute<void>(
           builder: (_) => ClassesPage(args: args),
+          settings: settings,
+        );
+      case classDetail:
+        final args = settings.arguments as ClassDetailArgs?;
+        return MaterialPageRoute<void>(
+          builder: (_) => ClassDetailPage.fromArgs(
+            args ?? const ClassDetailArgs(classId: 'class-1'),
+          ),
           settings: settings,
         );
       case lessons:

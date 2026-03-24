@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/class_detail_args.dart';
 import '../../core/models/classes_page_args.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/lessons_page_args.dart';
@@ -12,6 +13,7 @@ import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
+import 'class_workspace_data.dart';
 
 enum _ClassFilter {
   all('全部班级'),
@@ -35,9 +37,9 @@ class ClassesPage extends StatefulWidget {
 class _ClassesPageState extends State<ClassesPage> {
   _ClassFilter _filter = _ClassFilter.all;
   late String _selectedClassId =
-      widget.args?.focusClassId ?? _classRecords.first.id;
+      widget.args?.focusClassId ?? sampleClassRecords.first.id;
 
-  void _openStudents(_ClassRecord classroom) {
+  void _openStudents(ClassWorkspaceRecord classroom) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.students,
       (route) => false,
@@ -53,7 +55,7 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
-  void _openLesson(_ClassRecord classroom) {
+  void _openLesson(ClassWorkspaceRecord classroom) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.lessons,
       (route) => false,
@@ -68,7 +70,7 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
-  void _openDocument(_ClassRecord classroom) {
+  void _openDocument(ClassWorkspaceRecord classroom) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.documents,
       (route) => false,
@@ -83,6 +85,16 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
+  void _openDetail(ClassWorkspaceRecord classroom) {
+    Navigator.of(context).pushNamed(
+      AppRouter.classDetail,
+      arguments: ClassDetailArgs(
+        classId: classroom.id,
+        flashMessage: '已从班级工作页进入 ${classroom.name} 的详情档案。',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -91,7 +103,7 @@ class _ClassesPageState extends State<ClassesPage> {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
-    final filteredClasses = _classRecords
+    final filteredClasses = sampleClassRecords
         .where((item) => switch (_filter) {
               _ClassFilter.all => true,
               _ClassFilter.active => item.activityLabel == '本周活跃',
@@ -103,7 +115,7 @@ class _ClassesPageState extends State<ClassesPage> {
       (item) => item.id == _selectedClassId,
       orElse: () => filteredClasses.isNotEmpty
           ? filteredClasses.first
-          : _classRecords.first,
+          : sampleClassRecords.first,
     );
     final highlightTitle = widget.args?.highlightTitle;
     final highlightDetail = widget.args?.highlightDetail;
@@ -142,16 +154,16 @@ class _ClassesPageState extends State<ClassesPage> {
                 padding: workspacePagePadding(context),
                 children: [
                   _ClassHeroSection(
-                    classCount: _classRecords.length,
-                    studentCount: _classRecords.fold<int>(
+                    classCount: sampleClassRecords.length,
+                    studentCount: sampleClassRecords.fold<int>(
                       0,
                       (sum, item) => sum + item.studentCount,
                     ),
-                    activeLessonCount: _classRecords.fold<int>(
+                    activeLessonCount: sampleClassRecords.fold<int>(
                       0,
                       (sum, item) => sum + item.weeklyLessonCount,
                     ),
-                    linkedDocCount: _classRecords
+                    linkedDocCount: sampleClassRecords
                         .map((item) => item.latestDocLabel)
                         .toSet()
                         .length,
@@ -295,6 +307,7 @@ class _ClassesPageState extends State<ClassesPage> {
                           child: _ClassListPanel(
                             classes: filteredClasses,
                             selectedClassId: selectedClass.id,
+                            onOpenDetail: _openDetail,
                             onSelect: (classId) {
                               setState(() {
                                 _selectedClassId = classId;
@@ -307,6 +320,7 @@ class _ClassesPageState extends State<ClassesPage> {
                           flex: 3,
                           child: _ClassDetailRail(
                             classroom: selectedClass,
+                            onOpenDetail: () => _openDetail(selectedClass),
                             onOpenStudents: () => _openStudents(selectedClass),
                             onOpenLesson: () => _openLesson(selectedClass),
                             onOpenDocument: () => _openDocument(selectedClass),
@@ -317,6 +331,7 @@ class _ClassesPageState extends State<ClassesPage> {
                   else ...[
                     _ClassDetailRail(
                       classroom: selectedClass,
+                      onOpenDetail: () => _openDetail(selectedClass),
                       onOpenStudents: () => _openStudents(selectedClass),
                       onOpenLesson: () => _openLesson(selectedClass),
                       onOpenDocument: () => _openDocument(selectedClass),
@@ -325,6 +340,7 @@ class _ClassesPageState extends State<ClassesPage> {
                     _ClassListPanel(
                       classes: filteredClasses,
                       selectedClassId: selectedClass.id,
+                      onOpenDetail: _openDetail,
                       onSelect: (classId) {
                         setState(() {
                           _selectedClassId = classId;
@@ -409,11 +425,13 @@ class _ClassListPanel extends StatelessWidget {
   const _ClassListPanel({
     required this.classes,
     required this.selectedClassId,
+    required this.onOpenDetail,
     required this.onSelect,
   });
 
-  final List<_ClassRecord> classes;
+  final List<ClassWorkspaceRecord> classes;
   final String selectedClassId;
+  final ValueChanged<ClassWorkspaceRecord> onOpenDetail;
   final ValueChanged<String> onSelect;
 
   @override
@@ -447,6 +465,7 @@ class _ClassListPanel extends StatelessWidget {
                 classroom: item,
                 selected: item.id == selectedClassId,
                 onTap: () => onSelect(item.id),
+                onOpenDetail: () => onOpenDetail(item),
               ),
             ),
           ),
@@ -461,11 +480,13 @@ class _ClassCard extends StatelessWidget {
     required this.classroom,
     required this.selected,
     required this.onTap,
+    required this.onOpenDetail,
   });
 
-  final _ClassRecord classroom;
+  final ClassWorkspaceRecord classroom;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -516,6 +537,11 @@ class _ClassCard extends StatelessWidget {
                     ),
                   ),
                   WorkspaceInfoPill(value: classroom.activityLabel),
+                  IconButton(
+                    onPressed: onOpenDetail,
+                    tooltip: '查看班级详情',
+                    icon: const Icon(Icons.open_in_new_outlined),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -550,12 +576,14 @@ class _ClassCard extends StatelessWidget {
 class _ClassDetailRail extends StatelessWidget {
   const _ClassDetailRail({
     required this.classroom,
+    required this.onOpenDetail,
     required this.onOpenStudents,
     required this.onOpenLesson,
     required this.onOpenDocument,
   });
 
-  final _ClassRecord classroom;
+  final ClassWorkspaceRecord classroom;
+  final VoidCallback onOpenDetail;
   final VoidCallback onOpenStudents;
   final VoidCallback onOpenLesson;
   final VoidCallback onOpenDocument;
@@ -635,6 +663,11 @@ class _ClassDetailRail extends StatelessWidget {
             runSpacing: 10,
             children: [
               OutlinedButton.icon(
+                onPressed: onOpenDetail,
+                icon: const Icon(Icons.groups_outlined, size: 18),
+                label: const Text('查看班级详情'),
+              ),
+              OutlinedButton.icon(
                 onPressed: onOpenStudents,
                 icon: const Icon(Icons.school_outlined, size: 18),
                 label: Text('查看${classroom.focusStudentName}'),
@@ -661,130 +694,3 @@ class _ClassDetailRail extends StatelessWidget {
     );
   }
 }
-
-class _ClassRecord {
-  const _ClassRecord({
-    required this.id,
-    required this.name,
-    required this.lessonId,
-    required this.documentId,
-    required this.focusStudentId,
-    required this.focusStudentName,
-    required this.stageLabel,
-    required this.teacherLabel,
-    required this.textbookLabel,
-    required this.focusLabel,
-    required this.activityLabel,
-    required this.classSizeLabel,
-    required this.lessonFocusLabel,
-    required this.structureInsight,
-    required this.studentCount,
-    required this.weeklyLessonCount,
-    required this.latestDocLabel,
-    required this.summary,
-    required this.highlights,
-    required this.nextStep,
-  });
-
-  final String id;
-  final String name;
-  final String lessonId;
-  final String documentId;
-  final String focusStudentId;
-  final String focusStudentName;
-  final String stageLabel;
-  final String teacherLabel;
-  final String textbookLabel;
-  final String focusLabel;
-  final String activityLabel;
-  final String classSizeLabel;
-  final String lessonFocusLabel;
-  final String structureInsight;
-  final int studentCount;
-  final int weeklyLessonCount;
-  final String latestDocLabel;
-  final String summary;
-  final List<String> highlights;
-  final String nextStep;
-}
-
-const List<_ClassRecord> _classRecords = [
-  _ClassRecord(
-    id: 'class-1',
-    name: '九年级尖子班',
-    lessonId: 'lesson-1',
-    documentId: 'doc-2',
-    focusStudentId: 'student-1',
-    focusStudentName: '林之涵',
-    stageLabel: '初中 · 冲刺组',
-    teacherLabel: '主讲：陈老师',
-    textbookLabel: '浙教版',
-    focusLabel: '试卷跟进',
-    activityLabel: '本周活跃',
-    classSizeLabel: '26 人 · 小班精练',
-    lessonFocusLabel: '复盘课',
-    structureInsight: '班级规模适合精细追踪压轴题表达，可把课堂反馈直接回收进学生画像。',
-    studentCount: 26,
-    weeklyLessonCount: 3,
-    latestDocLabel: '二次函数周测卷',
-    summary: '当前重点是周测卷复盘和压轴题讲解，班级对讲义中的板书提示响应较好。',
-    highlights: [
-      '本周安排 3 节课堂，2 份试卷回看，1 份讲义补充。',
-      '需要关注中段学生在函数压轴题上的分层差异。',
-      '最近导出资料以试卷为主，讲义需要补一次课堂版。',
-    ],
-    nextStep: '先补一份“压轴题拆解讲义”，再串到周四的专题复盘课里。',
-  ),
-  _ClassRecord(
-    id: 'class-2',
-    name: '九年级提高班',
-    lessonId: 'lesson-2',
-    documentId: 'doc-1',
-    focusStudentId: 'student-2',
-    focusStudentName: '徐若楠',
-    stageLabel: '初中 · 提高组',
-    teacherLabel: '主讲：沈老师',
-    textbookLabel: '浙教版',
-    focusLabel: '讲义整理',
-    activityLabel: '本周活跃',
-    classSizeLabel: '34 人 · 常规班型',
-    lessonFocusLabel: '讲义推进',
-    structureInsight: '班级人数偏多，讲义与课堂追问需要更强的分层结构，短测更适合作为课后回收。',
-    studentCount: 34,
-    weeklyLessonCount: 2,
-    latestDocLabel: '相似三角形讲义',
-    summary: '班级目前更适合讲义驱动，课堂中对例题拆解和追问框的反馈较好。',
-    highlights: [
-      '最近一周以讲义整理和板书节奏优化为主。',
-      '需要补一次随堂小测，把讲义反馈收回到题库复盘。',
-      '班级人数较多，课堂任务要进一步分层。',
-    ],
-    nextStep: '下节课前补一份短测卷，并按讲义段落安排分层互动。',
-  ),
-  _ClassRecord(
-    id: 'class-3',
-    name: '高一物理培优班',
-    lessonId: 'lesson-3',
-    documentId: 'doc-1',
-    focusStudentId: 'student-3',
-    focusStudentName: '陈嘉言',
-    stageLabel: '高中 · 培优组',
-    teacherLabel: '主讲：周老师',
-    textbookLabel: '人教版',
-    focusLabel: '课堂联动',
-    activityLabel: '待排课',
-    classSizeLabel: '18 人 · 培优小组',
-    lessonFocusLabel: '模型拆解',
-    structureInsight: '小规模培优班适合把课堂、讲义和学生反馈绑得更紧，先跑通课堂闭环样例。',
-    studentCount: 18,
-    weeklyLessonCount: 1,
-    latestDocLabel: '力学建模讲义',
-    summary: '当前在验证课堂、学生画像和讲义之间的联动路径，班级规模适合做更细的反馈跟进。',
-    highlights: [
-      '班级规模较小，适合先跑课堂反馈样例。',
-      '本周只有 1 节课，适合作为课堂管理首批联动样例。',
-      '讲义和课后任务可以更紧密地串联。',
-    ],
-    nextStep: '先用一节课堂跑通“讲义 -> 反馈 -> 学生画像”的闭环。',
-  ),
-];
