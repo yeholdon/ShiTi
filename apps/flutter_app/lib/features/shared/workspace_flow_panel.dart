@@ -99,6 +99,41 @@ class WorkspaceFlowPanel extends StatelessWidget {
   }
 }
 
+class WorkspaceModuleQuickActions extends StatelessWidget {
+  const WorkspaceModuleQuickActions({
+    required this.currentModule,
+    required this.actions,
+    super.key,
+  });
+
+  final WorkspaceModule currentModule;
+  final List<WorkspaceFlowAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: actions.map((action) {
+        final selected = action.module == currentModule;
+        if (selected) {
+          return WorkspaceFilterPill(
+            label: action.label,
+            icon: action.icon,
+            selected: true,
+            onTap: null,
+          );
+        }
+        return OutlinedButton.icon(
+          onPressed: () => navigateToWorkspaceModule(context, action.module),
+          icon: Icon(action.icon, size: 18),
+          label: Text(action.label),
+        );
+      }).toList(),
+    );
+  }
+}
+
 class _WorkspaceFlowActionCard extends StatelessWidget {
   const _WorkspaceFlowActionCard({
     required this.action,

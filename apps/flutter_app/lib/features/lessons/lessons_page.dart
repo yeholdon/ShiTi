@@ -492,6 +492,36 @@ class _LessonDetailRail extends StatelessWidget {
             title: '下一步动作',
             message: lesson.nextStep,
           ),
+          const SizedBox(height: 14),
+          const WorkspaceModuleQuickActions(
+            currentModule: WorkspaceModule.lessons,
+            actions: [
+              WorkspaceFlowAction(
+                module: WorkspaceModule.classes,
+                icon: Icons.groups_outlined,
+                label: '打开班级',
+                description: '',
+              ),
+              WorkspaceFlowAction(
+                module: WorkspaceModule.students,
+                icon: Icons.school_outlined,
+                label: '打开学生',
+                description: '',
+              ),
+              WorkspaceFlowAction(
+                module: WorkspaceModule.documents,
+                icon: Icons.description_outlined,
+                label: '打开文档',
+                description: '',
+              ),
+              WorkspaceFlowAction(
+                module: WorkspaceModule.lessons,
+                icon: Icons.schedule_outlined,
+                label: '当前课堂页',
+                description: '',
+              ),
+            ],
+          ),
         ],
       ),
     );
