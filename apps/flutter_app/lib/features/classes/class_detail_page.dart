@@ -277,6 +277,90 @@ class ClassDetailPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
+                              '课堂时间线',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...classroom.lessonTimeline.map(
+                              (entry) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: TelegramPalette.border,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              entry.label,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: TelegramPalette.text,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          WorkspaceMetricPill(
+                                            label: '安排',
+                                            value: entry.scheduleLabel,
+                                            highlight: entry.scheduleLabel
+                                                .contains('进行中'),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        entry.focus,
+                                        style: const TextStyle(
+                                          height: 1.5,
+                                          color: TelegramPalette.textMuted,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children: [
+                                          WorkspaceInfoPill(
+                                            label: '状态',
+                                            value: entry.statusLabel,
+                                          ),
+                                          WorkspaceInfoPill(
+                                            label: '关联课堂',
+                                            value: classroom.lessonFocusLabel,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
                               '成员分层',
                               style: TextStyle(
                                 fontSize: 22,

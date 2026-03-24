@@ -10,6 +10,20 @@ class ClassTierRecord {
   final String focus;
 }
 
+class ClassLessonTimelineRecord {
+  const ClassLessonTimelineRecord({
+    required this.label,
+    required this.scheduleLabel,
+    required this.statusLabel,
+    required this.focus,
+  });
+
+  final String label;
+  final String scheduleLabel;
+  final String statusLabel;
+  final String focus;
+}
+
 class ClassWorkspaceRecord {
   const ClassWorkspaceRecord({
     required this.id,
@@ -30,6 +44,7 @@ class ClassWorkspaceRecord {
     required this.weeklyLessonCount,
     required this.latestDocLabel,
     required this.memberTiers,
+    required this.lessonTimeline,
     required this.summary,
     required this.highlights,
     required this.nextStep,
@@ -53,6 +68,7 @@ class ClassWorkspaceRecord {
   final int weeklyLessonCount;
   final String latestDocLabel;
   final List<ClassTierRecord> memberTiers;
+  final List<ClassLessonTimelineRecord> lessonTimeline;
   final String summary;
   final List<String> highlights;
   final String nextStep;
@@ -92,6 +108,26 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         label: '跟进层',
         studentCount: 6,
         focus: '课堂复盘后重点跟进函数压轴题与错题订正。',
+      ),
+    ],
+    lessonTimeline: [
+      ClassLessonTimelineRecord(
+        label: '周二 · 二次函数周测复盘',
+        scheduleLabel: '已完成',
+        statusLabel: '反馈已回收',
+        focus: '重点回看压轴题的表达链条，并把复盘结果沉淀进学生画像。',
+      ),
+      ClassLessonTimelineRecord(
+        label: '周四 · 压轴题拆解讲义',
+        scheduleLabel: '进行中',
+        statusLabel: '资料待补',
+        focus: '围绕讲义拆分压轴题模型，课堂里继续区分冲刺层和稳固层。',
+      ),
+      ClassLessonTimelineRecord(
+        label: '周六 · 专题复盘课',
+        scheduleLabel: '待开始',
+        statusLabel: '课堂待排',
+        focus: '把本周周测卷和讲义回看串到同一节专题课里，验证提分节奏。',
       ),
     ],
     summary: '当前重点是周测卷复盘和压轴题讲解，班级对讲义中的板书提示响应较好。',
@@ -137,6 +173,20 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         focus: '重点放慢审题节奏，先稳住图像和表格信息题。',
       ),
     ],
+    lessonTimeline: [
+      ClassLessonTimelineRecord(
+        label: '周三 · 相似三角形讲义推进',
+        scheduleLabel: '已完成',
+        statusLabel: '讲义已同步',
+        focus: '课堂例题和追问框反应较好，下一步需要补一轮短测回收。',
+      ),
+      ClassLessonTimelineRecord(
+        label: '周五 · 随堂短测',
+        scheduleLabel: '待开始',
+        statusLabel: '试卷待补',
+        focus: '把讲义中的重点例题转成短测，区分主力层和跟进层的回收效果。',
+      ),
+    ],
     summary: '班级目前更适合讲义驱动，课堂中对例题拆解和追问框的反馈较好。',
     highlights: [
       '最近一周以讲义整理和板书节奏优化为主。',
@@ -178,6 +228,20 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         label: '跟进层',
         studentCount: 5,
         focus: '先跑通课堂反馈样例，再补错题和课后任务衔接。',
+      ),
+    ],
+    lessonTimeline: [
+      ClassLessonTimelineRecord(
+        label: '周四 · 力学建模导入',
+        scheduleLabel: '待开始',
+        statusLabel: '资料已准备',
+        focus: '先用一节导入课跑通模型辨析、讲义提示和反馈采样。',
+      ),
+      ClassLessonTimelineRecord(
+        label: '周末 · 课堂反馈整理',
+        scheduleLabel: '待开始',
+        statusLabel: '任务待创建',
+        focus: '把课堂里采到的反馈整理成后续任务，回写到学生画像和班级跟进。',
       ),
     ],
     summary: '当前在验证课堂、学生画像和讲义之间的联动路径，班级规模适合做更细的反馈跟进。',
