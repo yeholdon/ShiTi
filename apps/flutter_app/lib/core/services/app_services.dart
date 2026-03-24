@@ -5,6 +5,7 @@ import '../models/tenant_summary.dart';
 import '../network/http_json_client.dart';
 import '../repositories/class_repository.dart';
 import '../repositories/document_repository.dart';
+import '../repositories/lesson_repository.dart';
 import '../repositories/question_repository.dart';
 import '../repositories/session_repository.dart';
 import '../repositories/student_repository.dart';
@@ -20,6 +21,7 @@ class AppServices {
       questionRepository = FakeQuestionRepository(apiClient);
       classRepository = FakeClassRepository(apiClient);
       documentRepository = FakeDocumentRepository(apiClient);
+      lessonRepository = FakeLessonRepository(apiClient);
       studentRepository = FakeStudentRepository(apiClient);
       taxonomyRepository = FakeTaxonomyRepository(apiClient);
       return;
@@ -38,6 +40,7 @@ class AppServices {
     questionRepository = RemoteQuestionRepository(httpClient);
     classRepository = RemoteClassRepository(httpClient);
     documentRepository = RemoteDocumentRepository(httpClient);
+    lessonRepository = RemoteLessonRepository(httpClient);
     studentRepository = RemoteStudentRepository(httpClient);
     taxonomyRepository = RemoteTaxonomyRepository(httpClient);
   }
@@ -49,6 +52,7 @@ class AppServices {
   late final QuestionRepository questionRepository;
   late final ClassRepository classRepository;
   late final DocumentRepository documentRepository;
+  late final LessonRepository lessonRepository;
   late final StudentRepository studentRepository;
   late final TaxonomyRepository taxonomyRepository;
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

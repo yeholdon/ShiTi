@@ -39,6 +39,9 @@ class _LessonsPageState extends State<LessonsPage> {
   late _LessonFilter _filter;
   late String _selectedLessonId;
   late final TextEditingController _queryController;
+  late List<LessonWorkspaceRecord> _records;
+  bool _isLoading = !AppConfig.useMockData;
+  String? _loadError;
 
   bool get _hasContextualEntry => widget.args?.focusLessonId != null;
 
@@ -52,10 +55,14 @@ class _LessonsPageState extends State<LessonsPage> {
     _filter = !_hasContextualEntry && storedState != null
         ? _lessonFilterFromLabel(storedState.filter)
         : _LessonFilter.all;
+    _records = sampleLessonRecords;
     _selectedLessonId = widget.args?.focusLessonId ??
         (!_hasContextualEntry && storedState != null
             ? storedState.selectedLessonId
             : sampleLessonRecords.first.id);
+    if (!AppConfig.useMockData) {
+      _loadLessons();
+    }
   }
 
   @override
@@ -74,7 +81,7 @@ class _LessonsPageState extends State<LessonsPage> {
 
   List<LessonWorkspaceRecord> _recordsForFilter(_LessonFilter filter) {
     final query = _queryController.text.trim().toLowerCase();
-    return sampleLessonRecords
+    return _records
         .where((lesson) => switch (filter) {
               _LessonFilter.all => true,
               _LessonFilter.thisWeek => lesson.scheduleTag == '本周进行',
@@ -90,6 +97,37 @@ class _LessonsPageState extends State<LessonsPage> {
               lesson.followUpLabel.toLowerCase().contains(query),
         )
         .toList(growable: false);
+  }
+
+  Future<void> _loadLessons() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final records = await AppServices.instance.lessonRepository.listLessons();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _records = records;
+        _isLoading = false;
+        _loadError = null;
+        if (_records.isNotEmpty &&
+            !_records.any((item) => item.id == _selectedLessonId)) {
+          _selectedLessonId = _records.first.id;
+        }
+        _rememberViewState();
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _loadError = error.toString();
+      });
+    }
   }
 
   void _openDetail(LessonWorkspaceRecord lesson) {
@@ -157,12 +195,12 @@ class _LessonsPageState extends State<LessonsPage> {
             ? '个人工作区'
             : '机构工作区';
     final filteredLessons = _recordsForFilter(_filter);
-    final selectedLesson = filteredLessons.firstWhere(
-      (lesson) => lesson.id == _selectedLessonId,
-      orElse: () => filteredLessons.isNotEmpty
-          ? filteredLessons.first
-          : sampleLessonRecords.first,
-    );
+    final selectedLesson = filteredLessons.isNotEmpty
+        ? filteredLessons.firstWhere(
+            (lesson) => lesson.id == _selectedLessonId,
+            orElse: () => filteredLessons.first,
+          )
+        : (_records.isNotEmpty ? _records.first : null);
     final highlightTitle = widget.args?.highlightTitle;
     final highlightDetail = widget.args?.highlightDetail;
     final feedbackBadgeLabel = widget.args?.feedbackBadgeLabel;
@@ -200,21 +238,34 @@ class _LessonsPageState extends State<LessonsPage> {
                 padding: workspacePagePadding(context),
                 children: [
                   _LessonHeroSection(
-                    lessonCount: sampleLessonRecords.length,
-                    feedbackCount: sampleLessonRecords
+                    lessonCount: _records.length,
+                    feedbackCount: _records
                         .where((lesson) => lesson.feedbackStatus == '待回收')
                         .length,
-                    linkedDocsCount: sampleLessonRecords
+                    linkedDocsCount: _records
                         .map((lesson) => lesson.documentFocus)
                         .where((focus) => focus.isNotEmpty)
                         .toSet()
                         .length,
-                    linkedClassCount: sampleLessonRecords
+                    linkedClassCount: _records
                         .map((lesson) => lesson.className)
                         .toSet()
                         .length,
                   ),
                   const SizedBox(height: 18),
+                  if (_isLoading) ...[
+                    const WorkspaceMessageBanner.info(
+                      title: '正在加载课堂',
+                      message: '正在读取当前工作区里的课堂安排、资料联动和课后反馈。',
+                    ),
+                    const SizedBox(height: 18),
+                  ] else if (_loadError != null) ...[
+                    WorkspaceMessageBanner.warning(
+                      title: '课堂加载失败',
+                      message: '未能读取课堂数据：$_loadError',
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                   WorkspacePanel(
                     padding: workspacePanelPadding(context),
                     child: Column(
@@ -242,7 +293,7 @@ class _LessonsPageState extends State<LessonsPage> {
                               )) {
                                 _selectedLessonId = nextRecords.isNotEmpty
                                     ? nextRecords.first.id
-                                    : sampleLessonRecords.first.id;
+                                    : (_records.isNotEmpty ? _records.first.id : '');
                               }
                               _rememberViewState();
                             });
@@ -267,7 +318,7 @@ class _LessonsPageState extends State<LessonsPage> {
                                       )) {
                                         _selectedLessonId = nextRecords.isNotEmpty
                                             ? nextRecords.first.id
-                                            : sampleLessonRecords.first.id;
+                                            : (_records.isNotEmpty ? _records.first.id : '');
                                       }
                                       _rememberViewState();
                                     });
@@ -310,11 +361,11 @@ class _LessonsPageState extends State<LessonsPage> {
                                 ),
                               WorkspaceInfoPill(
                                 label: '当前课堂',
-                                value: selectedLesson.title,
+                                value: selectedLesson?.title ?? '未选择课堂',
                               ),
                               WorkspaceInfoPill(
                                 label: '当前班级',
-                                value: selectedLesson.className,
+                                value: selectedLesson?.className ?? '未绑定班级',
                               ),
                             ],
                           ),
@@ -375,7 +426,12 @@ class _LessonsPageState extends State<LessonsPage> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  if (showAside)
+                  if (!_isLoading && _loadError == null && filteredLessons.isEmpty) ...[
+                    const WorkspaceMessageBanner.info(
+                      title: '当前没有匹配课堂',
+                      message: '可以调整搜索词或筛选条件，查看当前工作区中的其他课堂安排。',
+                    ),
+                  ] else if (selectedLesson != null && showAside)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -406,7 +462,7 @@ class _LessonsPageState extends State<LessonsPage> {
                         ),
                       ],
                     )
-                  else ...[
+                  else if (selectedLesson != null) ...[
                     _LessonDetailRail(
                       lesson: selectedLesson,
                       onOpenDetail: () => _openDetail(selectedLesson),

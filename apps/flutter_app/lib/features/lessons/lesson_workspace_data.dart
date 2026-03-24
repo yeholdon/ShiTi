@@ -8,6 +8,14 @@ class LessonFeedbackRecord {
   final String label;
   final String status;
   final String detail;
+
+  factory LessonFeedbackRecord.fromJson(Map<String, dynamic> json) {
+    return LessonFeedbackRecord(
+      label: json['label']?.toString() ?? '未命名反馈项',
+      status: json['status']?.toString() ?? '待处理',
+      detail: json['detail']?.toString() ?? '',
+    );
+  }
 }
 
 class LessonAssetRecord {
@@ -26,6 +34,17 @@ class LessonAssetRecord {
   final String detail;
   final String documentId;
   final String actionLabel;
+
+  factory LessonAssetRecord.fromJson(Map<String, dynamic> json) {
+    return LessonAssetRecord(
+      label: json['label']?.toString() ?? '未命名资料',
+      kindLabel: json['kindLabel']?.toString() ?? '资料',
+      statusLabel: json['statusLabel']?.toString() ?? '待处理',
+      detail: json['detail']?.toString() ?? '',
+      documentId: json['documentId']?.toString() ?? '',
+      actionLabel: json['actionLabel']?.toString() ?? '查看资料详情',
+    );
+  }
 }
 
 class LessonTaskRecord {
@@ -48,6 +67,19 @@ class LessonTaskRecord {
   final String targetRecordId;
   final String targetLabel;
   final String actionLabel;
+
+  factory LessonTaskRecord.fromJson(Map<String, dynamic> json) {
+    return LessonTaskRecord(
+      label: json['label']?.toString() ?? '未命名任务',
+      ownerLabel: json['ownerLabel']?.toString() ?? '待分配',
+      statusLabel: json['statusLabel']?.toString() ?? '待处理',
+      detail: json['detail']?.toString() ?? '',
+      targetModule: json['targetModule']?.toString() ?? '',
+      targetRecordId: json['targetRecordId']?.toString() ?? '',
+      targetLabel: json['targetLabel']?.toString() ?? '',
+      actionLabel: json['actionLabel']?.toString() ?? '查看详情',
+    );
+  }
 }
 
 class LessonWorkspaceRecord {
@@ -96,6 +128,41 @@ class LessonWorkspaceRecord {
   final String summary;
   final List<String> highlights;
   final String nextStep;
+
+  factory LessonWorkspaceRecord.fromJson(Map<String, dynamic> json) {
+    return LessonWorkspaceRecord(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '未命名课堂',
+      classId: json['classId']?.toString() ?? '',
+      className: json['className']?.toString() ?? '未绑定班级',
+      focusStudentId: json['focusStudentId']?.toString() ?? '',
+      focusStudentName: json['focusStudentName']?.toString() ?? '未指定学生',
+      teacherLabel: json['teacherLabel']?.toString() ?? '主讲待定',
+      scheduleLabel: json['scheduleLabel']?.toString() ?? '未排时间',
+      scheduleTag: json['scheduleTag']?.toString() ?? '待安排',
+      classScopeLabel: json['classScopeLabel']?.toString() ?? '未绑定班级',
+      documentFocus: json['documentFocus']?.toString() ?? '未绑定资料',
+      documentId: json['documentId']?.toString() ?? '',
+      feedbackStatus: json['feedbackStatus']?.toString() ?? '待回收',
+      followUpLabel: json['followUpLabel']?.toString() ?? '待处理',
+      feedbackInsight: json['feedbackInsight']?.toString() ?? '',
+      feedbackRecords: _decodeLessonList<LessonFeedbackRecord>(
+        json['feedbackRecords'],
+        (item) => LessonFeedbackRecord.fromJson(item),
+      ),
+      assetRecords: _decodeLessonList<LessonAssetRecord>(
+        json['assetRecords'],
+        (item) => LessonAssetRecord.fromJson(item),
+      ),
+      taskRecords: _decodeLessonList<LessonTaskRecord>(
+        json['taskRecords'],
+        (item) => LessonTaskRecord.fromJson(item),
+      ),
+      summary: json['summary']?.toString() ?? '',
+      highlights: _decodeLessonStringList(json['highlights']),
+      nextStep: json['nextStep']?.toString() ?? '',
+    );
+  }
 }
 
 const List<LessonWorkspaceRecord> sampleLessonRecords = [
@@ -351,4 +418,24 @@ LessonWorkspaceRecord? findLessonWorkspaceRecord(String id) {
     }
   }
   return null;
+}
+
+List<T> _decodeLessonList<T>(
+  dynamic raw,
+  T Function(Map<String, dynamic>) decoder,
+) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw
+      .whereType<Map>()
+      .map((item) => decoder(Map<String, dynamic>.from(item)))
+      .toList(growable: false);
+}
+
+List<String> _decodeLessonStringList(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  return raw.map((item) => item.toString()).toList(growable: false);
 }

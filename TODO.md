@@ -1035,3 +1035,5 @@ When work status changes, update this file in the same change.
 - [x] Backend: 新增 `GET /students`、`GET /students/:id`、`GET /classes`、`GET /classes/:id`、`GET /lessons`、`GET /lessons/:id`，把学生/班级/课堂样例结构接进真实数据库只读接口。
 - [x] Flutter: 学生工作页和学生详情页已接入真实 `students` API，非 mock 模式下改为后端加载，补齐了加载态、失败态和空态。
 - [x] Flutter: 班级工作页已接入真实 `classes` API，非 mock 模式下改为后端加载，并补齐了加载态、失败态和空态。
+- [x] Flutter: 班级详情页已接入真实 `classes/:id` API，非 mock 模式下改为后端加载班级档案，并联动真实学生列表回填关联学生。
+- [x] Flutter: 课堂工作页和课堂详情页已接入真实 `lessons` / `lessons/:id` API，非 mock 模式下改为后端加载，并补齐了加载态、失败态和空态。

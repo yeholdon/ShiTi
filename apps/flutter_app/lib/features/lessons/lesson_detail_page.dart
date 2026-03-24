@@ -84,10 +84,6 @@ class LessonDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lesson = findLessonWorkspaceRecord(lessonId);
-    final relatedStudents = sampleStudentRecords
-        .where((student) => student.lessonId == lessonId)
-        .toList(growable: false);
     final activeTenant = AppServices.instance.activeTenant;
     final tenantScope = activeTenant == null
         ? '未选择机构'
@@ -99,99 +95,154 @@ class LessonDetailPage extends StatelessWidget {
       'classes' => '返回${sourceLabel ?? '班级详情'}',
       _ => '返回课堂页',
     };
+    final detailFuture = () async {
+      if (AppConfig.useMockData) {
+        final lesson = findLessonWorkspaceRecord(lessonId);
+        final relatedStudents = sampleStudentRecords
+            .where((student) => student.lessonId == lessonId)
+            .toList(growable: false);
+        return (lesson, relatedStudents);
+      }
 
-    if (lesson == null) {
-      return Scaffold(
-        body: WorkspaceModuleShell(
-          currentModule: WorkspaceModule.lessons,
-          onSelectModule: (module) =>
-              navigateToWorkspaceModule(context, module),
-          title: '课堂详情',
-          subtitle: '当前课堂不存在或尚未同步到课堂列表。',
-          searchHint: '搜索课堂主题、班级、资料或课后反馈',
-          statusWidgets: [
-            WorkspaceInfoPill(
-              label: '数据模式',
-              value: AppConfig.useMockData ? '样例数据' : '真实数据',
-            ),
-            WorkspaceInfoPill(label: '当前场景', value: tenantScope),
-          ],
-          body: workspaceConstrainedContent(
-            context,
-            child: ListView(
-              padding: workspacePagePadding(context),
-              children: const [
-                WorkspaceMessageBanner.warning(
-                  title: '未找到课堂',
-                  message: '这节课堂暂时不在当前样例数据里，请返回课堂管理页重新选择。',
+      final lesson = await AppServices.instance.lessonRepository.getLesson(lessonId);
+      final students = await AppServices.instance.studentRepository.listStudents();
+      final relatedStudents = students
+          .where((student) => student.lessonId == lessonId)
+          .toList(growable: false);
+      return (lesson, relatedStudents);
+    }();
+
+    return FutureBuilder<(LessonWorkspaceRecord?, List<StudentWorkspaceRecord>)>(
+      future: detailFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Scaffold(
+            body: WorkspaceModuleShell(
+              currentModule: WorkspaceModule.lessons,
+              onSelectModule: (module) =>
+                  navigateToWorkspaceModule(context, module),
+              title: '课堂详情',
+              subtitle: '正在读取课堂资料、反馈明细与后续任务。',
+              searchHint: '搜索课堂主题、班级、资料或课后反馈',
+              statusWidgets: [
+                WorkspaceInfoPill(
+                  label: '数据模式',
+                  value: AppConfig.useMockData ? '样例数据' : '真实数据',
                 ),
+                WorkspaceInfoPill(label: '当前场景', value: tenantScope),
               ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      body: WorkspaceModuleShell(
-        currentModule: WorkspaceModule.lessons,
-        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
-        title: '课堂详情',
-        subtitle: '围绕单个课堂查看班级安排、主资料、课后反馈与后续任务。',
-        searchHint: '搜索其他课堂主题、班级、资料或反馈节奏',
-        statusWidgets: [
-          WorkspaceInfoPill(
-            label: '数据模式',
-            value: AppConfig.useMockData ? '样例数据' : '真实数据',
-          ),
-          WorkspaceInfoPill(label: '当前场景', value: tenantScope),
-          WorkspaceInfoPill(
-            label: '当前机构',
-            value: activeTenant?.name ?? '未选择机构',
-            highlight: activeTenant == null,
-          ),
-        ],
-        trailing: FilledButton.icon(
-          onPressed: () {
-            if (sourceModule == 'students' && sourceRecordId != null) {
-              Navigator.of(context).pushNamed(
-                AppRouter.studentDetail,
-                arguments: StudentDetailArgs(
-                  studentId: sourceRecordId!,
-                  flashMessage:
-                      '已从 ${lesson.title} 返回 ${sourceLabel ?? '学生详情'}。',
+              body: workspaceConstrainedContent(
+                context,
+                child: ListView(
+                  padding: workspacePagePadding(context),
+                  children: const [
+                    WorkspaceMessageBanner.info(
+                      title: '正在加载课堂详情',
+                      message: '正在读取当前课堂的资料、反馈和任务数据。',
+                    ),
+                  ],
                 ),
-              );
-              return;
-            }
-            if (sourceModule == 'classes' && sourceRecordId != null) {
-              Navigator.of(context).pushNamed(
-                AppRouter.classDetail,
-                arguments: ClassDetailArgs(
-                  classId: sourceRecordId!,
-                  flashMessage:
-                      '已从 ${lesson.title} 返回 ${sourceLabel ?? '班级详情'}。',
-                ),
-              );
-              return;
-            }
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRouter.lessons,
-              (route) => false,
-              arguments: LessonsPageArgs(
-                focusLessonId: lesson.id,
-                flashMessage: '已返回 ${lesson.title} 所在课堂页，可继续回看课堂节奏。',
               ),
-            );
-          },
-          icon: const Icon(Icons.arrow_back_outlined),
-          label: Text(backLabel),
-        ),
-        body: workspaceConstrainedContent(
-          context,
-          child: ListView(
-            padding: workspacePagePadding(context),
-            children: [
+            ),
+          );
+        }
+
+        final lesson = snapshot.data?.$1;
+        final relatedStudents =
+            snapshot.data?.$2 ?? const <StudentWorkspaceRecord>[];
+
+        if (lesson == null) {
+          return Scaffold(
+            body: WorkspaceModuleShell(
+              currentModule: WorkspaceModule.lessons,
+              onSelectModule: (module) =>
+                  navigateToWorkspaceModule(context, module),
+              title: '课堂详情',
+              subtitle: '当前课堂不存在或尚未同步到课堂列表。',
+              searchHint: '搜索课堂主题、班级、资料或课后反馈',
+              statusWidgets: [
+                WorkspaceInfoPill(
+                  label: '数据模式',
+                  value: AppConfig.useMockData ? '样例数据' : '真实数据',
+                ),
+                WorkspaceInfoPill(label: '当前场景', value: tenantScope),
+              ],
+              body: workspaceConstrainedContent(
+                context,
+                child: ListView(
+                  padding: workspacePagePadding(context),
+                  children: const [
+                    WorkspaceMessageBanner.warning(
+                      title: '未找到课堂',
+                      message: '这节课堂暂时不在当前数据里，请返回课堂管理页重新选择。',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: WorkspaceModuleShell(
+            currentModule: WorkspaceModule.lessons,
+            onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+            title: '课堂详情',
+            subtitle: '围绕单个课堂查看班级安排、主资料、课后反馈与后续任务。',
+            searchHint: '搜索其他课堂主题、班级、资料或反馈节奏',
+            statusWidgets: [
+              WorkspaceInfoPill(
+                label: '数据模式',
+                value: AppConfig.useMockData ? '样例数据' : '真实数据',
+              ),
+              WorkspaceInfoPill(label: '当前场景', value: tenantScope),
+              WorkspaceInfoPill(
+                label: '当前机构',
+                value: activeTenant?.name ?? '未选择机构',
+                highlight: activeTenant == null,
+              ),
+            ],
+            trailing: FilledButton.icon(
+              onPressed: () {
+                if (sourceModule == 'students' && sourceRecordId != null) {
+                  Navigator.of(context).pushNamed(
+                    AppRouter.studentDetail,
+                    arguments: StudentDetailArgs(
+                      studentId: sourceRecordId!,
+                      flashMessage:
+                          '已从 ${lesson.title} 返回 ${sourceLabel ?? '学生详情'}。',
+                    ),
+                  );
+                  return;
+                }
+                if (sourceModule == 'classes' && sourceRecordId != null) {
+                  Navigator.of(context).pushNamed(
+                    AppRouter.classDetail,
+                    arguments: ClassDetailArgs(
+                      classId: sourceRecordId!,
+                      flashMessage:
+                          '已从 ${lesson.title} 返回 ${sourceLabel ?? '班级详情'}。',
+                    ),
+                  );
+                  return;
+                }
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRouter.lessons,
+                  (route) => false,
+                  arguments: LessonsPageArgs(
+                    focusLessonId: lesson.id,
+                    flashMessage: '已返回 ${lesson.title} 所在课堂页，可继续回看课堂节奏。',
+                  ),
+                );
+              },
+              icon: const Icon(Icons.arrow_back_outlined),
+              label: Text(backLabel),
+            ),
+            body: workspaceConstrainedContent(
+              context,
+              child: ListView(
+                padding: workspacePagePadding(context),
+                children: [
               WorkspacePanel(
                 padding: workspaceHeroPanelPadding(context),
                 borderRadius: 28,
@@ -888,8 +939,10 @@ class LessonDetailPage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
