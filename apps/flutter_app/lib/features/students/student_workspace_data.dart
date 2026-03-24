@@ -12,6 +12,18 @@ class StudentScoreRecord {
   final String insight;
 }
 
+class StudentWrongQuestionRecord {
+  const StudentWrongQuestionRecord({
+    required this.label,
+    required this.status,
+    required this.followUp,
+  });
+
+  final String label;
+  final String status;
+  final String followUp;
+}
+
 class StudentWorkspaceRecord {
   const StudentWorkspaceRecord({
     required this.id,
@@ -34,6 +46,7 @@ class StudentWorkspaceRecord {
     required this.wrongCountLabel,
     required this.wrongCount,
     required this.scoreRecords,
+    required this.wrongQuestionRecords,
     required this.highlights,
     required this.nextStep,
   });
@@ -58,6 +71,7 @@ class StudentWorkspaceRecord {
   final String wrongCountLabel;
   final int wrongCount;
   final List<StudentScoreRecord> scoreRecords;
+  final List<StudentWrongQuestionRecord> wrongQuestionRecords;
   final List<String> highlights;
   final String nextStep;
 }
@@ -101,6 +115,18 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         score: 92,
         totalScore: 100,
         insight: '压轴题拆解明显进步，课堂讲解后复盘效果较好。',
+      ),
+    ],
+    wrongQuestionRecords: [
+      StudentWrongQuestionRecord(
+        label: '二次函数压轴第 23 题',
+        status: '已订正',
+        followUp: '下轮口头讲解时复盘证明链条完整度。',
+      ),
+      StudentWrongQuestionRecord(
+        label: '几何综合第 18 题',
+        status: '待复盘',
+        followUp: '需要补一次已知/求证拆解训练。',
       ),
     ],
     highlights: [
@@ -150,6 +176,23 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         insight: '分步作答开始改善，但图像信息提取仍需专项跟进。',
       ),
     ],
+    wrongQuestionRecords: [
+      StudentWrongQuestionRecord(
+        label: '函数图像第 12 题',
+        status: '待订正',
+        followUp: '优先补图像与表格联动的已知条件整理。',
+      ),
+      StudentWrongQuestionRecord(
+        label: '相似证明第 19 题',
+        status: '已订正',
+        followUp: '课堂中继续跟进口头复述是否稳定。',
+      ),
+      StudentWrongQuestionRecord(
+        label: '开放探究第 24 题',
+        status: '待讲解',
+        followUp: '下节课安排一次分步板演和口头追问。',
+      ),
+    ],
     highlights: [
       '函数图像题和表格信息题错误集中。',
       '错题订正完成，但口头复述仍不稳定。',
@@ -195,6 +238,18 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         score: 84,
         totalScore: 100,
         insight: '课堂反馈和错题回看已形成闭环，适合继续稳定推进。',
+      ),
+    ],
+    wrongQuestionRecords: [
+      StudentWrongQuestionRecord(
+        label: '力学图像第 8 题',
+        status: '待回看',
+        followUp: '课后结合讲义边注再做一次图像辨析。',
+      ),
+      StudentWrongQuestionRecord(
+        label: '模型转化第 15 题',
+        status: '已复盘',
+        followUp: '下次课堂继续观察物理量转化是否稳定。',
       ),
     ],
     highlights: [
