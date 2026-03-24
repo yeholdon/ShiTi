@@ -9,8 +9,29 @@ import 'router/app_router.dart';
 class ShiTiApp extends StatelessWidget {
   const ShiTiApp({super.key});
 
+  String _resolveInitialRouteName() {
+    if (kIsWeb) {
+      final fragment = Uri.base.fragment.trim();
+      if (fragment.isNotEmpty) {
+        return fragment.startsWith('/') ? fragment : '/$fragment';
+      }
+
+      final path = Uri.base.path.trim();
+      if (path.isNotEmpty && path != '/') {
+        return path;
+      }
+
+      return AppRouter.home;
+    }
+
+    final defaultRouteName =
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    return defaultRouteName.isEmpty ? AppRouter.home : defaultRouteName;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final initialRouteName = _resolveInitialRouteName();
     const webFontFamily = 'ShiTiSans';
     const webFontFallback = <String>[
       'PingFang SC',
@@ -189,7 +210,7 @@ class ShiTiApp extends StatelessWidget {
         useMaterial3: true,
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
-      initialRoute: AppRouter.home,
+      initialRoute: initialRouteName,
       builder: (context, child) {
         return Banner(
           message: '${AppConfig.environmentLabel} ${AppConfig.dataModeLabel}',
