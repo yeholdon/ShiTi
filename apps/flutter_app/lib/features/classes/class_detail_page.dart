@@ -405,6 +405,118 @@ class ClassDetailPage extends StatelessWidget {
                           ),
                         ),
                       ],
+                      if (classroom.assetLinks.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        WorkspacePanel(
+                          padding: workspacePanelPadding(context),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '资料联动',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: TelegramPalette.text,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ...classroom.assetLinks.map(
+                                (asset) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: TelegramPalette.surfaceRaised,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: TelegramPalette.border,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    asset.documentLabel,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          TelegramPalette.text,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    asset.detail,
+                                                    style: const TextStyle(
+                                                      height: 1.5,
+                                                      color: TelegramPalette
+                                                          .textMuted,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            WorkspaceMetricPill(
+                                              label: asset.label,
+                                              value: asset.statusLabel,
+                                              highlight: asset.statusLabel
+                                                  .contains('待'),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Wrap(
+                                          spacing: 10,
+                                          runSpacing: 10,
+                                          children: [
+                                            WorkspaceInfoPill(
+                                              label: '当前班级',
+                                              value: classroom.name,
+                                            ),
+                                            WorkspaceInfoPill(
+                                              label: '关联课堂',
+                                              value: classroom.lessonFocusLabel,
+                                            ),
+                                            OutlinedButton.icon(
+                                              onPressed: () {
+                                                Navigator.of(context).pushNamed(
+                                                  AppRouter.documentDetail,
+                                                  arguments: DocumentDetailArgs(
+                                                    documentId: asset.documentId,
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.description_outlined,
+                                                size: 18,
+                                              ),
+                                              label: Text(
+                                                '打开${asset.documentLabel}',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       WorkspacePanel(
                         padding: workspacePanelPadding(context),

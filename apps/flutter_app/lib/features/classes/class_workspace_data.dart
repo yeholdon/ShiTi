@@ -28,6 +28,22 @@ class ClassLessonTimelineRecord {
   final String actionLabel;
 }
 
+class ClassAssetLinkRecord {
+  const ClassAssetLinkRecord({
+    required this.label,
+    required this.documentId,
+    required this.documentLabel,
+    required this.statusLabel,
+    required this.detail,
+  });
+
+  final String label;
+  final String documentId;
+  final String documentLabel;
+  final String statusLabel;
+  final String detail;
+}
+
 class ClassWorkspaceRecord {
   const ClassWorkspaceRecord({
     required this.id,
@@ -47,6 +63,7 @@ class ClassWorkspaceRecord {
     required this.studentCount,
     required this.weeklyLessonCount,
     required this.latestDocLabel,
+    required this.assetLinks,
     required this.memberTiers,
     required this.lessonTimeline,
     required this.summary,
@@ -71,6 +88,7 @@ class ClassWorkspaceRecord {
   final int studentCount;
   final int weeklyLessonCount;
   final String latestDocLabel;
+  final List<ClassAssetLinkRecord> assetLinks;
   final List<ClassTierRecord> memberTiers;
   final List<ClassLessonTimelineRecord> lessonTimeline;
   final String summary;
@@ -97,6 +115,22 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 26,
     weeklyLessonCount: 3,
     latestDocLabel: '二次函数周测卷',
+    assetLinks: [
+      ClassAssetLinkRecord(
+        label: '当前主资料',
+        documentId: 'doc-2',
+        documentLabel: '二次函数周测卷',
+        statusLabel: '试卷已定稿',
+        detail: '作为本周复盘主资料，课堂里已经完成一次回看。',
+      ),
+      ClassAssetLinkRecord(
+        label: '讲义补充',
+        documentId: 'doc-1',
+        documentLabel: '二次函数压轴题拆解讲义',
+        statusLabel: '讲义待补',
+        detail: '下一节复盘课需要把压轴题拆解讲义补进来，承接表达训练。',
+      ),
+    ],
     memberTiers: [
       ClassTierRecord(
         label: '冲刺层',
@@ -166,6 +200,22 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 34,
     weeklyLessonCount: 2,
     latestDocLabel: '相似三角形讲义',
+    assetLinks: [
+      ClassAssetLinkRecord(
+        label: '当前主资料',
+        documentId: 'doc-1',
+        documentLabel: '相似三角形讲义',
+        statusLabel: '讲义已同步',
+        detail: '当前课堂以讲义为主资料，课堂追问已经围绕讲义结构展开。',
+      ),
+      ClassAssetLinkRecord(
+        label: '短测资料',
+        documentId: 'doc-2',
+        documentLabel: '相似三角形随堂短测',
+        statusLabel: '试卷待补',
+        detail: '下一轮课堂反馈需要通过短测资料回收并回写到班级分层。',
+      ),
+    ],
     memberTiers: [
       ClassTierRecord(
         label: '提优层',
@@ -227,6 +277,22 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 18,
     weeklyLessonCount: 1,
     latestDocLabel: '力学建模讲义',
+    assetLinks: [
+      ClassAssetLinkRecord(
+        label: '导入讲义',
+        documentId: 'doc-1',
+        documentLabel: '力学建模讲义',
+        statusLabel: '讲义已准备',
+        detail: '课堂导入阶段直接使用讲义，先跑通建模表达与反馈采样。',
+      ),
+      ClassAssetLinkRecord(
+        label: '反馈回写资料',
+        documentId: 'doc-2',
+        documentLabel: '课堂反馈整理单',
+        statusLabel: '资料待创建',
+        detail: '课堂结束后要把反馈沉淀成一份回写资料，方便继续跟进学生画像。',
+      ),
+    ],
     memberTiers: [
       ClassTierRecord(
         label: '培优层',
