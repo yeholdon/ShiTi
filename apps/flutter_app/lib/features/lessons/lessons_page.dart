@@ -67,6 +67,10 @@ class _LessonsPageState extends State<LessonsPage> {
       arguments: DocumentsPageArgs(
         focusDocumentId: lesson.documentId,
         flashMessage: '已定位到 ${lesson.documentFocus}，可继续整理这节课使用的资料。',
+        highlightTitle: '当前课堂资料',
+        highlightDetail:
+            '${lesson.documentFocus} 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
+        feedbackBadgeLabel: '课堂资料',
       ),
     );
   }

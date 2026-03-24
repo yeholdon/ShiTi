@@ -67,6 +67,10 @@ class _ClassesPageState extends State<ClassesPage> {
       arguments: DocumentsPageArgs(
         focusDocumentId: classroom.documentId,
         flashMessage: '已定位到 ${classroom.latestDocLabel}，可继续整理班级资料。',
+        highlightTitle: '当前班级资料',
+        highlightDetail:
+            '${classroom.latestDocLabel} 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
+        feedbackBadgeLabel: '班级资料',
       ),
     );
   }

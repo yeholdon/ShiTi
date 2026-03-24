@@ -66,6 +66,10 @@ class _StudentsPageState extends State<StudentsPage> {
       arguments: DocumentsPageArgs(
         focusDocumentId: student.documentId,
         flashMessage: '已定位到 ${student.documentName}，可继续整理学生跟进资料。',
+        highlightTitle: '当前学生跟进资料',
+        highlightDetail:
+            '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
+        feedbackBadgeLabel: '学生跟进',
       ),
     );
   }
