@@ -61,7 +61,7 @@ class AppRouter {
     switch (settings.name) {
       case exports:
         final args = settings.arguments as ExportsPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => ExportsPage(args: args),
           settings: settings,
         );
@@ -115,13 +115,13 @@ class AppRouter {
         );
       case documents:
         final args = settings.arguments as DocumentsPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => DocumentsPage(args: args),
           settings: settings,
         );
       case students:
         final args = settings.arguments as StudentsPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => StudentsPage(args: args),
           settings: settings,
         );
@@ -135,7 +135,7 @@ class AppRouter {
         );
       case classes:
         final args = settings.arguments as ClassesPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => ClassesPage(args: args),
           settings: settings,
         );
@@ -149,7 +149,7 @@ class AppRouter {
         );
       case lessons:
         final args = settings.arguments as LessonsPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => LessonsPage(args: args),
           settings: settings,
         );
@@ -162,7 +162,7 @@ class AppRouter {
           settings: settings,
         );
       case AppRouter.settings:
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => const SettingsPage(),
           settings: settings,
         );
@@ -180,7 +180,7 @@ class AppRouter {
           settings: settings,
         );
       case account:
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => const AccountPage(),
           settings: settings,
         );
@@ -196,16 +196,28 @@ class AppRouter {
         );
       case library:
         final args = settings.arguments as LibraryPageArgs?;
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => LibraryPage(args: args),
           settings: settings,
         );
       case home:
       default:
-        return MaterialPageRoute<void>(
+        return _workspaceModuleRoute(
           builder: (_) => const HomePage(),
           settings: settings,
         );
     }
+  }
+
+  static Route<void> _workspaceModuleRoute({
+    required WidgetBuilder builder,
+    required RouteSettings settings,
+  }) {
+    return PageRouteBuilder<void>(
+      settings: settings,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+    );
   }
 }
