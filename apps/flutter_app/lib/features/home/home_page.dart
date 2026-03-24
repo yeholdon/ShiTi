@@ -254,6 +254,9 @@ class _HomePageState extends State<HomePage> {
       focusBasketLabel: '$basketCount 题',
       focusDocumentLabel: '$documentCount 份',
       focusExportLabel: latestExport?.updatedAtLabel ?? '暂无导出',
+      focusStudentLabel: students.isEmpty ? '暂无学生' : students.first.name,
+      focusClassLabel: classes.isEmpty ? '暂无班级' : classes.first.name,
+      focusLessonLabel: lessons.isEmpty ? '暂无课堂' : lessons.first.title,
       questionCount: questionCount,
       documentCount: documentCount,
       basketCount: basketCount,
@@ -314,6 +317,9 @@ class _HomePageState extends State<HomePage> {
       focusBasketLabel: '待连接',
       focusDocumentLabel: '待连接',
       focusExportLabel: '待连接',
+      focusStudentLabel: '待连接',
+      focusClassLabel: '待连接',
+      focusLessonLabel: '待连接',
       questionCount: 0,
       documentCount: 0,
       basketCount: 0,
@@ -493,6 +499,15 @@ class _HomePageState extends State<HomePage> {
           PrimaryAppSection.exports,
           resetScrollOffset: true,
         );
+        return;
+      case _WorkspaceFocusTarget.students:
+        navigateToWorkspaceModule(context, WorkspaceModule.students);
+        return;
+      case _WorkspaceFocusTarget.classes:
+        navigateToWorkspaceModule(context, WorkspaceModule.classes);
+        return;
+      case _WorkspaceFocusTarget.lessons:
+        navigateToWorkspaceModule(context, WorkspaceModule.lessons);
         return;
       case _WorkspaceFocusTarget.none:
         return;
@@ -1650,6 +1665,9 @@ class _HeroPanel extends StatelessWidget {
     final basketLabel = hasError ? '需处理' : data?.focusBasketLabel ?? '--';
     final documentLabel = hasError ? '需处理' : data?.focusDocumentLabel ?? '--';
     final exportLabel = hasError ? '需处理' : data?.focusExportLabel ?? '--';
+    final studentLabel = hasError ? '需处理' : data?.focusStudentLabel ?? '--';
+    final classLabel = hasError ? '需处理' : data?.focusClassLabel ?? '--';
+    final lessonLabel = hasError ? '需处理' : data?.focusLessonLabel ?? '--';
     final errorMessage = _workspaceLoadMessage(error);
     return WorkspacePanel(
       padding: workspacePanelPadding(
@@ -1738,6 +1756,21 @@ class _HeroPanel extends StatelessWidget {
             value: exportLabel,
             onTap: () => onOpenFocus(_WorkspaceFocusTarget.exports),
           ),
+          _FocusMetric(
+            label: '学生',
+            value: studentLabel,
+            onTap: () => onOpenFocus(_WorkspaceFocusTarget.students),
+          ),
+          _FocusMetric(
+            label: '班级',
+            value: classLabel,
+            onTap: () => onOpenFocus(_WorkspaceFocusTarget.classes),
+          ),
+          _FocusMetric(
+            label: '课堂',
+            value: lessonLabel,
+            onTap: () => onOpenFocus(_WorkspaceFocusTarget.lessons),
+          ),
         ],
       ),
     );
@@ -1816,6 +1849,9 @@ enum _WorkspaceFocusTarget {
   basket,
   documents,
   exports,
+  students,
+  classes,
+  lessons,
 }
 
 class _SummaryCardData {
@@ -2367,6 +2403,9 @@ class _WorkspaceSnapshot {
     required this.focusBasketLabel,
     required this.focusDocumentLabel,
     required this.focusExportLabel,
+    required this.focusStudentLabel,
+    required this.focusClassLabel,
+    required this.focusLessonLabel,
     required this.questionCount,
     required this.documentCount,
     required this.basketCount,
@@ -2378,6 +2417,9 @@ class _WorkspaceSnapshot {
   final String focusBasketLabel;
   final String focusDocumentLabel;
   final String focusExportLabel;
+  final String focusStudentLabel;
+  final String focusClassLabel;
+  final String focusLessonLabel;
   final int questionCount;
   final int documentCount;
   final int basketCount;

@@ -1039,3 +1039,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 课堂工作页和课堂详情页已接入真实 `lessons` / `lessons/:id` API，非 mock 模式下改为后端加载，并补齐了加载态、失败态和空态。
 - [x] Flutter: 首页工作台摘要已接入真实学生、班级、课堂数量与重点对象，非 mock 模式下不再只展示题库/文档/导出三块规模卡。
 - [x] Flutter: 首页“最近任务”已接入真实学生、班级、课堂对象，非 mock 模式下可直接从工作台跳到真实学生/班级/课堂上下文。
+- [x] Flutter: 首页“当前聚焦”已扩展到真实学生、班级、课堂对象，非 mock 模式下可直接从工作台聚焦栏跳入这三类真实上下文。
