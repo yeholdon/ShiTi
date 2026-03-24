@@ -278,6 +278,149 @@ class LessonDetailPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
+                              '资料清单',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...lesson.assetRecords.map(
+                              (asset) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: TelegramPalette.border,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              asset.label,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: TelegramPalette.text,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          WorkspaceMetricPill(
+                                            label: asset.kindLabel,
+                                            value: asset.statusLabel,
+                                            highlight: asset.statusLabel
+                                                .contains('待'),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        asset.detail,
+                                        style: const TextStyle(
+                                          height: 1.5,
+                                          color: TelegramPalette.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '任务清单',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...lesson.taskRecords.map(
+                              (task) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: TelegramPalette.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: TelegramPalette.border,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              task.label,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: TelegramPalette.text,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          WorkspaceMetricPill(
+                                            label: '状态',
+                                            value: task.statusLabel,
+                                            highlight: task.statusLabel
+                                                .contains('待'),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        task.detail,
+                                        style: const TextStyle(
+                                          height: 1.5,
+                                          color: TelegramPalette.textMuted,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      WorkspaceInfoPill(
+                                        label: '责任归属',
+                                        value: task.ownerLabel,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
                               '反馈明细',
                               style: TextStyle(
                                 fontSize: 22,

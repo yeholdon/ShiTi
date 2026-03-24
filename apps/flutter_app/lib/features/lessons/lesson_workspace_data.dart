@@ -10,6 +10,34 @@ class LessonFeedbackRecord {
   final String detail;
 }
 
+class LessonAssetRecord {
+  const LessonAssetRecord({
+    required this.label,
+    required this.kindLabel,
+    required this.statusLabel,
+    required this.detail,
+  });
+
+  final String label;
+  final String kindLabel;
+  final String statusLabel;
+  final String detail;
+}
+
+class LessonTaskRecord {
+  const LessonTaskRecord({
+    required this.label,
+    required this.ownerLabel,
+    required this.statusLabel,
+    required this.detail,
+  });
+
+  final String label;
+  final String ownerLabel;
+  final String statusLabel;
+  final String detail;
+}
+
 class LessonWorkspaceRecord {
   const LessonWorkspaceRecord({
     required this.id,
@@ -28,6 +56,8 @@ class LessonWorkspaceRecord {
     required this.followUpLabel,
     required this.feedbackInsight,
     required this.feedbackRecords,
+    required this.assetRecords,
+    required this.taskRecords,
     required this.summary,
     required this.highlights,
     required this.nextStep,
@@ -49,6 +79,8 @@ class LessonWorkspaceRecord {
   final String followUpLabel;
   final String feedbackInsight;
   final List<LessonFeedbackRecord> feedbackRecords;
+  final List<LessonAssetRecord> assetRecords;
+  final List<LessonTaskRecord> taskRecords;
   final String summary;
   final List<String> highlights;
   final String nextStep;
@@ -86,6 +118,34 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         label: '课堂参与',
         status: '待整理',
         detail: '课堂追问记录已在教师侧完成，待沉淀到学生画像。',
+      ),
+    ],
+    assetRecords: [
+      LessonAssetRecord(
+        label: '二次函数周测卷',
+        kindLabel: '试卷',
+        statusLabel: '已上课',
+        detail: '本节课堂先用周测卷复盘，定位压轴题表达链条。',
+      ),
+      LessonAssetRecord(
+        label: '压轴题拆解讲义',
+        kindLabel: '讲义',
+        statusLabel: '待补充',
+        detail: '需要补一页压轴题拆解讲义，承接课后复盘和下节专题课。',
+      ),
+    ],
+    taskRecords: [
+      LessonTaskRecord(
+        label: '回收 5 名重点学生口头讲解',
+        ownerLabel: '课堂记录',
+        statusLabel: '待处理',
+        detail: '先补齐重点学生口头讲解，再回写到学生画像。',
+      ),
+      LessonTaskRecord(
+        label: '整理函数压轴题订正稿',
+        ownerLabel: '课后任务',
+        statusLabel: '进行中',
+        detail: '已收回一半订正稿，剩余部分需要在晚自习后补齐。',
       ),
     ],
     summary: '这节课会先复盘周测卷，再补一页压轴题拆解讲义，课后需要回收错题与口头讲解反馈。',
@@ -129,6 +189,34 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         detail: '高频卡点已提炼，可直接回流到下轮讲义。',
       ),
     ],
+    assetRecords: [
+      LessonAssetRecord(
+        label: '相似三角形讲义',
+        kindLabel: '讲义',
+        statusLabel: '已使用',
+        detail: '讲义版式和例题顺序已稳定，可直接承接短测回看。',
+      ),
+      LessonAssetRecord(
+        label: '相似三角形短测卷',
+        kindLabel: '试卷',
+        statusLabel: '待排版',
+        detail: '短测卷还要补齐两道层级题，再进入周末班级复盘。',
+      ),
+    ],
+    taskRecords: [
+      LessonTaskRecord(
+        label: '沉淀讲义反馈到班级分层',
+        ownerLabel: '班级跟进',
+        statusLabel: '待处理',
+        detail: '需要把课堂追问中的高频卡点拆回提优层和跟进层。',
+      ),
+      LessonTaskRecord(
+        label: '补周末短测卷',
+        ownerLabel: '资料准备',
+        statusLabel: '待开始',
+        detail: '按本节课讲义重点补一份短测卷，验证分层效果。',
+      ),
+    ],
     summary: '本节以讲义推进为主，重点看例题拆解、课堂追问和课后短测之间的衔接。',
     highlights: [
       '讲义版式已经稳定，重点优化课堂追问节奏。',
@@ -168,6 +256,34 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         label: '模型识别',
         status: '样例跟进',
         detail: '本节先跑样例课堂，验证反馈能否回流到个人工作区。',
+      ),
+    ],
+    assetRecords: [
+      LessonAssetRecord(
+        label: '力学模型讲义',
+        kindLabel: '讲义',
+        statusLabel: '排版中',
+        detail: '图示和板书提示还在微调，课堂前需要完成最终导出。',
+      ),
+      LessonAssetRecord(
+        label: '图像辨析短练',
+        kindLabel: '练习',
+        statusLabel: '待创建',
+        detail: '计划在课堂后段使用，帮助收图像信息提取反馈。',
+      ),
+    ],
+    taskRecords: [
+      LessonTaskRecord(
+        label: '确认讲义图示清晰度',
+        ownerLabel: '资料复核',
+        statusLabel: '待确认',
+        detail: '课堂后需要确认讲义图示是否足够清晰，决定是否追加重排版。',
+      ),
+      LessonTaskRecord(
+        label: '回写模型识别反馈',
+        ownerLabel: '个人工作区',
+        statusLabel: '样例跟进',
+        detail: '把课堂里采到的模型识别反馈先回流到个人工作区样例链路。',
       ),
     ],
     summary: '课堂重点是把模型图像和文字描述拆开讲，当前最需要把讲义中的示意图和板书节奏补完整。',
