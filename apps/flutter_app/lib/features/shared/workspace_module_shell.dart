@@ -101,7 +101,21 @@ class WorkspaceModuleShell extends StatelessWidget {
                             ),
                           ),
                         ),
-                      Expanded(child: body),
+                      Expanded(
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0x00FFFFFF),
+                                Color(0xB8F7FBFF),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                          child: body,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -467,7 +481,7 @@ const List<_WorkspaceRailItem> _primaryModules = <_WorkspaceRailItem>[
   ),
   _WorkspaceRailItem(
     module: WorkspaceModule.lessons,
-    icon: Icons.cast_for_education_outlined,
+    icon: Icons.schedule_outlined,
     label: '课堂管理',
   ),
   _WorkspaceRailItem(

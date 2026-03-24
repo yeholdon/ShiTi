@@ -120,7 +120,7 @@ class WorkspaceBackdrop extends StatelessWidget {
             right: 60,
             child: _GlowOrb(
               size: 240,
-              color: Color(0x3067B7FF),
+              color: Color(0x1267B7FF),
             ),
           ),
           const Positioned.fill(

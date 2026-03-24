@@ -1013,3 +1013,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 课堂详情页新增首版“反馈明细”分区，开始承接课堂模型里的课后反馈与回收状态。
 - [x] Flutter: 学生详情页新增首版“错题跟进”分区，开始承接学生模型里的错题状态与后续跟进行动。
 - [x] Flutter: 班级详情页新增首版“课堂时间线”分区，开始承接班级模型里的不同课堂节点、资料准备状态与跟进焦点。
+- [x] Flutter: 工作台 shell 内容区补了中性底层填充，并弱化 backdrop 底部发光层，避免首页内容较短时下方直接漏出彩色空白。
