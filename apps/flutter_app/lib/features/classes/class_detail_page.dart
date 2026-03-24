@@ -12,6 +12,7 @@ import '../../router/app_router.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../students/student_workspace_data.dart';
 import 'class_workspace_data.dart';
 
 class ClassDetailPage extends StatelessWidget {
@@ -43,6 +44,9 @@ class ClassDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final classroom = findClassWorkspaceRecord(classId);
+    final relatedStudents = sampleStudentRecords
+        .where((student) => student.classId == classId)
+        .toList(growable: false);
     final activeTenant = AppServices.instance.activeTenant;
     final tenantScope = activeTenant == null
         ? '未选择机构'
@@ -273,6 +277,134 @@ class ClassDetailPage extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (relatedStudents.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        WorkspacePanel(
+                          padding: workspacePanelPadding(context),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '重点学生',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: TelegramPalette.text,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ...relatedStudents.map(
+                                (student) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: TelegramPalette.surfaceRaised,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: TelegramPalette.border,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    student.name,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          TelegramPalette.text,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    student.summary,
+                                                    style: const TextStyle(
+                                                      height: 1.5,
+                                                      color: TelegramPalette
+                                                          .textMuted,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            WorkspaceMetricPill(
+                                              label: '当前成绩',
+                                              value: student.scoreLabel,
+                                              highlight: student.followUpLevel
+                                                  .contains(
+                                                '重点',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Wrap(
+                                          spacing: 10,
+                                          runSpacing: 10,
+                                          children: [
+                                            WorkspaceInfoPill(
+                                              label: '趋势',
+                                              value: student.historyTrendLabel,
+                                            ),
+                                            WorkspaceInfoPill(
+                                              label: '错题',
+                                              value: student.wrongCountLabel,
+                                            ),
+                                            WorkspaceInfoPill(
+                                              label: '跟进级别',
+                                              value: student.followUpLevel,
+                                              highlight: student.followUpLevel
+                                                  .contains(
+                                                '重点',
+                                              ),
+                                            ),
+                                            OutlinedButton.icon(
+                                              onPressed: () {
+                                                Navigator.of(context).pushNamed(
+                                                  AppRouter.studentDetail,
+                                                  arguments: StudentDetailArgs(
+                                                    studentId: student.id,
+                                                    flashMessage:
+                                                        '已从 ${classroom.name} 的重点学生区进入 ${student.name}，可继续回看学生画像。',
+                                                    sourceModule: 'classes',
+                                                    sourceRecordId:
+                                                        classroom.id,
+                                                    sourceLabel: classroom.name,
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.school_outlined,
+                                                size: 18,
+                                              ),
+                                              label: Text(
+                                                '查看${student.name}详情',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       WorkspacePanel(
                         padding: workspacePanelPadding(context),
