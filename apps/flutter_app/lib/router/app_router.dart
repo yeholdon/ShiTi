@@ -9,6 +9,7 @@ import '../core/models/exports_page_args.dart';
 import '../core/models/library_page_args.dart';
 import '../core/models/lessons_page_args.dart';
 import '../core/models/question_basket_page_args.dart';
+import '../core/models/student_detail_args.dart';
 import '../core/models/students_page_args.dart';
 import '../features/account/account_page.dart';
 import '../features/auth/login_page.dart';
@@ -24,6 +25,7 @@ import '../features/library/library_page.dart';
 import '../features/library/question_detail_page.dart';
 import '../features/lessons/lessons_page.dart';
 import '../features/settings/settings_page.dart';
+import '../features/students/student_detail_page.dart';
 import '../features/students/students_page.dart';
 import '../features/tenants/tenant_switch_page.dart';
 import '../features/tenants/tenant_members_page.dart';
@@ -44,6 +46,7 @@ class AppRouter {
   static const exportDetail = '/exports/detail';
   static const exportResult = '/exports/result';
   static const students = '/students';
+  static const studentDetail = '/students/detail';
   static const classes = '/classes';
   static const lessons = '/lessons';
   static const settings = '/settings';
@@ -114,6 +117,14 @@ class AppRouter {
         final args = settings.arguments as StudentsPageArgs?;
         return MaterialPageRoute<void>(
           builder: (_) => StudentsPage(args: args),
+          settings: settings,
+        );
+      case studentDetail:
+        final args = settings.arguments as StudentDetailArgs?;
+        return MaterialPageRoute<void>(
+          builder: (_) => StudentDetailPage.fromArgs(
+            args ?? const StudentDetailArgs(studentId: 'student-1'),
+          ),
           settings: settings,
         );
       case classes:

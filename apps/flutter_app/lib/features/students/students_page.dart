@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/classes_page_args.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/lessons_page_args.dart';
+import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
@@ -12,6 +13,7 @@ import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
+import 'student_workspace_data.dart';
 
 enum _StudentFilter {
   all('全部学生'),
@@ -35,9 +37,9 @@ class StudentsPage extends StatefulWidget {
 class _StudentsPageState extends State<StudentsPage> {
   _StudentFilter _filter = _StudentFilter.all;
   late String _selectedStudentId =
-      widget.args?.focusStudentId ?? _studentRecords.first.id;
+      widget.args?.focusStudentId ?? sampleStudentRecords.first.id;
 
-  void _openClass(_StudentRecord student) {
+  void _openClass(StudentWorkspaceRecord student) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.classes,
       (route) => false,
@@ -52,7 +54,7 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
-  void _openLesson(_StudentRecord student) {
+  void _openLesson(StudentWorkspaceRecord student) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.lessons,
       (route) => false,
@@ -67,7 +69,7 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
-  void _openDocument(_StudentRecord student) {
+  void _openDocument(StudentWorkspaceRecord student) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRouter.documents,
       (route) => false,
@@ -82,6 +84,16 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
+  void _openDetail(StudentWorkspaceRecord student) {
+    Navigator.of(context).pushNamed(
+      AppRouter.studentDetail,
+      arguments: StudentDetailArgs(
+        studentId: student.id,
+        flashMessage: '已从学生工作页进入 ${student.name} 的详情档案。',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -90,7 +102,7 @@ class _StudentsPageState extends State<StudentsPage> {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
-    final filteredRecords = _studentRecords
+    final filteredRecords = sampleStudentRecords
         .where((student) => switch (_filter) {
               _StudentFilter.all => true,
               _StudentFilter.risk => student.followUpLevel == '重点跟进',
@@ -102,7 +114,7 @@ class _StudentsPageState extends State<StudentsPage> {
       (student) => student.id == _selectedStudentId,
       orElse: () => filteredRecords.isNotEmpty
           ? filteredRecords.first
-          : _studentRecords.first,
+          : sampleStudentRecords.first,
     );
     final highlightTitle = widget.args?.highlightTitle;
     final highlightDetail = widget.args?.highlightDetail;
@@ -141,15 +153,15 @@ class _StudentsPageState extends State<StudentsPage> {
                 padding: workspacePagePadding(context),
                 children: [
                   _StudentHeroSection(
-                    totalCount: _studentRecords.length,
-                    riskCount: _studentRecords
+                    totalCount: sampleStudentRecords.length,
+                    riskCount: sampleStudentRecords
                         .where((student) => student.followUpLevel == '重点跟进')
                         .length,
-                    linkedClassCount: _studentRecords
+                    linkedClassCount: sampleStudentRecords
                         .map((student) => student.className)
                         .toSet()
                         .length,
-                    trackedWrongCount: _studentRecords.fold<int>(
+                    trackedWrongCount: sampleStudentRecords.fold<int>(
                       0,
                       (sum, student) => sum + student.wrongCount,
                     ),
@@ -184,7 +196,7 @@ class _StudentsPageState extends State<StudentsPage> {
                                             student.id == _selectedStudentId,
                                       )) {
                                         _selectedStudentId =
-                                            _studentRecords.first.id;
+                                            sampleStudentRecords.first.id;
                                       }
                                     });
                                   },
@@ -300,6 +312,7 @@ class _StudentsPageState extends State<StudentsPage> {
                           child: _StudentRosterPanel(
                             records: filteredRecords,
                             selectedStudentId: selectedRecord.id,
+                            onOpenDetail: _openDetail,
                             onSelect: (studentId) {
                               setState(() {
                                 _selectedStudentId = studentId;
@@ -312,6 +325,7 @@ class _StudentsPageState extends State<StudentsPage> {
                           flex: 3,
                           child: _StudentDetailRail(
                             student: selectedRecord,
+                            onOpenDetail: () => _openDetail(selectedRecord),
                             onOpenClass: () => _openClass(selectedRecord),
                             onOpenLesson: () => _openLesson(selectedRecord),
                             onOpenDocument: () => _openDocument(selectedRecord),
@@ -322,6 +336,7 @@ class _StudentsPageState extends State<StudentsPage> {
                   else ...[
                     _StudentDetailRail(
                       student: selectedRecord,
+                      onOpenDetail: () => _openDetail(selectedRecord),
                       onOpenClass: () => _openClass(selectedRecord),
                       onOpenLesson: () => _openLesson(selectedRecord),
                       onOpenDocument: () => _openDocument(selectedRecord),
@@ -330,6 +345,7 @@ class _StudentsPageState extends State<StudentsPage> {
                     _StudentRosterPanel(
                       records: filteredRecords,
                       selectedStudentId: selectedRecord.id,
+                      onOpenDetail: _openDetail,
                       onSelect: (studentId) {
                         setState(() {
                           _selectedStudentId = studentId;
@@ -414,11 +430,13 @@ class _StudentRosterPanel extends StatelessWidget {
   const _StudentRosterPanel({
     required this.records,
     required this.selectedStudentId,
+    required this.onOpenDetail,
     required this.onSelect,
   });
 
-  final List<_StudentRecord> records;
+  final List<StudentWorkspaceRecord> records;
   final String selectedStudentId;
+  final ValueChanged<StudentWorkspaceRecord> onOpenDetail;
   final ValueChanged<String> onSelect;
 
   @override
@@ -452,6 +470,7 @@ class _StudentRosterPanel extends StatelessWidget {
                 student: student,
                 selected: student.id == selectedStudentId,
                 onTap: () => onSelect(student.id),
+                onOpenDetail: () => onOpenDetail(student),
               ),
             ),
           ),
@@ -466,11 +485,13 @@ class _StudentCard extends StatelessWidget {
     required this.student,
     required this.selected,
     required this.onTap,
+    required this.onOpenDetail,
   });
 
-  final _StudentRecord student;
+  final StudentWorkspaceRecord student;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -524,6 +545,11 @@ class _StudentCard extends StatelessWidget {
                     value: student.followUpLevel,
                     highlight: student.followUpLevel == '重点跟进',
                   ),
+                  IconButton(
+                    onPressed: onOpenDetail,
+                    tooltip: '查看学生详情',
+                    icon: const Icon(Icons.open_in_new_outlined),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -557,12 +583,14 @@ class _StudentCard extends StatelessWidget {
 class _StudentDetailRail extends StatelessWidget {
   const _StudentDetailRail({
     required this.student,
+    required this.onOpenDetail,
     required this.onOpenClass,
     required this.onOpenLesson,
     required this.onOpenDocument,
   });
 
-  final _StudentRecord student;
+  final StudentWorkspaceRecord student;
+  final VoidCallback onOpenDetail;
   final VoidCallback onOpenClass;
   final VoidCallback onOpenLesson;
   final VoidCallback onOpenDocument;
@@ -641,6 +669,11 @@ class _StudentDetailRail extends StatelessWidget {
             runSpacing: 10,
             children: [
               OutlinedButton.icon(
+                onPressed: onOpenDetail,
+                icon: const Icon(Icons.person_search_outlined, size: 18),
+                label: const Text('查看学生详情'),
+              ),
+              OutlinedButton.icon(
                 onPressed: onOpenClass,
                 icon: const Icon(Icons.groups_outlined, size: 18),
                 label: Text('查看${student.className}'),
@@ -667,135 +700,3 @@ class _StudentDetailRail extends StatelessWidget {
     );
   }
 }
-
-class _StudentRecord {
-  const _StudentRecord({
-    required this.id,
-    required this.name,
-    required this.classId,
-    required this.className,
-    required this.lessonId,
-    required this.documentId,
-    required this.documentName,
-    required this.gradeLabel,
-    required this.subjectLabel,
-    required this.textbookLabel,
-    required this.trendLabel,
-    required this.habitTag,
-    required this.habitInsight,
-    required this.followUpLevel,
-    required this.summary,
-    required this.scoreLabel,
-    required this.historyTrendLabel,
-    required this.wrongCountLabel,
-    required this.wrongCount,
-    required this.highlights,
-    required this.nextStep,
-  });
-
-  final String id;
-  final String name;
-  final String classId;
-  final String className;
-  final String lessonId;
-  final String documentId;
-  final String documentName;
-  final String gradeLabel;
-  final String subjectLabel;
-  final String textbookLabel;
-  final String trendLabel;
-  final String habitTag;
-  final String habitInsight;
-  final String followUpLevel;
-  final String summary;
-  final String scoreLabel;
-  final String historyTrendLabel;
-  final String wrongCountLabel;
-  final int wrongCount;
-  final List<String> highlights;
-  final String nextStep;
-}
-
-const List<_StudentRecord> _studentRecords = [
-  _StudentRecord(
-    id: 'student-1',
-    name: '林之涵',
-    classId: 'class-1',
-    className: '九年级尖子班',
-    lessonId: 'lesson-1',
-    documentId: 'doc-2',
-    documentName: '二次函数周测卷',
-    gradeLabel: '初中 · 九年级下',
-    subjectLabel: '数学',
-    textbookLabel: '浙教版',
-    trendLabel: '近期进步',
-    habitTag: '订正及时',
-    habitInsight: '课后会主动回看讲义边注，订正完成度高，适合逐步增加开放题表达训练。',
-    followUpLevel: '常规关注',
-    summary: '最近两次函数专题测试稳步提升，几何综合题仍然需要在证明链条上加强拆解。',
-    scoreLabel: '92 / 100',
-    historyTrendLabel: '86 → 89 → 92',
-    wrongCountLabel: '6 道',
-    wrongCount: 6,
-    highlights: [
-      '相似三角形与二次函数综合题开始具备完整表达。',
-      '课堂互动积极，课后讲义订正完成度高。',
-      '可以逐步提高压轴题和开放题比重。',
-    ],
-    nextStep: '下一轮讲义里增加 2 道几何压轴题，并安排一次口头讲解复盘。',
-  ),
-  _StudentRecord(
-    id: 'student-2',
-    name: '徐若楠',
-    classId: 'class-2',
-    className: '九年级提高班',
-    lessonId: 'lesson-2',
-    documentId: 'doc-1',
-    documentName: '九上相似专题讲义',
-    gradeLabel: '初中 · 九年级下',
-    subjectLabel: '数学',
-    textbookLabel: '浙教版',
-    trendLabel: '波动明显',
-    habitTag: '审题偏快',
-    habitInsight: '课堂中容易直接下笔，跳过已知条件整理，适合在讲义里加入审题停顿框。',
-    followUpLevel: '重点跟进',
-    summary: '函数图像题失分较多，课堂作答时容易跳步骤，需要把题干拆解与审题节奏纳入跟进。',
-    scoreLabel: '71 / 100',
-    historyTrendLabel: '78 → 69 → 71',
-    wrongCountLabel: '14 道',
-    wrongCount: 14,
-    highlights: [
-      '函数图像题和表格信息题错误集中。',
-      '错题订正完成，但口头复述仍不稳定。',
-      '需要通过讲义中的“已知/求证”拆解框减缓审题节奏。',
-    ],
-    nextStep: '下节课前单独推送函数图像复盘讲义，并在课堂里安排一次分步板演。',
-  ),
-  _StudentRecord(
-    id: 'student-3',
-    name: '陈嘉言',
-    classId: 'class-3',
-    className: '个人工作区样例',
-    lessonId: 'lesson-3',
-    documentId: 'doc-1',
-    documentName: '九上相似专题讲义',
-    gradeLabel: '高中 · 高一',
-    subjectLabel: '物理',
-    textbookLabel: '人教版',
-    trendLabel: '稳定',
-    habitTag: '错题回看',
-    habitInsight: '习惯在课后回看错题与讲义边注，适合用个人工作区持续沉淀单人学习轨迹。',
-    followUpLevel: '常规关注',
-    summary: '力学计算题完成度稳定，个人工作区里重点跟踪的是错题回看的频次与课堂反馈衔接。',
-    scoreLabel: '84 / 100',
-    historyTrendLabel: '81 → 83 → 84',
-    wrongCountLabel: '9 道',
-    wrongCount: 9,
-    highlights: [
-      '习惯在课后回看错题与讲义边注。',
-      '需要强化图像信息提取和物理量转化。',
-      '适合作为个人工作区样例，后续验证课堂反馈回流。',
-    ],
-    nextStep: '将下一次课堂反馈与错题标签联动，验证个人工作区闭环。',
-  ),
-];
