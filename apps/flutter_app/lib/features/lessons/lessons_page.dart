@@ -93,6 +93,10 @@ class _LessonsPageState extends State<LessonsPage> {
                         .where((focus) => focus.isNotEmpty)
                         .toSet()
                         .length,
+                    linkedClassCount: _lessonRecords
+                        .map((lesson) => lesson.className)
+                        .toSet()
+                        .length,
                   ),
                   const SizedBox(height: 18),
                   WorkspacePanel(
@@ -181,11 +185,13 @@ class _LessonHeroSection extends StatelessWidget {
     required this.lessonCount,
     required this.feedbackCount,
     required this.linkedDocsCount,
+    required this.linkedClassCount,
   });
 
   final int lessonCount;
   final int feedbackCount;
   final int linkedDocsCount;
+  final int linkedClassCount;
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +234,7 @@ class _LessonHeroSection extends StatelessWidget {
                 highlight: feedbackCount > 0,
               ),
               WorkspaceMetricPill(label: '联动资料', value: '$linkedDocsCount'),
-              const WorkspaceMetricPill(label: '当前模式', value: '课堂时间线'),
+              WorkspaceMetricPill(label: '关联班级', value: '$linkedClassCount'),
             ],
           ),
         ],
@@ -359,8 +365,9 @@ class _LessonCard extends StatelessWidget {
                 runSpacing: 10,
                 children: [
                   WorkspaceInfoPill(label: '课堂状态', value: lesson.scheduleTag),
-                  WorkspaceInfoPill(label: '资料联动', value: lesson.documentFocus),
-                  WorkspaceInfoPill(label: '课后任务', value: lesson.followUpLabel),
+                  WorkspaceInfoPill(label: '关联班级', value: lesson.classScopeLabel),
+                  WorkspaceInfoPill(label: '主资料', value: lesson.documentFocus),
+                  WorkspaceInfoPill(label: '任务', value: lesson.followUpLabel),
                 ],
               ),
               const SizedBox(height: 14),
@@ -423,7 +430,14 @@ class _LessonDetailRail extends StatelessWidget {
             children: [
               WorkspaceMetricPill(label: '主资料', value: lesson.documentFocus),
               WorkspaceMetricPill(label: '反馈', value: lesson.feedbackStatus),
+              WorkspaceMetricPill(label: '关联班级', value: lesson.classScopeLabel),
+              WorkspaceMetricPill(label: '课后任务', value: lesson.followUpLabel),
             ],
+          ),
+          const SizedBox(height: 16),
+          WorkspaceMessageBanner.warning(
+            title: '课后反馈',
+            message: lesson.feedbackInsight,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -459,9 +473,11 @@ class _LessonRecord {
     required this.teacherLabel,
     required this.scheduleLabel,
     required this.scheduleTag,
+    required this.classScopeLabel,
     required this.documentFocus,
     required this.feedbackStatus,
     required this.followUpLabel,
+    required this.feedbackInsight,
     required this.summary,
     required this.highlights,
     required this.nextStep,
@@ -473,9 +489,11 @@ class _LessonRecord {
   final String teacherLabel;
   final String scheduleLabel;
   final String scheduleTag;
+  final String classScopeLabel;
   final String documentFocus;
   final String feedbackStatus;
   final String followUpLabel;
+  final String feedbackInsight;
   final String summary;
   final List<String> highlights;
   final String nextStep;
@@ -489,9 +507,11 @@ const List<_LessonRecord> _lessonRecords = [
     teacherLabel: '主讲：陈老师',
     scheduleLabel: '周三 19:00 - 20:30',
     scheduleTag: '本周进行',
+    classScopeLabel: '九年级尖子班',
     documentFocus: '二次函数周测卷',
     feedbackStatus: '待回收',
     followUpLabel: '补讲义',
+    feedbackInsight: '本节课后要重点回收压轴题口头讲解、错题订正和课堂参与反馈，方便回写学生画像。',
     summary: '这节课会先复盘周测卷，再补一页压轴题拆解讲义，课后需要回收错题与口头讲解反馈。',
     highlights: [
       '主资料是试卷 + 补充讲义，课堂结构更像复盘课。',
@@ -507,9 +527,11 @@ const List<_LessonRecord> _lessonRecords = [
     teacherLabel: '主讲：沈老师',
     scheduleLabel: '周四 18:30 - 20:00',
     scheduleTag: '本周进行',
+    classScopeLabel: '九年级提高班',
     documentFocus: '相似三角形讲义',
     feedbackStatus: '已回收',
     followUpLabel: '短测跟进',
+    feedbackInsight: '讲义反馈已收齐，下一轮重点是把课堂追问和课后短测结果重新沉淀到班级分层任务里。',
     summary: '本节以讲义推进为主，重点看例题拆解、课堂追问和课后短测之间的衔接。',
     highlights: [
       '讲义版式已经稳定，重点优化课堂追问节奏。',
@@ -525,9 +547,11 @@ const List<_LessonRecord> _lessonRecords = [
     teacherLabel: '主讲：周老师',
     scheduleLabel: '下周一 19:30 - 21:00',
     scheduleTag: '待准备',
+    classScopeLabel: '高一物理培优班',
     documentFocus: '力学模型讲义',
     feedbackStatus: '待回收',
     followUpLabel: '资料待排版',
+    feedbackInsight: '这节课的反馈重点是图像信息提取、模型识别和讲义图示是否足够清晰，适合先跑课堂样例。',
     summary: '课堂重点是把模型图像和文字描述拆开讲，当前最需要把讲义中的示意图和板书节奏补完整。',
     highlights: [
       '当前资料还在排版阶段，课堂前需完成最终导出。',
