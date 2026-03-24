@@ -26,15 +26,26 @@ window_margin_top="${CAPTURE_WINDOW_MARGIN_TOP:-24}"
 window_margin_right="${CAPTURE_WINDOW_MARGIN_RIGHT:-0}"
 window_margin_bottom="${CAPTURE_WINDOW_MARGIN_BOTTOM:-0}"
 lock_dir="${CAPTURE_LOCK_DIR:-/tmp/shiti-edge-capture.lock}"
+lock_pid_file="$lock_dir/pid"
 
 mkdir -p "$(dirname "$output_path")"
 
 while ! mkdir "$lock_dir" 2>/dev/null; do
+  if [[ -f "$lock_pid_file" ]]; then
+    lock_holder_pid="$(cat "$lock_pid_file" 2>/dev/null || true)"
+    if [[ -n "$lock_holder_pid" ]] && ! kill -0 "$lock_holder_pid" 2>/dev/null; then
+      rm -rf "$lock_dir"
+      continue
+    fi
+  fi
   sleep 0.2
 done
+echo "$$" >"$lock_pid_file"
 
 cleanup() {
-  rm -rf "$lock_dir"
+  if [[ ! -f "$lock_pid_file" ]] || [[ "$(cat "$lock_pid_file" 2>/dev/null || true)" == "$$" ]]; then
+    rm -rf "$lock_dir"
+  fi
 }
 
 trap cleanup EXIT
