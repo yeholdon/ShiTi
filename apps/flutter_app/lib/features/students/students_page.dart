@@ -38,6 +38,7 @@ class StudentsPage extends StatefulWidget {
 class _StudentsPageState extends State<StudentsPage> {
   late _StudentFilter _filter;
   late String _selectedStudentId;
+  late final TextEditingController _queryController;
 
   bool get _hasContextualEntry => widget.args?.focusStudentId != null;
 
@@ -45,6 +46,9 @@ class _StudentsPageState extends State<StudentsPage> {
   void initState() {
     super.initState();
     final storedState = PrimaryPageViewStateMemory.students;
+    _queryController = TextEditingController(
+      text: !_hasContextualEntry && storedState != null ? storedState.query : '',
+    );
     _filter = !_hasContextualEntry && storedState != null
         ? _studentFilterFromLabel(storedState.filter)
         : _StudentFilter.all;
@@ -54,14 +58,22 @@ class _StudentsPageState extends State<StudentsPage> {
             : sampleStudentRecords.first.id);
   }
 
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
   void _rememberViewState() {
     PrimaryPageViewStateMemory.students = PrimaryStudentsViewState(
+      query: _queryController.text.trim(),
       filter: _filter.label,
       selectedStudentId: _selectedStudentId,
     );
   }
 
   List<StudentWorkspaceRecord> _recordsForFilter(_StudentFilter filter) {
+    final query = _queryController.text.trim().toLowerCase();
     return sampleStudentRecords
         .where((student) => switch (filter) {
               _StudentFilter.all => true,
@@ -69,6 +81,14 @@ class _StudentsPageState extends State<StudentsPage> {
               _StudentFilter.improving => student.trendLabel == '近期进步',
               _StudentFilter.habits => student.habitTag.isNotEmpty,
             })
+        .where(
+          (student) =>
+              query.isEmpty ||
+              student.name.toLowerCase().contains(query) ||
+              student.className.toLowerCase().contains(query) ||
+              student.textbookLabel.toLowerCase().contains(query) ||
+              student.habitTag.toLowerCase().contains(query),
+        )
         .toList(growable: false);
   }
 
@@ -204,6 +224,27 @@ class _StudentsPageState extends State<StudentsPage> {
                             fontWeight: FontWeight.w700,
                             color: TelegramPalette.textStrong,
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _queryController,
+                          decoration: const InputDecoration(
+                            hintText: '搜索学生姓名、班级、教材或习惯标签',
+                            prefixIcon: Icon(Icons.search_rounded),
+                          ),
+                          onChanged: (_) {
+                            final nextRecords = _recordsForFilter(_filter);
+                            setState(() {
+                              if (!nextRecords.any(
+                                (student) => student.id == _selectedStudentId,
+                              )) {
+                                _selectedStudentId = nextRecords.isNotEmpty
+                                    ? nextRecords.first.id
+                                    : sampleStudentRecords.first.id;
+                              }
+                              _rememberViewState();
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         Wrap(

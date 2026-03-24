@@ -38,6 +38,7 @@ class ClassesPage extends StatefulWidget {
 class _ClassesPageState extends State<ClassesPage> {
   late _ClassFilter _filter;
   late String _selectedClassId;
+  late final TextEditingController _queryController;
 
   bool get _hasContextualEntry => widget.args?.focusClassId != null;
 
@@ -45,6 +46,9 @@ class _ClassesPageState extends State<ClassesPage> {
   void initState() {
     super.initState();
     final storedState = PrimaryPageViewStateMemory.classes;
+    _queryController = TextEditingController(
+      text: !_hasContextualEntry && storedState != null ? storedState.query : '',
+    );
     _filter = !_hasContextualEntry && storedState != null
         ? _classFilterFromLabel(storedState.filter)
         : _ClassFilter.all;
@@ -54,14 +58,22 @@ class _ClassesPageState extends State<ClassesPage> {
             : sampleClassRecords.first.id);
   }
 
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
   void _rememberViewState() {
     PrimaryPageViewStateMemory.classes = PrimaryClassesViewState(
+      query: _queryController.text.trim(),
       filter: _filter.label,
       selectedClassId: _selectedClassId,
     );
   }
 
   List<ClassWorkspaceRecord> _recordsForFilter(_ClassFilter filter) {
+    final query = _queryController.text.trim().toLowerCase();
     return sampleClassRecords
         .where((item) => switch (filter) {
               _ClassFilter.all => true,
@@ -69,6 +81,14 @@ class _ClassesPageState extends State<ClassesPage> {
               _ClassFilter.exam => item.focusLabel == '试卷跟进',
               _ClassFilter.handout => item.focusLabel == '讲义整理',
             })
+        .where(
+          (item) =>
+              query.isEmpty ||
+              item.name.toLowerCase().contains(query) ||
+              item.textbookLabel.toLowerCase().contains(query) ||
+              item.lessonFocusLabel.toLowerCase().contains(query) ||
+              item.focusLabel.toLowerCase().contains(query),
+        )
         .toList(growable: false);
   }
 
@@ -206,6 +226,27 @@ class _ClassesPageState extends State<ClassesPage> {
                             fontWeight: FontWeight.w700,
                             color: TelegramPalette.textStrong,
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _queryController,
+                          decoration: const InputDecoration(
+                            hintText: '搜索班级名称、教材、课堂或跟进重点',
+                            prefixIcon: Icon(Icons.search_rounded),
+                          ),
+                          onChanged: (_) {
+                            final nextRecords = _recordsForFilter(_filter);
+                            setState(() {
+                              if (!nextRecords.any(
+                                (item) => item.id == _selectedClassId,
+                              )) {
+                                _selectedClassId = nextRecords.isNotEmpty
+                                    ? nextRecords.first.id
+                                    : sampleClassRecords.first.id;
+                              }
+                              _rememberViewState();
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         Wrap(

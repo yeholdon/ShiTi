@@ -1017,3 +1017,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 修复首页上下文条在桌面态因 `removeLast` 触发的运行时异常，避免首页 hero 下方被红色 `ErrorWidget` 整块替换。
 - [x] Flutter: 课堂详情页新增首版“资料清单 / 任务清单”分区，开始承接课堂模型里的文档资料、排版状态与课后执行任务。
 - [x] Flutter: 学生、班级、课堂工作页开始记忆筛选项与当前选中对象；普通切换返回时恢复上次视图，带 `focusId` 的上下文进入仍优先尊重当前对象。
+- [x] Flutter: 学生、班级、课堂工作页补齐本地搜索栏，查询词也纳入视图状态记忆；普通切换返回时继续保留搜索 + 筛选 + 当前选中对象。

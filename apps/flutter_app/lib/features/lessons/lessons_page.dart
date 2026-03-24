@@ -38,6 +38,7 @@ class LessonsPage extends StatefulWidget {
 class _LessonsPageState extends State<LessonsPage> {
   late _LessonFilter _filter;
   late String _selectedLessonId;
+  late final TextEditingController _queryController;
 
   bool get _hasContextualEntry => widget.args?.focusLessonId != null;
 
@@ -45,6 +46,9 @@ class _LessonsPageState extends State<LessonsPage> {
   void initState() {
     super.initState();
     final storedState = PrimaryPageViewStateMemory.lessons;
+    _queryController = TextEditingController(
+      text: !_hasContextualEntry && storedState != null ? storedState.query : '',
+    );
     _filter = !_hasContextualEntry && storedState != null
         ? _lessonFilterFromLabel(storedState.filter)
         : _LessonFilter.all;
@@ -54,14 +58,22 @@ class _LessonsPageState extends State<LessonsPage> {
             : sampleLessonRecords.first.id);
   }
 
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
   void _rememberViewState() {
     PrimaryPageViewStateMemory.lessons = PrimaryLessonsViewState(
+      query: _queryController.text.trim(),
       filter: _filter.label,
       selectedLessonId: _selectedLessonId,
     );
   }
 
   List<LessonWorkspaceRecord> _recordsForFilter(_LessonFilter filter) {
+    final query = _queryController.text.trim().toLowerCase();
     return sampleLessonRecords
         .where((lesson) => switch (filter) {
               _LessonFilter.all => true,
@@ -69,6 +81,14 @@ class _LessonsPageState extends State<LessonsPage> {
               _LessonFilter.feedback => lesson.feedbackStatus == '待回收',
               _LessonFilter.docs => lesson.documentFocus.isNotEmpty,
             })
+        .where(
+          (lesson) =>
+              query.isEmpty ||
+              lesson.title.toLowerCase().contains(query) ||
+              lesson.className.toLowerCase().contains(query) ||
+              lesson.documentFocus.toLowerCase().contains(query) ||
+              lesson.followUpLabel.toLowerCase().contains(query),
+        )
         .toList(growable: false);
   }
 
@@ -206,6 +226,27 @@ class _LessonsPageState extends State<LessonsPage> {
                             fontWeight: FontWeight.w700,
                             color: TelegramPalette.textStrong,
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _queryController,
+                          decoration: const InputDecoration(
+                            hintText: '搜索课堂主题、班级、资料或课后任务',
+                            prefixIcon: Icon(Icons.search_rounded),
+                          ),
+                          onChanged: (_) {
+                            final nextRecords = _recordsForFilter(_filter);
+                            setState(() {
+                              if (!nextRecords.any(
+                                (lesson) => lesson.id == _selectedLessonId,
+                              )) {
+                                _selectedLessonId = nextRecords.isNotEmpty
+                                    ? nextRecords.first.id
+                                    : sampleLessonRecords.first.id;
+                              }
+                              _rememberViewState();
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         Wrap(

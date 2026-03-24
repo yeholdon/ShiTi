@@ -54,30 +54,36 @@ class PrimaryExportsViewState {
 
 class PrimaryStudentsViewState {
   const PrimaryStudentsViewState({
+    required this.query,
     required this.filter,
     required this.selectedStudentId,
   });
 
+  final String query;
   final String filter;
   final String selectedStudentId;
 }
 
 class PrimaryClassesViewState {
   const PrimaryClassesViewState({
+    required this.query,
     required this.filter,
     required this.selectedClassId,
   });
 
+  final String query;
   final String filter;
   final String selectedClassId;
 }
 
 class PrimaryLessonsViewState {
   const PrimaryLessonsViewState({
+    required this.query,
     required this.filter,
     required this.selectedLessonId,
   });
 
+  final String query;
   final String filter;
   final String selectedLessonId;
 }
