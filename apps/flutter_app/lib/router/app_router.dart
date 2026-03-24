@@ -122,8 +122,37 @@ class AppRouter {
         );
       case documents:
         final args = settings.arguments as DocumentsPageArgs?;
+        final focusDocumentId =
+            routeUri?.queryParameters['focusDocumentId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['focusDocumentId']!.trim()
+                : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel =
+            routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
-          builder: (_) => DocumentsPage(args: args),
+          builder: (_) => DocumentsPage(
+            args: args ??
+                DocumentsPageArgs(
+                  focusDocumentId: focusDocumentId,
+                  flashMessage: flashMessage,
+                  highlightTitle: highlightTitle,
+                  highlightDetail: highlightDetail,
+                  feedbackBadgeLabel: feedbackBadgeLabel,
+                ),
+          ),
           settings: settings,
         );
       case students:
