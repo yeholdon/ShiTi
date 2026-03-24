@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/classes_page_args.dart';
+import '../../core/models/documents_page_args.dart';
+import '../../core/models/lessons_page_args.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
@@ -7,6 +11,7 @@ import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../../router/app_router.dart';
 
 enum _StudentFilter {
   all('全部学生'),
@@ -19,7 +24,9 @@ enum _StudentFilter {
 }
 
 class StudentsPage extends StatefulWidget {
-  const StudentsPage({super.key});
+  const StudentsPage({this.args, super.key});
+
+  final StudentsPageArgs? args;
 
   @override
   State<StudentsPage> createState() => _StudentsPageState();
@@ -27,7 +34,41 @@ class StudentsPage extends StatefulWidget {
 
 class _StudentsPageState extends State<StudentsPage> {
   _StudentFilter _filter = _StudentFilter.all;
-  String _selectedStudentId = _studentRecords.first.id;
+  late String _selectedStudentId =
+      widget.args?.focusStudentId ?? _studentRecords.first.id;
+
+  void _openClass(_StudentRecord student) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.classes,
+      (route) => false,
+      arguments: ClassesPageArgs(
+        focusClassId: student.classId,
+        flashMessage: '已定位到 ${student.className}，可继续安排班级与课堂节奏。',
+      ),
+    );
+  }
+
+  void _openLesson(_StudentRecord student) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.lessons,
+      (route) => false,
+      arguments: LessonsPageArgs(
+        focusLessonId: student.lessonId,
+        flashMessage: '已定位到与 ${student.name} 相关的课堂，可继续回看反馈。',
+      ),
+    );
+  }
+
+  void _openDocument(_StudentRecord student) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.documents,
+      (route) => false,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: student.documentId,
+        flashMessage: '已定位到 ${student.documentName}，可继续整理学生跟进资料。',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +181,13 @@ class _StudentsPageState extends State<StudentsPage> {
                       ],
                     ),
                   ),
+                  if ((widget.args?.flashMessage ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    WorkspaceMessageBanner.info(
+                      title: '当前上下文',
+                      message: widget.args!.flashMessage!,
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   const WorkspaceFlowPanel(
                     currentModule: WorkspaceModule.students,
@@ -192,12 +240,22 @@ class _StudentsPageState extends State<StudentsPage> {
                         const SizedBox(width: 16),
                         Expanded(
                           flex: 3,
-                          child: _StudentDetailRail(student: selectedRecord),
+                          child: _StudentDetailRail(
+                            student: selectedRecord,
+                            onOpenClass: () => _openClass(selectedRecord),
+                            onOpenLesson: () => _openLesson(selectedRecord),
+                            onOpenDocument: () => _openDocument(selectedRecord),
+                          ),
                         ),
                       ],
                     )
                   else ...[
-                    _StudentDetailRail(student: selectedRecord),
+                    _StudentDetailRail(
+                      student: selectedRecord,
+                      onOpenClass: () => _openClass(selectedRecord),
+                      onOpenLesson: () => _openLesson(selectedRecord),
+                      onOpenDocument: () => _openDocument(selectedRecord),
+                    ),
                     const SizedBox(height: 16),
                     _StudentRosterPanel(
                       records: filteredRecords,
@@ -429,9 +487,15 @@ class _StudentCard extends StatelessWidget {
 class _StudentDetailRail extends StatelessWidget {
   const _StudentDetailRail({
     required this.student,
+    required this.onOpenClass,
+    required this.onOpenLesson,
+    required this.onOpenDocument,
   });
 
   final _StudentRecord student;
+  final VoidCallback onOpenClass;
+  final VoidCallback onOpenLesson;
+  final VoidCallback onOpenDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -502,32 +566,29 @@ class _StudentDetailRail extends StatelessWidget {
             message: student.nextStep,
           ),
           const SizedBox(height: 14),
-          WorkspaceModuleQuickActions(
-            currentModule: WorkspaceModule.students,
-            actions: [
-              WorkspaceFlowAction(
-                module: WorkspaceModule.classes,
-                icon: Icons.groups_outlined,
-                label: '查看${student.className}',
-                description: '',
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onOpenClass,
+                icon: const Icon(Icons.groups_outlined, size: 18),
+                label: Text('查看${student.className}'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.lessons,
-                icon: Icons.schedule_outlined,
-                label: '回看关联课堂',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenLesson,
+                icon: const Icon(Icons.schedule_outlined, size: 18),
+                label: const Text('回看关联课堂'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.documents,
-                icon: Icons.description_outlined,
-                label: '整理当前资料',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenDocument,
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: Text('打开${student.documentName}'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.students,
-                icon: Icons.school_outlined,
+              const WorkspaceFilterPill(
                 label: '当前学生页',
-                description: '',
+                icon: Icons.school_outlined,
+                selected: true,
               ),
             ],
           ),
@@ -541,7 +602,11 @@ class _StudentRecord {
   const _StudentRecord({
     required this.id,
     required this.name,
+    required this.classId,
     required this.className,
+    required this.lessonId,
+    required this.documentId,
+    required this.documentName,
     required this.gradeLabel,
     required this.subjectLabel,
     required this.textbookLabel,
@@ -560,7 +625,11 @@ class _StudentRecord {
 
   final String id;
   final String name;
+  final String classId;
   final String className;
+  final String lessonId;
+  final String documentId;
+  final String documentName;
   final String gradeLabel;
   final String subjectLabel;
   final String textbookLabel;
@@ -581,7 +650,11 @@ const List<_StudentRecord> _studentRecords = [
   _StudentRecord(
     id: 'student-1',
     name: '林之涵',
+    classId: 'class-1',
     className: '九年级尖子班',
+    lessonId: 'lesson-1',
+    documentId: 'doc-2',
+    documentName: '二次函数周测卷',
     gradeLabel: '初中 · 九年级下',
     subjectLabel: '数学',
     textbookLabel: '浙教版',
@@ -604,7 +677,11 @@ const List<_StudentRecord> _studentRecords = [
   _StudentRecord(
     id: 'student-2',
     name: '徐若楠',
+    classId: 'class-2',
     className: '九年级提高班',
+    lessonId: 'lesson-2',
+    documentId: 'doc-1',
+    documentName: '九上相似专题讲义',
     gradeLabel: '初中 · 九年级下',
     subjectLabel: '数学',
     textbookLabel: '浙教版',
@@ -627,7 +704,11 @@ const List<_StudentRecord> _studentRecords = [
   _StudentRecord(
     id: 'student-3',
     name: '陈嘉言',
+    classId: 'class-3',
     className: '个人工作区样例',
+    lessonId: 'lesson-3',
+    documentId: 'doc-1',
+    documentName: '九上相似专题讲义',
     gradeLabel: '高中 · 高一',
     subjectLabel: '物理',
     textbookLabel: '人教版',

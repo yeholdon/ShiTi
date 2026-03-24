@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../core/models/classes_page_args.dart';
 import '../core/models/document_detail_args.dart';
 import '../core/models/documents_page_args.dart';
 import '../core/models/export_detail_args.dart';
 import '../core/models/export_job_summary.dart';
 import '../core/models/exports_page_args.dart';
 import '../core/models/library_page_args.dart';
+import '../core/models/lessons_page_args.dart';
 import '../core/models/question_basket_page_args.dart';
+import '../core/models/students_page_args.dart';
 import '../features/account/account_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/basket/question_basket_page.dart';
@@ -108,18 +111,21 @@ class AppRouter {
           settings: settings,
         );
       case students:
+        final args = settings.arguments as StudentsPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const StudentsPage(),
+          builder: (_) => StudentsPage(args: args),
           settings: settings,
         );
       case classes:
+        final args = settings.arguments as ClassesPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const ClassesPage(),
+          builder: (_) => ClassesPage(args: args),
           settings: settings,
         );
       case lessons:
+        final args = settings.arguments as LessonsPageArgs?;
         return MaterialPageRoute<void>(
-          builder: (_) => const LessonsPage(),
+          builder: (_) => LessonsPage(args: args),
           settings: settings,
         );
       case AppRouter.settings:

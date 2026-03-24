@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/classes_page_args.dart';
+import '../../core/models/documents_page_args.dart';
+import '../../core/models/lessons_page_args.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
@@ -7,6 +11,7 @@ import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../../router/app_router.dart';
 
 enum _LessonFilter {
   all('全部课堂'),
@@ -19,7 +24,9 @@ enum _LessonFilter {
 }
 
 class LessonsPage extends StatefulWidget {
-  const LessonsPage({super.key});
+  const LessonsPage({this.args, super.key});
+
+  final LessonsPageArgs? args;
 
   @override
   State<LessonsPage> createState() => _LessonsPageState();
@@ -27,7 +34,40 @@ class LessonsPage extends StatefulWidget {
 
 class _LessonsPageState extends State<LessonsPage> {
   _LessonFilter _filter = _LessonFilter.all;
-  String _selectedLessonId = _lessonRecords.first.id;
+  late String _selectedLessonId =
+      widget.args?.focusLessonId ?? _lessonRecords.first.id;
+
+  void _openClass(_LessonRecord lesson) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.classes,
+      (route) => false,
+      arguments: ClassesPageArgs(
+        focusClassId: lesson.classId,
+        flashMessage: '已定位到 ${lesson.classScopeLabel}，可继续编排班级与课堂资料。',
+      ),
+    );
+  }
+
+  void _openStudents(_LessonRecord lesson) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.students,
+      (route) => false,
+      arguments: StudentsPageArgs(
+        flashMessage: '已从 ${lesson.title} 进入学生页，可继续回写课堂反馈。',
+      ),
+    );
+  }
+
+  void _openDocument(_LessonRecord lesson) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.documents,
+      (route) => false,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: lesson.documentId,
+        flashMessage: '已定位到 ${lesson.documentFocus}，可继续整理这节课使用的资料。',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +174,13 @@ class _LessonsPageState extends State<LessonsPage> {
                       ],
                     ),
                   ),
+                  if ((widget.args?.flashMessage ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    WorkspaceMessageBanner.info(
+                      title: '当前上下文',
+                      message: widget.args!.flashMessage!,
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   const WorkspaceFlowPanel(
                     currentModule: WorkspaceModule.lessons,
@@ -186,12 +233,22 @@ class _LessonsPageState extends State<LessonsPage> {
                         const SizedBox(width: 16),
                         Expanded(
                           flex: 3,
-                          child: _LessonDetailRail(lesson: selectedLesson),
+                          child: _LessonDetailRail(
+                            lesson: selectedLesson,
+                            onOpenClass: () => _openClass(selectedLesson),
+                            onOpenStudents: () => _openStudents(selectedLesson),
+                            onOpenDocument: () => _openDocument(selectedLesson),
+                          ),
                         ),
                       ],
                     )
                   else ...[
-                    _LessonDetailRail(lesson: selectedLesson),
+                    _LessonDetailRail(
+                      lesson: selectedLesson,
+                      onOpenClass: () => _openClass(selectedLesson),
+                      onOpenStudents: () => _openStudents(selectedLesson),
+                      onOpenDocument: () => _openDocument(selectedLesson),
+                    ),
                     const SizedBox(height: 16),
                     _LessonListPanel(
                       lessons: filteredLessons,
@@ -422,9 +479,15 @@ class _LessonCard extends StatelessWidget {
 class _LessonDetailRail extends StatelessWidget {
   const _LessonDetailRail({
     required this.lesson,
+    required this.onOpenClass,
+    required this.onOpenStudents,
+    required this.onOpenDocument,
   });
 
   final _LessonRecord lesson;
+  final VoidCallback onOpenClass;
+  final VoidCallback onOpenStudents;
+  final VoidCallback onOpenDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -493,32 +556,29 @@ class _LessonDetailRail extends StatelessWidget {
             message: lesson.nextStep,
           ),
           const SizedBox(height: 14),
-          WorkspaceModuleQuickActions(
-            currentModule: WorkspaceModule.lessons,
-            actions: [
-              WorkspaceFlowAction(
-                module: WorkspaceModule.classes,
-                icon: Icons.groups_outlined,
-                label: '查看${lesson.classScopeLabel}',
-                description: '',
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onOpenClass,
+                icon: const Icon(Icons.groups_outlined, size: 18),
+                label: Text('查看${lesson.classScopeLabel}'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.students,
-                icon: Icons.school_outlined,
-                label: '回写学生反馈',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenStudents,
+                icon: const Icon(Icons.school_outlined, size: 18),
+                label: const Text('回写学生反馈'),
               ),
-              WorkspaceFlowAction(
-                module: WorkspaceModule.documents,
-                icon: Icons.description_outlined,
-                label: '打开${lesson.documentFocus}',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenDocument,
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: Text('打开${lesson.documentFocus}'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.lessons,
-                icon: Icons.schedule_outlined,
+              const WorkspaceFilterPill(
                 label: '当前课堂页',
-                description: '',
+                icon: Icons.schedule_outlined,
+                selected: true,
               ),
             ],
           ),
@@ -532,12 +592,14 @@ class _LessonRecord {
   const _LessonRecord({
     required this.id,
     required this.title,
+    required this.classId,
     required this.className,
     required this.teacherLabel,
     required this.scheduleLabel,
     required this.scheduleTag,
     required this.classScopeLabel,
     required this.documentFocus,
+    required this.documentId,
     required this.feedbackStatus,
     required this.followUpLabel,
     required this.feedbackInsight,
@@ -548,12 +610,14 @@ class _LessonRecord {
 
   final String id;
   final String title;
+  final String classId;
   final String className;
   final String teacherLabel;
   final String scheduleLabel;
   final String scheduleTag;
   final String classScopeLabel;
   final String documentFocus;
+  final String documentId;
   final String feedbackStatus;
   final String followUpLabel;
   final String feedbackInsight;
@@ -566,12 +630,14 @@ const List<_LessonRecord> _lessonRecords = [
   _LessonRecord(
     id: 'lesson-1',
     title: '二次函数专题复盘课',
+    classId: 'class-1',
     className: '九年级尖子班',
     teacherLabel: '主讲：陈老师',
     scheduleLabel: '周三 19:00 - 20:30',
     scheduleTag: '本周进行',
     classScopeLabel: '九年级尖子班',
     documentFocus: '二次函数周测卷',
+    documentId: 'doc-2',
     feedbackStatus: '待回收',
     followUpLabel: '补讲义',
     feedbackInsight: '本节课后要重点回收压轴题口头讲解、错题订正和课堂参与反馈，方便回写学生画像。',
@@ -586,12 +652,14 @@ const List<_LessonRecord> _lessonRecords = [
   _LessonRecord(
     id: 'lesson-2',
     title: '相似三角形讲义推进课',
+    classId: 'class-2',
     className: '九年级提高班',
     teacherLabel: '主讲：沈老师',
     scheduleLabel: '周四 18:30 - 20:00',
     scheduleTag: '本周进行',
     classScopeLabel: '九年级提高班',
     documentFocus: '相似三角形讲义',
+    documentId: 'doc-1',
     feedbackStatus: '已回收',
     followUpLabel: '短测跟进',
     feedbackInsight: '讲义反馈已收齐，下一轮重点是把课堂追问和课后短测结果重新沉淀到班级分层任务里。',
@@ -606,12 +674,14 @@ const List<_LessonRecord> _lessonRecords = [
   _LessonRecord(
     id: 'lesson-3',
     title: '高一力学模型拆解课',
+    classId: 'class-3',
     className: '高一物理培优班',
     teacherLabel: '主讲：周老师',
     scheduleLabel: '下周一 19:30 - 21:00',
     scheduleTag: '待准备',
     classScopeLabel: '高一物理培优班',
     documentFocus: '力学模型讲义',
+    documentId: 'doc-1',
     feedbackStatus: '待回收',
     followUpLabel: '资料待排版',
     feedbackInsight: '这节课的反馈重点是图像信息提取、模型识别和讲义图示是否足够清晰，适合先跑课堂样例。',

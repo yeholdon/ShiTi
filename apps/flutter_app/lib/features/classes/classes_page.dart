@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/classes_page_args.dart';
+import '../../core/models/documents_page_args.dart';
+import '../../core/models/lessons_page_args.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
@@ -7,6 +11,7 @@ import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../../router/app_router.dart';
 
 enum _ClassFilter {
   all('全部班级'),
@@ -19,7 +24,9 @@ enum _ClassFilter {
 }
 
 class ClassesPage extends StatefulWidget {
-  const ClassesPage({super.key});
+  const ClassesPage({this.args, super.key});
+
+  final ClassesPageArgs? args;
 
   @override
   State<ClassesPage> createState() => _ClassesPageState();
@@ -27,7 +34,40 @@ class ClassesPage extends StatefulWidget {
 
 class _ClassesPageState extends State<ClassesPage> {
   _ClassFilter _filter = _ClassFilter.all;
-  String _selectedClassId = _classRecords.first.id;
+  late String _selectedClassId =
+      widget.args?.focusClassId ?? _classRecords.first.id;
+
+  void _openStudents(_ClassRecord classroom) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.students,
+      (route) => false,
+      arguments: StudentsPageArgs(
+        flashMessage: '已从 ${classroom.name} 进入学生页，可继续筛选重点跟进学生。',
+      ),
+    );
+  }
+
+  void _openLesson(_ClassRecord classroom) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.lessons,
+      (route) => false,
+      arguments: LessonsPageArgs(
+        focusLessonId: classroom.lessonId,
+        flashMessage: '已定位到 ${classroom.lessonFocusLabel}，可继续安排课堂资料与反馈。',
+      ),
+    );
+  }
+
+  void _openDocument(_ClassRecord classroom) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.documents,
+      (route) => false,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: classroom.documentId,
+        flashMessage: '已定位到 ${classroom.latestDocLabel}，可继续整理班级资料。',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +174,13 @@ class _ClassesPageState extends State<ClassesPage> {
                       ],
                     ),
                   ),
+                  if ((widget.args?.flashMessage ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    WorkspaceMessageBanner.info(
+                      title: '当前上下文',
+                      message: widget.args!.flashMessage!,
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   const WorkspaceFlowPanel(
                     currentModule: WorkspaceModule.classes,
@@ -186,12 +233,22 @@ class _ClassesPageState extends State<ClassesPage> {
                         const SizedBox(width: 16),
                         Expanded(
                           flex: 3,
-                          child: _ClassDetailRail(classroom: selectedClass),
+                          child: _ClassDetailRail(
+                            classroom: selectedClass,
+                            onOpenStudents: () => _openStudents(selectedClass),
+                            onOpenLesson: () => _openLesson(selectedClass),
+                            onOpenDocument: () => _openDocument(selectedClass),
+                          ),
                         ),
                       ],
                     )
                   else ...[
-                    _ClassDetailRail(classroom: selectedClass),
+                    _ClassDetailRail(
+                      classroom: selectedClass,
+                      onOpenStudents: () => _openStudents(selectedClass),
+                      onOpenLesson: () => _openLesson(selectedClass),
+                      onOpenDocument: () => _openDocument(selectedClass),
+                    ),
                     const SizedBox(height: 16),
                     _ClassListPanel(
                       classes: filteredClasses,
@@ -421,9 +478,15 @@ class _ClassCard extends StatelessWidget {
 class _ClassDetailRail extends StatelessWidget {
   const _ClassDetailRail({
     required this.classroom,
+    required this.onOpenStudents,
+    required this.onOpenLesson,
+    required this.onOpenDocument,
   });
 
   final _ClassRecord classroom;
+  final VoidCallback onOpenStudents;
+  final VoidCallback onOpenLesson;
+  final VoidCallback onOpenDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -495,32 +558,29 @@ class _ClassDetailRail extends StatelessWidget {
             message: classroom.nextStep,
           ),
           const SizedBox(height: 14),
-          WorkspaceModuleQuickActions(
-            currentModule: WorkspaceModule.classes,
-            actions: [
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.students,
-                icon: Icons.school_outlined,
-                label: '回看重点学生',
-                description: '',
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onOpenStudents,
+                icon: const Icon(Icons.school_outlined, size: 18),
+                label: const Text('回看重点学生'),
               ),
-              WorkspaceFlowAction(
-                module: WorkspaceModule.lessons,
-                icon: Icons.schedule_outlined,
-                label: '查看${classroom.lessonFocusLabel}',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenLesson,
+                icon: const Icon(Icons.schedule_outlined, size: 18),
+                label: Text('查看${classroom.lessonFocusLabel}'),
               ),
-              WorkspaceFlowAction(
-                module: WorkspaceModule.documents,
-                icon: Icons.description_outlined,
-                label: '打开${classroom.latestDocLabel}',
-                description: '',
+              OutlinedButton.icon(
+                onPressed: onOpenDocument,
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: Text('打开${classroom.latestDocLabel}'),
               ),
-              const WorkspaceFlowAction(
-                module: WorkspaceModule.classes,
-                icon: Icons.groups_outlined,
+              const WorkspaceFilterPill(
                 label: '当前班级页',
-                description: '',
+                icon: Icons.groups_outlined,
+                selected: true,
               ),
             ],
           ),
@@ -534,6 +594,8 @@ class _ClassRecord {
   const _ClassRecord({
     required this.id,
     required this.name,
+    required this.lessonId,
+    required this.documentId,
     required this.stageLabel,
     required this.teacherLabel,
     required this.textbookLabel,
@@ -552,6 +614,8 @@ class _ClassRecord {
 
   final String id;
   final String name;
+  final String lessonId;
+  final String documentId;
   final String stageLabel;
   final String teacherLabel;
   final String textbookLabel;
@@ -572,6 +636,8 @@ const List<_ClassRecord> _classRecords = [
   _ClassRecord(
     id: 'class-1',
     name: '九年级尖子班',
+    lessonId: 'lesson-1',
+    documentId: 'doc-2',
     stageLabel: '初中 · 冲刺组',
     teacherLabel: '主讲：陈老师',
     textbookLabel: '浙教版',
@@ -594,6 +660,8 @@ const List<_ClassRecord> _classRecords = [
   _ClassRecord(
     id: 'class-2',
     name: '九年级提高班',
+    lessonId: 'lesson-2',
+    documentId: 'doc-1',
     stageLabel: '初中 · 提高组',
     teacherLabel: '主讲：沈老师',
     textbookLabel: '浙教版',
@@ -616,6 +684,8 @@ const List<_ClassRecord> _classRecords = [
   _ClassRecord(
     id: 'class-3',
     name: '高一物理培优班',
+    lessonId: 'lesson-3',
+    documentId: 'doc-1',
     stageLabel: '高中 · 培优组',
     teacherLabel: '主讲：周老师',
     textbookLabel: '人教版',
