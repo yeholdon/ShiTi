@@ -25,8 +25,10 @@ window_margin_left="${CAPTURE_WINDOW_MARGIN_LEFT:-0}"
 window_margin_top="${CAPTURE_WINDOW_MARGIN_TOP:-24}"
 window_margin_right="${CAPTURE_WINDOW_MARGIN_RIGHT:-0}"
 window_margin_bottom="${CAPTURE_WINDOW_MARGIN_BOTTOM:-0}"
+screencapture_bin="${CAPTURE_SCREENCAPTURE_BIN:-/usr/sbin/screencapture}"
 lock_dir="${CAPTURE_LOCK_DIR:-/tmp/shiti-edge-capture.lock}"
 lock_pid_file="$lock_dir/pid"
+osascript_timeout_seconds="${CAPTURE_OSASCRIPT_TIMEOUT_SECONDS:-20}"
 
 mkdir -p "$(dirname "$output_path")"
 
@@ -46,6 +48,37 @@ cleanup() {
   if [[ ! -f "$lock_pid_file" ]] || [[ "$(cat "$lock_pid_file" 2>/dev/null || true)" == "$$" ]]; then
     rm -rf "$lock_dir"
   fi
+}
+
+run_osascript() {
+  local timeout_seconds="$1"
+  local script_file
+  script_file="$(mktemp -t shiti-edge-osascript.XXXXXX)"
+  cat >"$script_file"
+  python3 - "$timeout_seconds" "$script_file" <<'PY'
+import subprocess
+import sys
+
+timeout_seconds = float(sys.argv[1])
+script_file = sys.argv[2]
+try:
+    completed = subprocess.run(
+        ['osascript', script_file],
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+        check=True,
+    )
+except subprocess.TimeoutExpired:
+    print(f'osascript timed out after {timeout_seconds:.0f}s', file=sys.stderr)
+    sys.exit(124)
+except subprocess.CalledProcessError as error:
+    sys.stderr.write(error.stderr)
+    sys.exit(error.returncode)
+else:
+    sys.stdout.write(completed.stdout)
+PY
+  rm -f "$script_file"
 }
 
 trap cleanup EXIT
@@ -70,7 +103,7 @@ if [[ "$url" == http://* || "$url" == https://* ]]; then
 fi
 
 window_payload="$(
-  osascript <<APPLESCRIPT
+  run_osascript "$osascript_timeout_seconds" <<APPLESCRIPT
 tell application "Finder"
   set desktopBounds to bounds of window of desktop
 end tell
@@ -121,13 +154,13 @@ final_url="${remaining_payload#*|}"
 
 tmp_capture="$(mktemp -t edge-window-full)"
 for ((capture_attempt = 1; capture_attempt <= max_capture_attempts; capture_attempt++)); do
-  osascript <<'APPLESCRIPT' >/dev/null
+  run_osascript "$osascript_timeout_seconds" <<'APPLESCRIPT' >/dev/null
 tell application "Microsoft Edge"
   activate
 end tell
 APPLESCRIPT
   sleep 0.2
-  screencapture -x "$tmp_capture"
+  "$screencapture_bin" -x "$tmp_capture"
 
   capture_status="$(
     python3 - "$tmp_capture" "$output_path" "$bounds" "$blank_threshold" "$bright_threshold" "$expected_hash" "$final_url" <<'PY'
@@ -182,7 +215,7 @@ PY
   fi
 
   if (( capture_attempt < max_capture_attempts )); then
-    osascript <<APPLESCRIPT >/dev/null
+    run_osascript "$osascript_timeout_seconds" <<APPLESCRIPT >/dev/null
 tell application "Microsoft Edge"
   activate
   repeat with browserWindow in windows
@@ -205,7 +238,7 @@ APPLESCRIPT
 done
 
 rm -f "$tmp_capture"
-osascript <<APPLESCRIPT >/dev/null
+run_osascript "$osascript_timeout_seconds" <<APPLESCRIPT >/dev/null
 tell application "Microsoft Edge"
   repeat with browserWindow in windows
     if (id of browserWindow as text) is "$window_id" then
