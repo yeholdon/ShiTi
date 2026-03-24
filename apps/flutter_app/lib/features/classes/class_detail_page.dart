@@ -18,16 +18,25 @@ class ClassDetailPage extends StatelessWidget {
   const ClassDetailPage({
     required this.classId,
     this.flashMessage,
+    this.sourceModule,
+    this.sourceRecordId,
+    this.sourceLabel,
     super.key,
   });
 
   final String classId;
   final String? flashMessage;
+  final String? sourceModule;
+  final String? sourceRecordId;
+  final String? sourceLabel;
 
   static ClassDetailPage fromArgs(ClassDetailArgs args) {
     return ClassDetailPage(
       classId: args.classId,
       flashMessage: args.flashMessage,
+      sourceModule: args.sourceModule,
+      sourceRecordId: args.sourceRecordId,
+      sourceLabel: args.sourceLabel,
     );
   }
 
@@ -40,6 +49,11 @@ class ClassDetailPage extends StatelessWidget {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
+    final backLabel = switch (sourceModule) {
+      'students' => '返回${sourceLabel ?? '学生详情'}',
+      'lessons' => '返回${sourceLabel ?? '课堂详情'}',
+      _ => '返回班级页',
+    };
 
     if (classroom == null) {
       return Scaffold(
@@ -93,6 +107,26 @@ class ClassDetailPage extends StatelessWidget {
         ],
         trailing: FilledButton.icon(
           onPressed: () {
+            if (sourceModule == 'students' && sourceRecordId != null) {
+              Navigator.of(context).pushNamed(
+                AppRouter.studentDetail,
+                arguments: StudentDetailArgs(
+                  studentId: sourceRecordId!,
+                  flashMessage: '已从 ${classroom.name} 返回 ${sourceLabel ?? '学生详情'}。',
+                ),
+              );
+              return;
+            }
+            if (sourceModule == 'lessons' && sourceRecordId != null) {
+              Navigator.of(context).pushNamed(
+                AppRouter.lessonDetail,
+                arguments: LessonDetailArgs(
+                  lessonId: sourceRecordId!,
+                  flashMessage: '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
+                ),
+              );
+              return;
+            }
             Navigator.of(context).pushNamedAndRemoveUntil(
               AppRouter.classes,
               (route) => false,
@@ -103,7 +137,7 @@ class ClassDetailPage extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.arrow_back_outlined),
-          label: const Text('返回班级页'),
+          label: Text(backLabel),
         ),
         body: workspaceConstrainedContent(
           context,
@@ -268,6 +302,9 @@ class ClassDetailPage extends StatelessWidget {
                                         studentId: classroom.focusStudentId,
                                         flashMessage:
                                             '已从 ${classroom.name} 的班级档案进入 ${classroom.focusStudentName}，可继续回看学生画像。',
+                                        sourceModule: 'classes',
+                                        sourceRecordId: classroom.id,
+                                        sourceLabel: classroom.name,
                                       ),
                                     );
                                   },
@@ -282,6 +319,9 @@ class ClassDetailPage extends StatelessWidget {
                                         lessonId: classroom.lessonId,
                                         flashMessage:
                                             '已从 ${classroom.name} 的班级档案进入 ${classroom.lessonFocusLabel}，可继续回看课堂资料与反馈。',
+                                        sourceModule: 'classes',
+                                        sourceRecordId: classroom.id,
+                                        sourceLabel: classroom.name,
                                       ),
                                     );
                                   },
@@ -365,6 +405,9 @@ class ClassDetailPage extends StatelessWidget {
                                     studentId: classroom.focusStudentId,
                                     flashMessage:
                                         '已从 ${classroom.name} 的班级档案进入 ${classroom.focusStudentName}，可继续回看学生画像。',
+                                    sourceModule: 'classes',
+                                    sourceRecordId: classroom.id,
+                                    sourceLabel: classroom.name,
                                   ),
                                 );
                               },
@@ -379,6 +422,9 @@ class ClassDetailPage extends StatelessWidget {
                                     lessonId: classroom.lessonId,
                                     flashMessage:
                                         '已从 ${classroom.name} 的班级档案进入 ${classroom.lessonFocusLabel}，可继续回看课堂资料与反馈。',
+                                    sourceModule: 'classes',
+                                    sourceRecordId: classroom.id,
+                                    sourceLabel: classroom.name,
                                   ),
                                 );
                               },

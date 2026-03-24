@@ -18,16 +18,25 @@ class StudentDetailPage extends StatelessWidget {
   const StudentDetailPage({
     required this.studentId,
     this.flashMessage,
+    this.sourceModule,
+    this.sourceRecordId,
+    this.sourceLabel,
     super.key,
   });
 
   final String studentId;
   final String? flashMessage;
+  final String? sourceModule;
+  final String? sourceRecordId;
+  final String? sourceLabel;
 
   static StudentDetailPage fromArgs(StudentDetailArgs args) {
     return StudentDetailPage(
       studentId: args.studentId,
       flashMessage: args.flashMessage,
+      sourceModule: args.sourceModule,
+      sourceRecordId: args.sourceRecordId,
+      sourceLabel: args.sourceLabel,
     );
   }
 
@@ -40,6 +49,11 @@ class StudentDetailPage extends StatelessWidget {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
+    final backLabel = switch (sourceModule) {
+      'classes' => '返回${sourceLabel ?? '班级详情'}',
+      'lessons' => '返回${sourceLabel ?? '课堂详情'}',
+      _ => '返回学生页',
+    };
 
     if (student == null) {
       return Scaffold(
@@ -93,6 +107,26 @@ class StudentDetailPage extends StatelessWidget {
         ],
         trailing: FilledButton.icon(
           onPressed: () {
+            if (sourceModule == 'classes' && sourceRecordId != null) {
+              Navigator.of(context).pushNamed(
+                AppRouter.classDetail,
+                arguments: ClassDetailArgs(
+                  classId: sourceRecordId!,
+                  flashMessage: '已从 ${student.name} 返回 ${sourceLabel ?? '班级详情'}。',
+                ),
+              );
+              return;
+            }
+            if (sourceModule == 'lessons' && sourceRecordId != null) {
+              Navigator.of(context).pushNamed(
+                AppRouter.lessonDetail,
+                arguments: LessonDetailArgs(
+                  lessonId: sourceRecordId!,
+                  flashMessage: '已从 ${student.name} 返回 ${sourceLabel ?? '课堂详情'}。',
+                ),
+              );
+              return;
+            }
             Navigator.of(context).pushNamedAndRemoveUntil(
               AppRouter.students,
               (route) => false,
@@ -103,7 +137,7 @@ class StudentDetailPage extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.arrow_back_outlined),
-          label: const Text('返回学生页'),
+          label: Text(backLabel),
         ),
         body: workspaceConstrainedContent(
           context,
@@ -269,6 +303,9 @@ class StudentDetailPage extends StatelessWidget {
                                         classId: student.classId,
                                         flashMessage:
                                             '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                        sourceModule: 'students',
+                                        sourceRecordId: student.id,
+                                        sourceLabel: student.name,
                                       ),
                                     );
                                   },
@@ -283,6 +320,9 @@ class StudentDetailPage extends StatelessWidget {
                                         lessonId: student.lessonId,
                                         flashMessage:
                                             '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
+                                        sourceModule: 'students',
+                                        sourceRecordId: student.id,
+                                        sourceLabel: student.name,
                                       ),
                                     );
                                   },
@@ -371,6 +411,9 @@ class StudentDetailPage extends StatelessWidget {
                                     classId: student.classId,
                                     flashMessage:
                                         '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                    sourceModule: 'students',
+                                    sourceRecordId: student.id,
+                                    sourceLabel: student.name,
                                   ),
                                 );
                               },
@@ -385,6 +428,9 @@ class StudentDetailPage extends StatelessWidget {
                                     lessonId: student.lessonId,
                                     flashMessage:
                                         '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
+                                    sourceModule: 'students',
+                                    sourceRecordId: student.id,
+                                    sourceLabel: student.name,
                                   ),
                                 );
                               },
