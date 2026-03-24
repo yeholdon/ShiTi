@@ -59,7 +59,8 @@ class StudentDetailPage extends StatelessWidget {
       return Scaffold(
         body: WorkspaceModuleShell(
           currentModule: WorkspaceModule.students,
-          onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+          onSelectModule: (module) =>
+              navigateToWorkspaceModule(context, module),
           title: '学生详情',
           subtitle: '当前学生不存在或尚未同步到学生档案列表。',
           searchHint: '搜索学生姓名、班级或历史表现',
@@ -112,7 +113,8 @@ class StudentDetailPage extends StatelessWidget {
                 AppRouter.classDetail,
                 arguments: ClassDetailArgs(
                   classId: sourceRecordId!,
-                  flashMessage: '已从 ${student.name} 返回 ${sourceLabel ?? '班级详情'}。',
+                  flashMessage:
+                      '已从 ${student.name} 返回 ${sourceLabel ?? '班级详情'}。',
                 ),
               );
               return;
@@ -122,7 +124,8 @@ class StudentDetailPage extends StatelessWidget {
                 AppRouter.lessonDetail,
                 arguments: LessonDetailArgs(
                   lessonId: sourceRecordId!,
-                  flashMessage: '已从 ${student.name} 返回 ${sourceLabel ?? '课堂详情'}。',
+                  flashMessage:
+                      '已从 ${student.name} 返回 ${sourceLabel ?? '课堂详情'}。',
                 ),
               );
               return;
@@ -270,7 +273,8 @@ class StudentDetailPage extends StatelessWidget {
                                     ),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Column(
@@ -289,7 +293,8 @@ class StudentDetailPage extends StatelessWidget {
                                               record.insight,
                                               style: const TextStyle(
                                                 height: 1.5,
-                                                color: TelegramPalette.textMuted,
+                                                color:
+                                                    TelegramPalette.textMuted,
                                               ),
                                             ),
                                           ],
@@ -305,6 +310,136 @@ class StudentDetailPage extends StatelessWidget {
                                     ],
                                   ),
                                 ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      WorkspacePanel(
+                        padding: workspacePanelPadding(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '资料承接',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: TelegramPalette.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: TelegramPalette.surfaceRaised,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: TelegramPalette.border,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '当前承接链路',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: TelegramPalette.text,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${student.className} -> 关联课堂 -> ${student.documentName}',
+                                    style: const TextStyle(
+                                      height: 1.5,
+                                      color: TelegramPalette.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: [
+                                      WorkspaceInfoPill(
+                                        label: '班级',
+                                        value: student.className,
+                                      ),
+                                      WorkspaceInfoPill(
+                                        label: '资料',
+                                        value: student.documentName,
+                                      ),
+                                      WorkspaceInfoPill(
+                                        label: '教材',
+                                        value: student.textbookLabel,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).pushNamed(
+                                            AppRouter.classDetail,
+                                            arguments: ClassDetailArgs(
+                                              classId: student.classId,
+                                              flashMessage:
+                                                  '已从 ${student.name} 的资料承接区进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                              sourceModule: 'students',
+                                              sourceRecordId: student.id,
+                                              sourceLabel: student.name,
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.groups_outlined,
+                                          size: 18,
+                                        ),
+                                        label: Text('查看${student.className}'),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).pushNamed(
+                                            AppRouter.lessonDetail,
+                                            arguments: LessonDetailArgs(
+                                              lessonId: student.lessonId,
+                                              flashMessage:
+                                                  '已从 ${student.name} 的资料承接区进入关联课堂，可继续回看本节课的资料与反馈。',
+                                              sourceModule: 'students',
+                                              sourceRecordId: student.id,
+                                              sourceLabel: student.name,
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.schedule_outlined,
+                                          size: 18,
+                                        ),
+                                        label: const Text('查看关联课堂'),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).pushNamed(
+                                            AppRouter.documentDetail,
+                                            arguments: DocumentDetailArgs(
+                                              documentId: student.documentId,
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.description_outlined,
+                                          size: 18,
+                                        ),
+                                        label:
+                                            Text('打开${student.documentName}'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -338,7 +473,8 @@ class StudentDetailPage extends StatelessWidget {
                                     ),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Column(
@@ -357,7 +493,8 @@ class StudentDetailPage extends StatelessWidget {
                                               record.followUp,
                                               style: const TextStyle(
                                                 height: 1.5,
-                                                color: TelegramPalette.textMuted,
+                                                color:
+                                                    TelegramPalette.textMuted,
                                               ),
                                             ),
                                           ],
@@ -444,7 +581,8 @@ class StudentDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.groups_outlined, size: 18),
+                                  icon: const Icon(Icons.groups_outlined,
+                                      size: 18),
                                   label: Text('查看${student.className}详情'),
                                 ),
                                 OutlinedButton.icon(
@@ -461,7 +599,8 @@ class StudentDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.schedule_outlined, size: 18),
+                                  icon: const Icon(Icons.schedule_outlined,
+                                      size: 18),
                                   label: const Text('查看关联课堂详情'),
                                 ),
                                 OutlinedButton.icon(
@@ -473,7 +612,8 @@ class StudentDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.description_outlined, size: 18),
+                                  icon: const Icon(Icons.description_outlined,
+                                      size: 18),
                                   label: Text('打开${student.documentName}'),
                                 ),
                               ],
@@ -569,7 +709,8 @@ class StudentDetailPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.schedule_outlined, size: 18),
+                              icon:
+                                  const Icon(Icons.schedule_outlined, size: 18),
                               label: const Text('当前课堂'),
                             ),
                             OutlinedButton.icon(
@@ -581,8 +722,8 @@ class StudentDetailPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              icon:
-                                  const Icon(Icons.description_outlined, size: 18),
+                              icon: const Icon(Icons.description_outlined,
+                                  size: 18),
                               label: Text(student.documentName),
                             ),
                           ],
