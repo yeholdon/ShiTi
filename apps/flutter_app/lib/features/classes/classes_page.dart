@@ -11,6 +11,7 @@ import '../../core/theme/telegram_palette.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
+import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
 import 'class_workspace_data.dart';
@@ -35,9 +36,41 @@ class ClassesPage extends StatefulWidget {
 }
 
 class _ClassesPageState extends State<ClassesPage> {
-  _ClassFilter _filter = _ClassFilter.all;
-  late String _selectedClassId =
-      widget.args?.focusClassId ?? sampleClassRecords.first.id;
+  late _ClassFilter _filter;
+  late String _selectedClassId;
+
+  bool get _hasContextualEntry => widget.args?.focusClassId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final storedState = PrimaryPageViewStateMemory.classes;
+    _filter = !_hasContextualEntry && storedState != null
+        ? _classFilterFromLabel(storedState.filter)
+        : _ClassFilter.all;
+    _selectedClassId = widget.args?.focusClassId ??
+        (!_hasContextualEntry && storedState != null
+            ? storedState.selectedClassId
+            : sampleClassRecords.first.id);
+  }
+
+  void _rememberViewState() {
+    PrimaryPageViewStateMemory.classes = PrimaryClassesViewState(
+      filter: _filter.label,
+      selectedClassId: _selectedClassId,
+    );
+  }
+
+  List<ClassWorkspaceRecord> _recordsForFilter(_ClassFilter filter) {
+    return sampleClassRecords
+        .where((item) => switch (filter) {
+              _ClassFilter.all => true,
+              _ClassFilter.active => item.activityLabel == '本周活跃',
+              _ClassFilter.exam => item.focusLabel == '试卷跟进',
+              _ClassFilter.handout => item.focusLabel == '讲义整理',
+            })
+        .toList(growable: false);
+  }
 
   void _openStudents(ClassWorkspaceRecord classroom) {
     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -103,14 +136,7 @@ class _ClassesPageState extends State<ClassesPage> {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
-    final filteredClasses = sampleClassRecords
-        .where((item) => switch (_filter) {
-              _ClassFilter.all => true,
-              _ClassFilter.active => item.activityLabel == '本周活跃',
-              _ClassFilter.exam => item.focusLabel == '试卷跟进',
-              _ClassFilter.handout => item.focusLabel == '讲义整理',
-            })
-        .toList(growable: false);
+    final filteredClasses = _recordsForFilter(_filter);
     final selectedClass = filteredClasses.firstWhere(
       (item) => item.id == _selectedClassId,
       orElse: () => filteredClasses.isNotEmpty
@@ -191,8 +217,17 @@ class _ClassesPageState extends State<ClassesPage> {
                                   label: filter.label,
                                   selected: _filter == filter,
                                   onTap: () {
+                                    final nextRecords = _recordsForFilter(filter);
                                     setState(() {
                                       _filter = filter;
+                                      if (!nextRecords.any(
+                                        (item) => item.id == _selectedClassId,
+                                      )) {
+                                        _selectedClassId = nextRecords.isNotEmpty
+                                            ? nextRecords.first.id
+                                            : sampleClassRecords.first.id;
+                                      }
+                                      _rememberViewState();
                                     });
                                   },
                                   showSelectedCheckmark: true,
@@ -311,6 +346,7 @@ class _ClassesPageState extends State<ClassesPage> {
                             onSelect: (classId) {
                               setState(() {
                                 _selectedClassId = classId;
+                                _rememberViewState();
                               });
                             },
                           ),
@@ -344,6 +380,7 @@ class _ClassesPageState extends State<ClassesPage> {
                       onSelect: (classId) {
                         setState(() {
                           _selectedClassId = classId;
+                          _rememberViewState();
                         });
                       },
                     ),
@@ -356,6 +393,13 @@ class _ClassesPageState extends State<ClassesPage> {
       ),
     );
   }
+}
+
+_ClassFilter _classFilterFromLabel(String label) {
+  return _ClassFilter.values.firstWhere(
+    (filter) => filter.label == label,
+    orElse: () => _ClassFilter.all,
+  );
 }
 
 class _ClassHeroSection extends StatelessWidget {

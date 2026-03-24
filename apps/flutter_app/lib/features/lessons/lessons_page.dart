@@ -11,6 +11,7 @@ import '../../core/theme/telegram_palette.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
+import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
 import 'lesson_workspace_data.dart';
@@ -35,9 +36,41 @@ class LessonsPage extends StatefulWidget {
 }
 
 class _LessonsPageState extends State<LessonsPage> {
-  _LessonFilter _filter = _LessonFilter.all;
-  late String _selectedLessonId =
-      widget.args?.focusLessonId ?? sampleLessonRecords.first.id;
+  late _LessonFilter _filter;
+  late String _selectedLessonId;
+
+  bool get _hasContextualEntry => widget.args?.focusLessonId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final storedState = PrimaryPageViewStateMemory.lessons;
+    _filter = !_hasContextualEntry && storedState != null
+        ? _lessonFilterFromLabel(storedState.filter)
+        : _LessonFilter.all;
+    _selectedLessonId = widget.args?.focusLessonId ??
+        (!_hasContextualEntry && storedState != null
+            ? storedState.selectedLessonId
+            : sampleLessonRecords.first.id);
+  }
+
+  void _rememberViewState() {
+    PrimaryPageViewStateMemory.lessons = PrimaryLessonsViewState(
+      filter: _filter.label,
+      selectedLessonId: _selectedLessonId,
+    );
+  }
+
+  List<LessonWorkspaceRecord> _recordsForFilter(_LessonFilter filter) {
+    return sampleLessonRecords
+        .where((lesson) => switch (filter) {
+              _LessonFilter.all => true,
+              _LessonFilter.thisWeek => lesson.scheduleTag == '本周进行',
+              _LessonFilter.feedback => lesson.feedbackStatus == '待回收',
+              _LessonFilter.docs => lesson.documentFocus.isNotEmpty,
+            })
+        .toList(growable: false);
+  }
 
   void _openDetail(LessonWorkspaceRecord lesson) {
     Navigator.of(context).pushNamed(
@@ -103,14 +136,7 @@ class _LessonsPageState extends State<LessonsPage> {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
-    final filteredLessons = sampleLessonRecords
-        .where((lesson) => switch (_filter) {
-              _LessonFilter.all => true,
-              _LessonFilter.thisWeek => lesson.scheduleTag == '本周进行',
-              _LessonFilter.feedback => lesson.feedbackStatus == '待回收',
-              _LessonFilter.docs => lesson.documentFocus.isNotEmpty,
-            })
-        .toList(growable: false);
+    final filteredLessons = _recordsForFilter(_filter);
     final selectedLesson = filteredLessons.firstWhere(
       (lesson) => lesson.id == _selectedLessonId,
       orElse: () => filteredLessons.isNotEmpty
@@ -191,8 +217,18 @@ class _LessonsPageState extends State<LessonsPage> {
                                   label: filter.label,
                                   selected: _filter == filter,
                                   onTap: () {
+                                    final nextRecords = _recordsForFilter(filter);
                                     setState(() {
                                       _filter = filter;
+                                      if (!nextRecords.any(
+                                        (lesson) =>
+                                            lesson.id == _selectedLessonId,
+                                      )) {
+                                        _selectedLessonId = nextRecords.isNotEmpty
+                                            ? nextRecords.first.id
+                                            : sampleLessonRecords.first.id;
+                                      }
+                                      _rememberViewState();
                                     });
                                   },
                                   showSelectedCheckmark: true,
@@ -311,6 +347,7 @@ class _LessonsPageState extends State<LessonsPage> {
                             onSelect: (lessonId) {
                               setState(() {
                                 _selectedLessonId = lessonId;
+                                _rememberViewState();
                               });
                             },
                           ),
@@ -344,6 +381,7 @@ class _LessonsPageState extends State<LessonsPage> {
                       onSelect: (lessonId) {
                         setState(() {
                           _selectedLessonId = lessonId;
+                          _rememberViewState();
                         });
                       },
                     ),
@@ -356,6 +394,13 @@ class _LessonsPageState extends State<LessonsPage> {
       ),
     );
   }
+}
+
+_LessonFilter _lessonFilterFromLabel(String label) {
+  return _LessonFilter.values.firstWhere(
+    (filter) => filter.label == label,
+    orElse: () => _LessonFilter.all,
+  );
 }
 
 class _LessonHeroSection extends StatelessWidget {

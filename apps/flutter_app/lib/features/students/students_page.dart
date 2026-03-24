@@ -11,6 +11,7 @@ import '../../core/theme/telegram_palette.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
+import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
 import 'student_workspace_data.dart';
@@ -35,9 +36,41 @@ class StudentsPage extends StatefulWidget {
 }
 
 class _StudentsPageState extends State<StudentsPage> {
-  _StudentFilter _filter = _StudentFilter.all;
-  late String _selectedStudentId =
-      widget.args?.focusStudentId ?? sampleStudentRecords.first.id;
+  late _StudentFilter _filter;
+  late String _selectedStudentId;
+
+  bool get _hasContextualEntry => widget.args?.focusStudentId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final storedState = PrimaryPageViewStateMemory.students;
+    _filter = !_hasContextualEntry && storedState != null
+        ? _studentFilterFromLabel(storedState.filter)
+        : _StudentFilter.all;
+    _selectedStudentId = widget.args?.focusStudentId ??
+        (!_hasContextualEntry && storedState != null
+            ? storedState.selectedStudentId
+            : sampleStudentRecords.first.id);
+  }
+
+  void _rememberViewState() {
+    PrimaryPageViewStateMemory.students = PrimaryStudentsViewState(
+      filter: _filter.label,
+      selectedStudentId: _selectedStudentId,
+    );
+  }
+
+  List<StudentWorkspaceRecord> _recordsForFilter(_StudentFilter filter) {
+    return sampleStudentRecords
+        .where((student) => switch (filter) {
+              _StudentFilter.all => true,
+              _StudentFilter.risk => student.followUpLevel == '重点跟进',
+              _StudentFilter.improving => student.trendLabel == '近期进步',
+              _StudentFilter.habits => student.habitTag.isNotEmpty,
+            })
+        .toList(growable: false);
+  }
 
   void _openClass(StudentWorkspaceRecord student) {
     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -102,14 +135,7 @@ class _StudentsPageState extends State<StudentsPage> {
         : activeTenant.isPersonal
             ? '个人工作区'
             : '机构工作区';
-    final filteredRecords = sampleStudentRecords
-        .where((student) => switch (_filter) {
-              _StudentFilter.all => true,
-              _StudentFilter.risk => student.followUpLevel == '重点跟进',
-              _StudentFilter.improving => student.trendLabel == '近期进步',
-              _StudentFilter.habits => student.habitTag.isNotEmpty,
-            })
-        .toList(growable: false);
+    final filteredRecords = _recordsForFilter(_filter);
     final selectedRecord = filteredRecords.firstWhere(
       (student) => student.id == _selectedStudentId,
       orElse: () => filteredRecords.isNotEmpty
@@ -189,15 +215,18 @@ class _StudentsPageState extends State<StudentsPage> {
                                   label: filter.label,
                                   selected: _filter == filter,
                                   onTap: () {
+                                    final nextRecords = _recordsForFilter(filter);
                                     setState(() {
                                       _filter = filter;
-                                      if (!filteredRecords.any(
+                                      if (!nextRecords.any(
                                         (student) =>
                                             student.id == _selectedStudentId,
                                       )) {
-                                        _selectedStudentId =
-                                            sampleStudentRecords.first.id;
+                                        _selectedStudentId = nextRecords.isNotEmpty
+                                            ? nextRecords.first.id
+                                            : sampleStudentRecords.first.id;
                                       }
+                                      _rememberViewState();
                                     });
                                   },
                                   showSelectedCheckmark: true,
@@ -316,6 +345,7 @@ class _StudentsPageState extends State<StudentsPage> {
                             onSelect: (studentId) {
                               setState(() {
                                 _selectedStudentId = studentId;
+                                _rememberViewState();
                               });
                             },
                           ),
@@ -349,6 +379,7 @@ class _StudentsPageState extends State<StudentsPage> {
                       onSelect: (studentId) {
                         setState(() {
                           _selectedStudentId = studentId;
+                          _rememberViewState();
                         });
                       },
                     ),
@@ -361,6 +392,13 @@ class _StudentsPageState extends State<StudentsPage> {
       ),
     );
   }
+}
+
+_StudentFilter _studentFilterFromLabel(String label) {
+  return _StudentFilter.values.firstWhere(
+    (filter) => filter.label == label,
+    orElse: () => _StudentFilter.all,
+  );
 }
 
 class _StudentHeroSection extends StatelessWidget {

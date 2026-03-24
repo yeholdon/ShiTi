@@ -1016,3 +1016,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 工作台 shell 内容区补了中性底层填充，并弱化 backdrop 底部发光层，避免首页内容较短时下方直接漏出彩色空白。
 - [x] Flutter: 修复首页上下文条在桌面态因 `removeLast` 触发的运行时异常，避免首页 hero 下方被红色 `ErrorWidget` 整块替换。
 - [x] Flutter: 课堂详情页新增首版“资料清单 / 任务清单”分区，开始承接课堂模型里的文档资料、排版状态与课后执行任务。
+- [x] Flutter: 学生、班级、课堂工作页开始记忆筛选项与当前选中对象；普通切换返回时恢复上次视图，带 `focusId` 的上下文进入仍优先尊重当前对象。
