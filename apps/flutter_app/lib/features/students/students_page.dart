@@ -44,6 +44,10 @@ class _StudentsPageState extends State<StudentsPage> {
       arguments: ClassesPageArgs(
         focusClassId: student.classId,
         flashMessage: '已定位到 ${student.className}，可继续安排班级与课堂节奏。',
+        highlightTitle: '当前学生所在班级',
+        highlightDetail:
+            '${student.className} 正承接 ${student.name} 的学习跟进，可继续回看班级资料、课堂安排和分层任务。',
+        feedbackBadgeLabel: '学生回看',
       ),
     );
   }
@@ -55,6 +59,10 @@ class _StudentsPageState extends State<StudentsPage> {
       arguments: LessonsPageArgs(
         focusLessonId: student.lessonId,
         flashMessage: '已定位到与 ${student.name} 相关的课堂，可继续回看反馈。',
+        highlightTitle: '当前学生关联课堂',
+        highlightDetail:
+            '${student.name} 当前关联 ${student.className} 的课堂安排，可继续回看资料使用和课后反馈。',
+        feedbackBadgeLabel: '学生回看',
       ),
     );
   }

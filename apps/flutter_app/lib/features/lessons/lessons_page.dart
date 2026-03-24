@@ -44,6 +44,10 @@ class _LessonsPageState extends State<LessonsPage> {
       arguments: ClassesPageArgs(
         focusClassId: lesson.classId,
         flashMessage: '已定位到 ${lesson.classScopeLabel}，可继续编排班级与课堂资料。',
+        highlightTitle: '当前课堂关联班级',
+        highlightDetail:
+            '${lesson.classScopeLabel} 正承接 ${lesson.title} 的教学安排，可继续回看班级资料、学生分层和课堂节奏。',
+        feedbackBadgeLabel: '课堂回看',
       ),
     );
   }
@@ -101,6 +105,9 @@ class _LessonsPageState extends State<LessonsPage> {
           ? filteredLessons.first
           : _lessonRecords.first,
     );
+    final highlightTitle = widget.args?.highlightTitle;
+    final highlightDetail = widget.args?.highlightDetail;
+    final feedbackBadgeLabel = widget.args?.feedbackBadgeLabel;
 
     return Scaffold(
       body: WorkspaceModuleShell(
@@ -189,6 +196,61 @@ class _LessonsPageState extends State<LessonsPage> {
                     WorkspaceMessageBanner.info(
                       title: '当前上下文',
                       message: widget.args!.flashMessage!,
+                    ),
+                  ],
+                  if ((highlightTitle?.trim().isNotEmpty ?? false) ||
+                      (highlightDetail?.trim().isNotEmpty ?? false) ||
+                      (feedbackBadgeLabel?.trim().isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 18),
+                    WorkspacePanel(
+                      padding: workspacePanelPadding(context),
+                      backgroundColor: TelegramPalette.surfaceAccent,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              if (feedbackBadgeLabel != null &&
+                                  feedbackBadgeLabel.trim().isNotEmpty)
+                                WorkspaceInfoPill(
+                                  label: '当前来源',
+                                  value: feedbackBadgeLabel,
+                                  highlight: true,
+                                ),
+                              WorkspaceInfoPill(
+                                label: '当前课堂',
+                                value: selectedLesson.title,
+                              ),
+                              WorkspaceInfoPill(
+                                label: '当前班级',
+                                value: selectedLesson.className,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            highlightTitle ?? '当前课堂上下文',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: TelegramPalette.text,
+                            ),
+                          ),
+                          if (highlightDetail != null &&
+                              highlightDetail.trim().isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              highlightDetail,
+                              style: const TextStyle(
+                                height: 1.5,
+                                color: TelegramPalette.textStrong,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                   const SizedBox(height: 18),
