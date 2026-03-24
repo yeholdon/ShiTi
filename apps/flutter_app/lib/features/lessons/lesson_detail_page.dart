@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
-import '../../core/models/classes_page_args.dart';
+import '../../core/models/class_detail_args.dart';
 import '../../core/models/document_detail_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
-import '../../core/models/students_page_args.dart';
+import '../../core/models/student_detail_args.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
@@ -263,41 +263,31 @@ class LessonDetailPage extends StatelessWidget {
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      AppRouter.classes,
-                                      (route) => false,
-                                      arguments: ClassesPageArgs(
-                                        focusClassId: lesson.classId,
+                                    Navigator.of(context).pushNamed(
+                                      AppRouter.classDetail,
+                                      arguments: ClassDetailArgs(
+                                        classId: lesson.classId,
                                         flashMessage:
-                                            '已定位到 ${lesson.classScopeLabel}，可继续回看 ${lesson.title} 对应的班级安排。',
-                                        highlightTitle: '当前课堂关联班级',
-                                        highlightDetail:
-                                            '${lesson.classScopeLabel} 正承接 ${lesson.title} 的课堂安排，可继续查看班级结构、资料和后续节奏。',
-                                        feedbackBadgeLabel: '课堂回看',
+                                            '已从 ${lesson.title} 的课堂档案进入 ${lesson.classScopeLabel}，可继续回看班级安排。',
                                       ),
                                     );
                                   },
                                   icon: const Icon(Icons.groups_outlined, size: 18),
-                                  label: Text('查看${lesson.classScopeLabel}'),
+                                  label: Text('查看${lesson.classScopeLabel}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      AppRouter.students,
-                                      (route) => false,
-                                      arguments: StudentsPageArgs(
-                                        focusStudentId: lesson.focusStudentId,
+                                    Navigator.of(context).pushNamed(
+                                      AppRouter.studentDetail,
+                                      arguments: StudentDetailArgs(
+                                        studentId: lesson.focusStudentId,
                                         flashMessage:
-                                            '已定位到 ${lesson.focusStudentName}，可继续回看 ${lesson.title} 的课堂反馈。',
-                                        highlightTitle: '当前课堂反馈学生',
-                                        highlightDetail:
-                                            '${lesson.focusStudentName} 正承接 ${lesson.title} 的课堂反馈，可继续回看画像、错题与习惯跟进。',
-                                        feedbackBadgeLabel: '课堂回看',
+                                            '已从 ${lesson.title} 的课堂档案进入 ${lesson.focusStudentName}，可继续回看学生反馈。',
                                       ),
                                     );
                                   },
                                   icon: const Icon(Icons.school_outlined, size: 18),
-                                  label: Text('回看${lesson.focusStudentName}'),
+                                  label: Text('查看${lesson.focusStudentName}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {

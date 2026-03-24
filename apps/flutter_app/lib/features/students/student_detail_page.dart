@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
-import '../../core/models/classes_page_args.dart';
+import '../../core/models/class_detail_args.dart';
 import '../../core/models/document_detail_args.dart';
-import '../../core/models/lessons_page_args.dart';
+import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
 import '../../core/services/app_services.dart';
@@ -263,39 +263,31 @@ class StudentDetailPage extends StatelessWidget {
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      AppRouter.classes,
-                                      (route) => false,
-                                      arguments: ClassesPageArgs(
-                                        focusClassId: student.classId,
-                                        flashMessage: '已定位到 ${student.className}，可继续安排班级与课堂节奏。',
-                                        highlightTitle: '当前学生所在班级',
-                                        highlightDetail:
-                                            '${student.className} 正承接 ${student.name} 的学习跟进，可继续回看班级资料、课堂安排和分层任务。',
-                                        feedbackBadgeLabel: '学生回看',
+                                    Navigator.of(context).pushNamed(
+                                      AppRouter.classDetail,
+                                      arguments: ClassDetailArgs(
+                                        classId: student.classId,
+                                        flashMessage:
+                                            '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
                                       ),
                                     );
                                   },
                                   icon: const Icon(Icons.groups_outlined, size: 18),
-                                  label: Text('查看${student.className}'),
+                                  label: Text('查看${student.className}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      AppRouter.lessons,
-                                      (route) => false,
-                                      arguments: LessonsPageArgs(
-                                        focusLessonId: student.lessonId,
-                                        flashMessage: '已定位到与 ${student.name} 相关的课堂，可继续回看反馈。',
-                                        highlightTitle: '当前学生关联课堂',
-                                        highlightDetail:
-                                            '${student.name} 当前关联 ${student.className} 的课堂安排，可继续回看资料使用和课后反馈。',
-                                        feedbackBadgeLabel: '学生回看',
+                                    Navigator.of(context).pushNamed(
+                                      AppRouter.lessonDetail,
+                                      arguments: LessonDetailArgs(
+                                        lessonId: student.lessonId,
+                                        flashMessage:
+                                            '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
                                       ),
                                     );
                                   },
                                   icon: const Icon(Icons.schedule_outlined, size: 18),
-                                  label: const Text('回看关联课堂'),
+                                  label: const Text('查看关联课堂详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
