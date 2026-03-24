@@ -1,3 +1,15 @@
+class ClassTierRecord {
+  const ClassTierRecord({
+    required this.label,
+    required this.studentCount,
+    required this.focus,
+  });
+
+  final String label;
+  final int studentCount;
+  final String focus;
+}
+
 class ClassWorkspaceRecord {
   const ClassWorkspaceRecord({
     required this.id,
@@ -17,6 +29,7 @@ class ClassWorkspaceRecord {
     required this.studentCount,
     required this.weeklyLessonCount,
     required this.latestDocLabel,
+    required this.memberTiers,
     required this.summary,
     required this.highlights,
     required this.nextStep,
@@ -39,6 +52,7 @@ class ClassWorkspaceRecord {
   final int studentCount;
   final int weeklyLessonCount;
   final String latestDocLabel;
+  final List<ClassTierRecord> memberTiers;
   final String summary;
   final List<String> highlights;
   final String nextStep;
@@ -63,6 +77,23 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 26,
     weeklyLessonCount: 3,
     latestDocLabel: '二次函数周测卷',
+    memberTiers: [
+      ClassTierRecord(
+        label: '冲刺层',
+        studentCount: 8,
+        focus: '压轴题表达与证明链条稳定推进。',
+      ),
+      ClassTierRecord(
+        label: '稳固层',
+        studentCount: 12,
+        focus: '二次函数综合题保持正确率，继续补讲义拆解。',
+      ),
+      ClassTierRecord(
+        label: '跟进层',
+        studentCount: 6,
+        focus: '课堂复盘后重点跟进函数压轴题与错题订正。',
+      ),
+    ],
     summary: '当前重点是周测卷复盘和压轴题讲解，班级对讲义中的板书提示响应较好。',
     highlights: [
       '本周安排 3 节课堂，2 份试卷回看，1 份讲义补充。',
@@ -89,6 +120,23 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 34,
     weeklyLessonCount: 2,
     latestDocLabel: '相似三角形讲义',
+    memberTiers: [
+      ClassTierRecord(
+        label: '提优层',
+        studentCount: 9,
+        focus: '保持讲义推进节奏，补短测承接开放题表达。',
+      ),
+      ClassTierRecord(
+        label: '主力层',
+        studentCount: 17,
+        focus: '围绕讲义例题和课堂追问建立稳定答题结构。',
+      ),
+      ClassTierRecord(
+        label: '跟进层',
+        studentCount: 8,
+        focus: '重点放慢审题节奏，先稳住图像和表格信息题。',
+      ),
+    ],
     summary: '班级目前更适合讲义驱动，课堂中对例题拆解和追问框的反馈较好。',
     highlights: [
       '最近一周以讲义整理和板书节奏优化为主。',
@@ -115,6 +163,23 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
     studentCount: 18,
     weeklyLessonCount: 1,
     latestDocLabel: '力学建模讲义',
+    memberTiers: [
+      ClassTierRecord(
+        label: '培优层',
+        studentCount: 6,
+        focus: '主抓模型辨析和图像信息转化的高阶表达。',
+      ),
+      ClassTierRecord(
+        label: '稳定层',
+        studentCount: 7,
+        focus: '保证讲义例题和课堂反馈之间的闭环。',
+      ),
+      ClassTierRecord(
+        label: '跟进层',
+        studentCount: 5,
+        focus: '先跑通课堂反馈样例，再补错题和课后任务衔接。',
+      ),
+    ],
     summary: '当前在验证课堂、学生画像和讲义之间的联动路径，班级规模适合做更细的反馈跟进。',
     highlights: [
       '班级规模较小，适合先跑课堂反馈样例。',
