@@ -6,7 +6,13 @@ cd "$(dirname "$0")/.."
 RUN_DIR="tmp/local-run"
 mkdir -p "$RUN_DIR"
 
-if [ ! -f .env ]; then
+if [ ! -f .env ] && [ -f .env.example ]; then
+  echo ".env not found; loading defaults from .env.example" >&2
+  set -a
+  # shellcheck disable=SC1091
+  source .env.example
+  set +a
+elif [ ! -f .env ]; then
   echo ".env not found; relying on current shell and compose defaults" >&2
 else
   set -a
@@ -18,6 +24,9 @@ fi
 : "${DATABASE_URL:=postgresql://qb_app:qb_app@localhost:5432/qb?schema=public}"
 : "${RLS_ADMIN_DATABASE_URL:=postgresql://postgres:postgres@localhost:5432/qb?schema=public}"
 : "${REDIS_URL:=redis://localhost:6379}"
+: "${DB_NAME:=qb}"
+: "${APP_DB_USER:=qb_app}"
+: "${APP_DB_PASS:=qb_app}"
 : "${MINIO_ENDPOINT:=localhost}"
 : "${MINIO_PORT:=9000}"
 : "${MINIO_USE_SSL:=false}"
@@ -68,9 +77,30 @@ start_service() {
     return
   fi
 
-  nohup bash -lc "$command" >"$log_file" 2>&1 &
-  echo $! >"$pid_file"
-  echo "Started $name (pid $(cat "$pid_file"))"
+  local started_pid
+  started_pid="$(
+    python3 - "$command" "$log_file" <<'PY'
+import subprocess
+import sys
+
+command = sys.argv[1]
+log_file = sys.argv[2]
+
+with open(log_file, "ab", buffering=0) as handle:
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        stdin=subprocess.DEVNULL,
+        stdout=handle,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+
+print(process.pid)
+PY
+  )"
+  echo "$started_pid" >"$pid_file"
+  echo "Started $name (pid $started_pid)"
 }
 
 wait_for_url() {
@@ -94,16 +124,65 @@ detect_lan_ip() {
   ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true
 }
 
+wait_for_postgres_container() {
+  for _ in $(seq 1 60); do
+    if docker compose exec -T postgres pg_isready -U postgres -d qb >/dev/null 2>&1; then
+      echo "Postgres ready: localhost:5432/qb"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Postgres failed to become ready: localhost:5432/qb" >&2
+  return 1
+}
+
+ensure_app_db_role() {
+  echo "Ensuring app DB role exists: ${APP_DB_USER}"
+  docker compose exec -T postgres psql -U postgres -d "${DB_NAME}" <<SQL
+DO \$\$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_DB_USER}') THEN
+    CREATE ROLE ${APP_DB_USER} LOGIN PASSWORD '${APP_DB_PASS}' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+  END IF;
+END \$\$;
+
+ALTER ROLE ${APP_DB_USER} WITH PASSWORD '${APP_DB_PASS}';
+GRANT CONNECT ON DATABASE ${DB_NAME} TO ${APP_DB_USER};
+GRANT USAGE, CREATE ON SCHEMA public TO ${APP_DB_USER};
+ALTER SCHEMA public OWNER TO ${APP_DB_USER};
+ALTER DATABASE ${DB_NAME} OWNER TO ${APP_DB_USER};
+SQL
+}
+
 echo "Starting infrastructure (postgres, redis, minio)..."
 docker compose up -d postgres redis minio
+
+wait_for_postgres_container
+ensure_app_db_role
+
+echo "Syncing Prisma schema and seeds..."
+npx prisma db push --skip-generate
+npx prisma generate
+npm run prisma:seed
+npm run prisma:rls
+
+echo "Building Flutter web preview..."
+(
+  cd "$PWD/apps/flutter_app"
+  env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY \
+    flutter build web --release --no-web-resources-cdn \
+    --dart-define=SHITI_USE_MOCK_DATA=false \
+    --dart-define=SHITI_API_BASE_URL=http://127.0.0.1:3000
+)
 
 echo "Starting API / worker / Flutter web..."
 start_service "api" "cd '$PWD' && exec env HOST=0.0.0.0 ./node_modules/.bin/ts-node apps/api/main.ts" "3000" "ts-node apps/api/main.ts"
 start_service "worker" "cd '$PWD' && exec ./node_modules/.bin/ts-node apps/worker/main.ts" "" "ts-node apps/worker/main.ts"
-start_service "flutter_web" "cd '$PWD/apps/flutter_app' && exec env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY flutter run -d web-server --web-hostname 0.0.0.0 --web-port 4111 --dart-define=SHITI_USE_MOCK_DATA=false --dart-define=SHITI_API_BASE_URL=http://127.0.0.1:3000" "4111" "flutter run -d web-server --web-hostname 0.0.0.0 --web-port 4111"
+start_service "flutter_web" "cd '$PWD' && exec env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY /Users/honcy/Project/ShiTi/scripts/serve-flutter-web-build.sh '$PWD/apps/flutter_app/build/web' 4111" "4111" "serve-flutter-web-build.sh '$PWD/apps/flutter_app/build/web' 4111"
 
 wait_for_url "API" "http://127.0.0.1:3000/health" ""
-wait_for_url "Flutter web" "http://127.0.0.1:4111/" "env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY "
+wait_for_url "Flutter web" "http://127.0.0.1:4111/" "env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY "
 
 LAN_IP="$(detect_lan_ip)"
 

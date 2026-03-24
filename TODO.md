@@ -1030,3 +1030,5 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 学生详情页新增“资料承接”分区，把当前班级、课堂和资料链路拉进正文层，而不只停在摘要 rail 和后续动作。
 - [x] Flutter: 班级详情页新增“资料联动”分区，把班级对象和当前主资料/补充资料直接拉进正文层，并支持从班级详情直接打开对应文档。
 - [x] Flutter: 学生详情页新增“课堂反馈记录”分区，把学生对象上的课堂反馈回收与后续跟进也拉进正文层，而不只停在课堂入口和摘要文案里。
+- [x] Tooling: `npm run local:restart` 的 Flutter 前端启动方式已改成“先 build 再静态预览”，不再依赖 `flutter run -d web-server` 的后台 TTY 和 CDN 资源链路，避免 `4111` 偶发白页或直接拒绝连接。
+- [x] Tooling: `npm run local:restart` 的后台服务启动已改成 `python3 subprocess(start_new_session=True)` 脱离 `npm` 进程组，修复 `4111` 在脚本结束后立即消失的问题。
