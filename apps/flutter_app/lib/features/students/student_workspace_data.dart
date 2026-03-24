@@ -24,6 +24,18 @@ class StudentWrongQuestionRecord {
   final String followUp;
 }
 
+class StudentFeedbackRecord {
+  const StudentFeedbackRecord({
+    required this.label,
+    required this.status,
+    required this.detail,
+  });
+
+  final String label;
+  final String status;
+  final String detail;
+}
+
 class StudentWorkspaceRecord {
   const StudentWorkspaceRecord({
     required this.id,
@@ -46,6 +58,7 @@ class StudentWorkspaceRecord {
     required this.wrongCountLabel,
     required this.wrongCount,
     required this.scoreRecords,
+    required this.feedbackRecords,
     required this.wrongQuestionRecords,
     required this.highlights,
     required this.nextStep,
@@ -71,6 +84,7 @@ class StudentWorkspaceRecord {
   final String wrongCountLabel;
   final int wrongCount;
   final List<StudentScoreRecord> scoreRecords;
+  final List<StudentFeedbackRecord> feedbackRecords;
   final List<StudentWrongQuestionRecord> wrongQuestionRecords;
   final List<String> highlights;
   final String nextStep;
@@ -115,6 +129,18 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         score: 92,
         totalScore: 100,
         insight: '压轴题拆解明显进步，课堂讲解后复盘效果较好。',
+      ),
+    ],
+    feedbackRecords: [
+      StudentFeedbackRecord(
+        label: '周测复盘课',
+        status: '已回收',
+        detail: '口头讲解完整度明显提升，下一轮可以加一点开放题追问。',
+      ),
+      StudentFeedbackRecord(
+        label: '压轴题讲义回看',
+        status: '跟进中',
+        detail: '证明链条已稳定，但几何综合题仍需要单独拆一次已知/求证。',
       ),
     ],
     wrongQuestionRecords: [
@@ -174,6 +200,18 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         score: 71,
         totalScore: 100,
         insight: '分步作答开始改善，但图像信息提取仍需专项跟进。',
+      ),
+    ],
+    feedbackRecords: [
+      StudentFeedbackRecord(
+        label: '讲义推进课',
+        status: '已回收',
+        detail: '课堂追问能跟上，但审题停顿仍然不足，需要继续强化。',
+      ),
+      StudentFeedbackRecord(
+        label: '短测回看',
+        status: '待补录',
+        detail: '等随堂短测完成后，把图像信息题的回收结果回写进学生画像。',
       ),
     ],
     wrongQuestionRecords: [
@@ -238,6 +276,18 @@ const List<StudentWorkspaceRecord> sampleStudentRecords = [
         score: 84,
         totalScore: 100,
         insight: '课堂反馈和错题回看已形成闭环，适合继续稳定推进。',
+      ),
+    ],
+    feedbackRecords: [
+      StudentFeedbackRecord(
+        label: '模型导入课',
+        status: '已回收',
+        detail: '课堂互动稳定，图像辨析反馈已经能回写到个人工作区记录里。',
+      ),
+      StudentFeedbackRecord(
+        label: '讲义边注复盘',
+        status: '跟进中',
+        detail: '下一轮重点确认边注回看是否能稳定转成课后任务。',
       ),
     ],
     wrongQuestionRecords: [
