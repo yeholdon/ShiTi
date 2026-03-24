@@ -18,6 +18,8 @@ import '../../router/app_router.dart';
 import '../shared/primary_page_scroll_memory.dart';
 import '../shared/primary_page_view_state_memory.dart';
 import '../shared/primary_navigation_bar.dart';
+import '../shared/workspace_module_paths.dart';
+import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
 import 'create_document_dialog.dart';
 import 'document_summary_preview.dart';
@@ -1487,543 +1489,559 @@ class _DocumentsPageState extends State<DocumentsPage> {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final wideDesktop = MediaQuery.sizeOf(context).width >= 1280;
     final filteredDocuments = _applyFilters(_documents);
+    final activeTenant = AppServices.instance.activeTenant;
     return Scaffold(
-      appBar: AppBar(title: const Text('讲义与试卷')),
-      body: WorkspaceBackdrop(
-        child: SafeArea(
-          child: workspaceConstrainedContent(
-            context,
-            child: ListView(
-              controller: _scrollController,
-              padding: workspacePagePadding(context),
-              children: [
-                if (_flashMessage != null &&
-                    _flashMessage!.trim().isNotEmpty) ...[
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 18),
-                    padding: EdgeInsets.all(compact ? 14 : 16),
-                    decoration: BoxDecoration(
-                      color: TelegramPalette.surfaceAccent,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: TelegramPalette.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.task_alt_outlined,
-                          color: TelegramPalette.accent,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _flashMessage!,
-                            style: const TextStyle(
-                              height: 1.45,
-                              color: TelegramPalette.textStrong,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _flashMessage = null;
-                            });
-                          },
-                          child: const Text('知道了'),
-                        ),
-                      ],
-                    ),
+      body: WorkspaceModuleShell(
+        currentModule: WorkspaceModule.documents,
+        onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+        title: '文档管理',
+        subtitle: '围绕讲义、试卷、排版元素与导出回看，组织统一的文档编排与整理工作台。',
+        searchHint: '搜索文档名称、文档类型、导出状态或最近反馈',
+        statusWidgets: [
+          WorkspaceInfoPill(
+            label: '数据模式',
+            value: AppConfig.dataModeLabel,
+          ),
+          WorkspaceInfoPill(
+            label: '当前场景',
+            value: activeTenant == null
+                ? '待选择机构'
+                : activeTenant.isPersonal
+                    ? '个人工作区'
+                    : '机构工作区',
+            highlight: activeTenant == null,
+          ),
+          WorkspaceInfoPill(
+            label: '当前机构',
+            value: activeTenant?.name ?? '未选择机构',
+            highlight: activeTenant == null,
+          ),
+        ],
+        trailing: IconButton.filledTonal(
+          onPressed: _openWorkspace,
+          tooltip: '返回工作台',
+          icon: const Icon(Icons.home_outlined),
+        ),
+        body: workspaceConstrainedContent(
+          context,
+          child: ListView(
+            controller: _scrollController,
+            padding: workspacePagePadding(context),
+            children: [
+              if (_flashMessage != null &&
+                  _flashMessage!.trim().isNotEmpty) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 18),
+                  padding: EdgeInsets.all(compact ? 14 : 16),
+                  decoration: BoxDecoration(
+                    color: TelegramPalette.surfaceAccent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: TelegramPalette.border),
                   ),
-                ],
-                if (wideDesktop)
-                  Row(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Icon(
+                        Icons.task_alt_outlined,
+                        color: TelegramPalette.accent,
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        flex: 5,
-                        child: _DocumentsHeroStrip(
-                          documentCount: _documents.length,
-                          selectedCount: _selectedDocumentIds.length,
-                          questionCount: _documents.fold<int>(
-                            0,
-                            (sum, document) => sum + document.questionCount,
+                        child: Text(
+                          _flashMessage!,
+                          style: const TextStyle(
+                            height: 1.45,
+                            color: TelegramPalette.textStrong,
+                            fontWeight: FontWeight.w600,
                           ),
-                          pendingExportCount: _documents
-                              .where((document) =>
-                                  document.latestExportStatus == 'pending' ||
-                                  document.latestExportStatus == 'running')
-                              .length,
-                          hasFocusedContext: _focusedDocumentId != null ||
-                              (_flashMessage?.trim().isNotEmpty ?? false) ||
-                              (_highlightTitle?.trim().isNotEmpty ?? false) ||
-                              (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
-                          onOpenWorkspace: _openWorkspace,
                         ),
                       ),
-                      const SizedBox(width: 18),
-                      SizedBox(
-                        width: 320,
-                        child: _DocumentsStatusCard(
-                          modeLabel: AppConfig.dataModeLabel,
-                          sessionLabel:
-                              AppServices.instance.session?.username ?? '未登录',
-                          tenantLabel:
-                              AppServices.instance.activeTenant?.code ??
-                                  '未选择机构',
-                        ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _flashMessage = null;
+                          });
+                        },
+                        child: const Text('知道了'),
                       ),
                     ],
-                  )
-                else ...[
-                  _DocumentsHeroStrip(
-                    documentCount: _documents.length,
-                    selectedCount: _selectedDocumentIds.length,
-                    questionCount: _documents.fold<int>(
-                      0,
-                      (sum, document) => sum + document.questionCount,
+                  ),
+                ),
+              ],
+              if (wideDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _DocumentsHeroStrip(
+                        documentCount: _documents.length,
+                        selectedCount: _selectedDocumentIds.length,
+                        questionCount: _documents.fold<int>(
+                          0,
+                          (sum, document) => sum + document.questionCount,
+                        ),
+                        pendingExportCount: _documents
+                            .where((document) =>
+                                document.latestExportStatus == 'pending' ||
+                                document.latestExportStatus == 'running')
+                            .length,
+                        hasFocusedContext: _focusedDocumentId != null ||
+                            (_flashMessage?.trim().isNotEmpty ?? false) ||
+                            (_highlightTitle?.trim().isNotEmpty ?? false) ||
+                            (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
+                        onOpenWorkspace: _openWorkspace,
+                      ),
                     ),
-                    pendingExportCount: _documents
-                        .where((document) =>
-                            document.latestExportStatus == 'pending' ||
-                            document.latestExportStatus == 'running')
-                        .length,
-                    hasFocusedContext: _focusedDocumentId != null ||
-                        (_flashMessage?.trim().isNotEmpty ?? false) ||
-                        (_highlightTitle?.trim().isNotEmpty ?? false) ||
-                        (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
-                    onOpenWorkspace: _openWorkspace,
-                  ),
-                  const SizedBox(height: 18),
-                  _DocumentsStatusCard(
-                    modeLabel: AppConfig.dataModeLabel,
-                    sessionLabel:
-                        AppServices.instance.session?.username ?? '未登录',
-                    tenantLabel:
-                        AppServices.instance.activeTenant?.code ?? '未选择机构',
-                  ),
-                ],
-                const SizedBox(height: 18),
-                _DocumentsHeader(
-                  onCreateDocument: _createDocument,
+                    const SizedBox(width: 18),
+                    SizedBox(
+                      width: 320,
+                      child: _DocumentsStatusCard(
+                        modeLabel: AppConfig.dataModeLabel,
+                        sessionLabel:
+                            AppServices.instance.session?.username ?? '未登录',
+                        tenantLabel:
+                            AppServices.instance.activeTenant?.code ?? '未选择机构',
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _DocumentsHeroStrip(
                   documentCount: _documents.length,
+                  selectedCount: _selectedDocumentIds.length,
                   questionCount: _documents.fold<int>(
                     0,
                     (sum, document) => sum + document.questionCount,
                   ),
-                  layoutCount: _documents.fold<int>(
-                    0,
-                    (sum, document) => sum + document.layoutCount,
-                  ),
-                  filteredDocumentCount: filteredDocuments.length,
-                  filteredQuestionCount: filteredDocuments.fold<int>(
-                    0,
-                    (sum, document) => sum + document.questionCount,
-                  ),
-                  filteredLayoutCount: filteredDocuments.fold<int>(
-                    0,
-                    (sum, document) => sum + document.layoutCount,
-                  ),
-                  filteredHandoutCount: filteredDocuments
-                      .where((document) => document.kind == 'handout')
-                      .length,
-                  filteredPaperCount: filteredDocuments
-                      .where((document) => document.kind == 'paper')
-                      .length,
-                  filteredPendingExportCount: filteredDocuments
-                      .where((document) =>
-                          document.latestExportStatus == 'pending' ||
-                          document.latestExportStatus == 'running')
-                      .length,
-                  filteredSucceededExportCount: filteredDocuments
-                      .where(
-                        (document) =>
-                            document.latestExportStatus == 'succeeded',
-                      )
-                      .length,
-                  filteredFailedExportCount: filteredDocuments
-                      .where(
-                        (document) => document.latestExportStatus == 'failed',
-                      )
-                      .length,
                   pendingExportCount: _documents
                       .where((document) =>
                           document.latestExportStatus == 'pending' ||
                           document.latestExportStatus == 'running')
                       .length,
-                  queryController: _queryController,
-                  query: _query,
-                  kindFilter: _kindFilter,
-                  exportStatusFilter: _exportStatusFilter,
-                  sortBy: _sortBy,
-                  onQueryChanged: (value) {
-                    setState(() {
-                      _query = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onKindChanged: (value) {
-                    setState(() {
-                      _kindFilter = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onExportStatusChanged: (value) {
-                    setState(() {
-                      _exportStatusFilter = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onSortChanged: (value) {
-                    setState(() {
-                      _sortBy = value;
-                    });
-                    _rememberViewState();
-                  },
-                  onClearFilters: _clearFilters,
-                  recentlyAddedQuestionCount: _recentlyAddedQuestionCount,
-                  feedbackBadgeLabel: _feedbackBadgeLabel,
+                  hasFocusedContext: _focusedDocumentId != null ||
+                      (_flashMessage?.trim().isNotEmpty ?? false) ||
+                      (_highlightTitle?.trim().isNotEmpty ?? false) ||
+                      (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
+                  onOpenWorkspace: _openWorkspace,
                 ),
                 const SizedBox(height: 18),
-                if (_loadError != null)
-                  _DocumentsErrorCard(
-                    message: _loadError is HttpJsonException
-                        ? '文档列表加载失败：${(_loadError as HttpJsonException).message}（HTTP ${(_loadError as HttpJsonException).statusCode}）'
-                        : '文档列表加载失败：$_loadError',
-                    onRetry: _reload,
-                  )
-                else if (_loading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_documents.isEmpty)
-                  WorkspacePanel(
-                    padding: EdgeInsets.all(compact ? 14 : 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppConfig.useMockData
-                              ? '当前还没有文档。先新建一份讲义或试卷，再继续编排内容。'
-                              : '当前还没有文档。先确认已登录并选择机构，再新建讲义或试卷。',
-                          style: const TextStyle(
-                            height: 1.5,
-                            color: TelegramPalette.textMuted,
-                          ),
+                _DocumentsStatusCard(
+                  modeLabel: AppConfig.dataModeLabel,
+                  sessionLabel: AppServices.instance.session?.username ?? '未登录',
+                  tenantLabel:
+                      AppServices.instance.activeTenant?.code ?? '未选择机构',
+                ),
+              ],
+              const SizedBox(height: 18),
+              _DocumentsHeader(
+                onCreateDocument: _createDocument,
+                documentCount: _documents.length,
+                questionCount: _documents.fold<int>(
+                  0,
+                  (sum, document) => sum + document.questionCount,
+                ),
+                layoutCount: _documents.fold<int>(
+                  0,
+                  (sum, document) => sum + document.layoutCount,
+                ),
+                filteredDocumentCount: filteredDocuments.length,
+                filteredQuestionCount: filteredDocuments.fold<int>(
+                  0,
+                  (sum, document) => sum + document.questionCount,
+                ),
+                filteredLayoutCount: filteredDocuments.fold<int>(
+                  0,
+                  (sum, document) => sum + document.layoutCount,
+                ),
+                filteredHandoutCount: filteredDocuments
+                    .where((document) => document.kind == 'handout')
+                    .length,
+                filteredPaperCount: filteredDocuments
+                    .where((document) => document.kind == 'paper')
+                    .length,
+                filteredPendingExportCount: filteredDocuments
+                    .where((document) =>
+                        document.latestExportStatus == 'pending' ||
+                        document.latestExportStatus == 'running')
+                    .length,
+                filteredSucceededExportCount: filteredDocuments
+                    .where(
+                      (document) => document.latestExportStatus == 'succeeded',
+                    )
+                    .length,
+                filteredFailedExportCount: filteredDocuments
+                    .where(
+                      (document) => document.latestExportStatus == 'failed',
+                    )
+                    .length,
+                pendingExportCount: _documents
+                    .where((document) =>
+                        document.latestExportStatus == 'pending' ||
+                        document.latestExportStatus == 'running')
+                    .length,
+                queryController: _queryController,
+                query: _query,
+                kindFilter: _kindFilter,
+                exportStatusFilter: _exportStatusFilter,
+                sortBy: _sortBy,
+                onQueryChanged: (value) {
+                  setState(() {
+                    _query = value;
+                  });
+                  _rememberViewState();
+                },
+                onKindChanged: (value) {
+                  setState(() {
+                    _kindFilter = value;
+                  });
+                  _rememberViewState();
+                },
+                onExportStatusChanged: (value) {
+                  setState(() {
+                    _exportStatusFilter = value;
+                  });
+                  _rememberViewState();
+                },
+                onSortChanged: (value) {
+                  setState(() {
+                    _sortBy = value;
+                  });
+                  _rememberViewState();
+                },
+                onClearFilters: _clearFilters,
+                recentlyAddedQuestionCount: _recentlyAddedQuestionCount,
+                feedbackBadgeLabel: _feedbackBadgeLabel,
+              ),
+              const SizedBox(height: 18),
+              if (_loadError != null)
+                _DocumentsErrorCard(
+                  message: _loadError is HttpJsonException
+                      ? '文档列表加载失败：${(_loadError as HttpJsonException).message}（HTTP ${(_loadError as HttpJsonException).statusCode}）'
+                      : '文档列表加载失败：$_loadError',
+                  onRetry: _reload,
+                )
+              else if (_loading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_documents.isEmpty)
+                WorkspacePanel(
+                  padding: EdgeInsets.all(compact ? 14 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppConfig.useMockData
+                            ? '当前还没有文档。先新建一份讲义或试卷，再继续编排内容。'
+                            : '当前还没有文档。先确认已登录并选择机构，再新建讲义或试卷。',
+                        style: const TextStyle(
+                          height: 1.5,
+                          color: TelegramPalette.textMuted,
                         ),
-                        if (!AppConfig.useMockData) ...[
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: compact ? 8 : 10,
-                            runSpacing: compact ? 8 : 10,
-                            children: [
-                              if (AppServices.instance.session == null)
-                                OutlinedButton.icon(
-                                  onPressed: () => Navigator.of(context)
-                                      .pushNamed(AppRouter.login),
-                                  icon: const Icon(Icons.login),
-                                  label: const Text('先登录'),
-                                ),
-                              if (AppServices.instance.activeTenant == null)
-                                OutlinedButton.icon(
-                                  onPressed: () => Navigator.of(context)
-                                      .pushNamed(AppRouter.tenantSwitch),
-                                  icon: const Icon(Icons.apartment_outlined),
-                                  label: const Text('选择机构'),
-                                ),
-                            ],
-                          ),
-                        ],
+                      ),
+                      if (!AppConfig.useMockData) ...[
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: compact ? 8 : 10,
+                          runSpacing: compact ? 8 : 10,
+                          children: [
+                            if (AppServices.instance.session == null)
+                              OutlinedButton.icon(
+                                onPressed: () => Navigator.of(context)
+                                    .pushNamed(AppRouter.login),
+                                icon: const Icon(Icons.login),
+                                label: const Text('先登录'),
+                              ),
+                            if (AppServices.instance.activeTenant == null)
+                              OutlinedButton.icon(
+                                onPressed: () => Navigator.of(context)
+                                    .pushNamed(AppRouter.tenantSwitch),
+                                icon: const Icon(Icons.apartment_outlined),
+                                label: const Text('选择机构'),
+                              ),
+                          ],
+                        ),
                       ],
-                    ),
-                  )
-                else ...[
-                  Builder(
-                    builder: (context) {
-                      final filteredDocuments = _applyFilters(_documents);
-                      _scheduleFocusedDocumentScroll(filteredDocuments);
-                      if (filteredDocuments.isEmpty) {
-                        final showingOnlySelected = _showOnlySelectedDocuments;
-                        return WorkspacePanel(
-                          padding: EdgeInsets.all(compact ? 14 : 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                '当前没有可展示的文档。',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: TelegramPalette.textStrong,
-                                ),
+                    ],
+                  ),
+                )
+              else ...[
+                Builder(
+                  builder: (context) {
+                    final filteredDocuments = _applyFilters(_documents);
+                    _scheduleFocusedDocumentScroll(filteredDocuments);
+                    if (filteredDocuments.isEmpty) {
+                      final showingOnlySelected = _showOnlySelectedDocuments;
+                      return WorkspacePanel(
+                        padding: EdgeInsets.all(compact ? 14 : 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '当前没有可展示的文档。',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: TelegramPalette.textStrong,
                               ),
-                              const SizedBox(height: 8),
-                              Text(
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              showingOnlySelected
+                                  ? '可以先退出“只看已选”，或重新选择一批文档后再继续批量处理。'
+                                  : _query.trim().isEmpty
+                                      ? '可以切换文档类型筛选，或清空筛选后查看全部文档。'
+                                      : '可以调整关键词或类型筛选，重新定位目标文档。',
+                              style: const TextStyle(
+                                height: 1.5,
+                                color: TelegramPalette.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            TextButton.icon(
+                              onPressed: showingOnlySelected
+                                  ? () {
+                                      setState(() {
+                                        _showOnlySelectedDocuments = false;
+                                      });
+                                      _rememberViewState();
+                                    }
+                                  : _clearFilters,
+                              icon: Icon(
                                 showingOnlySelected
-                                    ? '可以先退出“只看已选”，或重新选择一批文档后再继续批量处理。'
-                                    : _query.trim().isEmpty
-                                        ? '可以切换文档类型筛选，或清空筛选后查看全部文档。'
-                                        : '可以调整关键词或类型筛选，重新定位目标文档。',
-                                style: const TextStyle(
-                                  height: 1.5,
-                                  color: TelegramPalette.textMuted,
-                                ),
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.filter_alt_off_outlined,
                               ),
-                              const SizedBox(height: 14),
-                              TextButton.icon(
-                                onPressed: showingOnlySelected
-                                    ? () {
-                                        setState(() {
-                                          _showOnlySelectedDocuments = false;
-                                        });
-                                        _rememberViewState();
-                                      }
-                                    : _clearFilters,
-                                icon: Icon(
-                                  showingOnlySelected
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.filter_alt_off_outlined,
-                                ),
-                                label: Text(
-                                  showingOnlySelected
-                                      ? '退出只看已选'
-                                      : (compact ? '清空' : '清空筛选'),
-                                ),
+                              label: Text(
+                                showingOnlySelected
+                                    ? '退出只看已选'
+                                    : (compact ? '清空' : '清空筛选'),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    final allFilteredSelected = filteredDocuments.isNotEmpty &&
+                        filteredDocuments.every(
+                          (document) =>
+                              _selectedDocumentIds.contains(document.id),
                         );
-                      }
-                      final allFilteredSelected =
-                          filteredDocuments.isNotEmpty &&
-                              filteredDocuments.every(
+                    final handoutCount = filteredDocuments
+                        .where((document) => document.kind == 'handout')
+                        .length;
+                    final paperCount = filteredDocuments
+                        .where((document) => document.kind == 'paper')
+                        .length;
+                    final notStartedCount = filteredDocuments
+                        .where(
+                          (document) =>
+                              document.latestExportStatus == 'not_started',
+                        )
+                        .length;
+                    final inProgressCount = filteredDocuments
+                        .where(
+                          (document) =>
+                              document.latestExportStatus == 'pending' ||
+                              document.latestExportStatus == 'running',
+                        )
+                        .length;
+                    final failedCount = filteredDocuments
+                        .where(
+                          (document) => document.latestExportStatus == 'failed',
+                        )
+                        .length;
+                    final succeededCount = filteredDocuments
+                        .where(
+                          (document) =>
+                              document.latestExportStatus == 'succeeded',
+                        )
+                        .length;
+                    final canceledCount = filteredDocuments
+                        .where(
+                          (document) =>
+                              document.latestExportStatus == 'canceled',
+                        )
+                        .length;
+                    return Column(
+                      children: [
+                        _DocumentsSelectionBar(
+                          selectedCount: _selectedDocumentIds.length,
+                          selectedHandoutCount: filteredDocuments
+                              .where(
+                                (document) =>
+                                    _selectedDocumentIds
+                                        .contains(document.id) &&
+                                    document.kind == 'handout',
+                              )
+                              .length,
+                          selectedPaperCount: filteredDocuments
+                              .where(
+                                (document) =>
+                                    _selectedDocumentIds
+                                        .contains(document.id) &&
+                                    document.kind == 'paper',
+                              )
+                              .length,
+                          selectedQuestionTotal: filteredDocuments
+                              .where(
                                 (document) =>
                                     _selectedDocumentIds.contains(document.id),
-                              );
-                      final handoutCount = filteredDocuments
-                          .where((document) => document.kind == 'handout')
-                          .length;
-                      final paperCount = filteredDocuments
-                          .where((document) => document.kind == 'paper')
-                          .length;
-                      final notStartedCount = filteredDocuments
-                          .where(
-                            (document) =>
-                                document.latestExportStatus == 'not_started',
-                          )
-                          .length;
-                      final inProgressCount = filteredDocuments
-                          .where(
-                            (document) =>
-                                document.latestExportStatus == 'pending' ||
-                                document.latestExportStatus == 'running',
-                          )
-                          .length;
-                      final failedCount = filteredDocuments
-                          .where(
-                            (document) =>
-                                document.latestExportStatus == 'failed',
-                          )
-                          .length;
-                      final succeededCount = filteredDocuments
-                          .where(
-                            (document) =>
-                                document.latestExportStatus == 'succeeded',
-                          )
-                          .length;
-                      final canceledCount = filteredDocuments
-                          .where(
-                            (document) =>
-                                document.latestExportStatus == 'canceled',
-                          )
-                          .length;
-                      return Column(
-                        children: [
-                          _DocumentsSelectionBar(
-                            selectedCount: _selectedDocumentIds.length,
-                            selectedHandoutCount: filteredDocuments
-                                .where(
-                                  (document) =>
-                                      _selectedDocumentIds
-                                          .contains(document.id) &&
-                                      document.kind == 'handout',
-                                )
-                                .length,
-                            selectedPaperCount: filteredDocuments
-                                .where(
-                                  (document) =>
-                                      _selectedDocumentIds
-                                          .contains(document.id) &&
-                                      document.kind == 'paper',
-                                )
-                                .length,
-                            selectedQuestionTotal: filteredDocuments
-                                .where(
-                                  (document) => _selectedDocumentIds
-                                      .contains(document.id),
-                                )
-                                .fold<int>(
-                                  0,
-                                  (sum, document) =>
-                                      sum + document.questionCount,
-                                ),
-                            selectedLayoutTotal: filteredDocuments
-                                .where(
-                                  (document) => _selectedDocumentIds
-                                      .contains(document.id),
-                                )
-                                .fold<int>(
-                                  0,
-                                  (sum, document) => sum + document.layoutCount,
-                                ),
-                            filteredCount: filteredDocuments.length,
-                            selectedFilteredCount: filteredDocuments
-                                .where(
-                                  (document) => _selectedDocumentIds
-                                      .contains(document.id),
-                                )
-                                .length,
-                            allFilteredSelected: allFilteredSelected,
-                            handoutCount: handoutCount,
-                            paperCount: paperCount,
-                            notStartedCount: notStartedCount,
-                            inProgressCount: inProgressCount,
-                            failedCount: failedCount,
-                            succeededCount: succeededCount,
-                            canceledCount: canceledCount,
-                            exportingSelected: _exportingSelected,
-                            duplicatingSelected: _duplicatingSelected,
-                            addingSelectedToDocument: _addingSelectedToDocument,
-                            mergingSelected: _mergingSelected,
-                            removingSelected: _removingSelected,
-                            showOnlySelected: _showOnlySelectedDocuments,
-                            onSelectAll: () =>
-                                _selectAllFiltered(filteredDocuments),
-                            onSelectHandouts: () =>
-                                _selectFilteredDocumentsByKind(
-                              filteredDocuments,
-                              'handout',
-                            ),
-                            onSelectPapers: () =>
-                                _selectFilteredDocumentsByKind(
-                              filteredDocuments,
-                              'paper',
-                            ),
-                            onSelectNotStarted: () =>
-                                _selectFilteredDocumentsByExportStatus(
-                              filteredDocuments,
-                              'not_started',
-                            ),
-                            onSelectInProgress: () =>
-                                _selectFilteredDocumentsByExportStatus(
-                              filteredDocuments,
-                              'in_progress',
-                            ),
-                            onSelectFailed: () =>
-                                _selectFilteredDocumentsByExportStatus(
-                              filteredDocuments,
-                              'failed',
-                            ),
-                            onSelectSucceeded: () =>
-                                _selectFilteredDocumentsByExportStatus(
-                              filteredDocuments,
-                              'succeeded',
-                            ),
-                            onSelectCanceled: () =>
-                                _selectFilteredDocumentsByExportStatus(
-                              filteredDocuments,
-                              'canceled',
-                            ),
-                            onInvertSelection: () =>
-                                _invertFilteredSelection(filteredDocuments),
-                            onClearSelection: _clearSelection,
-                            onShowOnlySelectedChanged: (value) {
-                              setState(() {
-                                _showOnlySelectedDocuments = value;
-                              });
-                              _rememberViewState();
-                            },
-                            onExportSelected: () =>
-                                _exportSelectedDocuments(filteredDocuments),
-                            onDuplicateSelected: () =>
-                                _duplicateSelectedDocuments(filteredDocuments),
-                            onAddSelectedToDocument: () =>
-                                _addSelectedDocumentsToDocument(
-                                    filteredDocuments),
-                            onMergeSelected: () =>
-                                _mergeSelectedDocumentsIntoNewDocument(
-                              filteredDocuments,
-                            ),
-                            onRemoveSelected: () =>
-                                _removeSelectedDocuments(filteredDocuments),
-                          ),
-                          const SizedBox(height: 12),
-                          ...filteredDocuments.map(
-                            (document) => Padding(
-                              key: _keyForDocument(document.id),
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _DocumentCard(
-                                document: document,
-                                isSelected:
-                                    _selectedDocumentIds.contains(document.id),
-                                highlighted: _focusedDocumentId == document.id,
-                                recentlyAddedQuestionCount:
-                                    _focusedDocumentId == document.id
-                                        ? _recentlyAddedQuestionCount
-                                        : null,
-                                highlightTitle:
-                                    _focusedDocumentId == document.id
-                                        ? _highlightTitle
-                                        : null,
-                                highlightDetail:
-                                    _focusedDocumentId == document.id
-                                        ? _highlightDetail
-                                        : null,
-                                feedbackBadgeLabel:
-                                    _focusedDocumentId == document.id
-                                        ? _feedbackBadgeLabel
-                                        : null,
-                                onOpenDetail: () =>
-                                    _openDocumentDetail(document),
-                                onOpenLibrary: () =>
-                                    _openLibraryForDocument(document),
-                                onOpenBasket: () =>
-                                    _openBasketForDocument(document),
-                                onExport: _exportingDocumentId == document.id
-                                    ? null
-                                    : () => _exportDocument(document),
-                                exporting: _exportingDocumentId == document.id,
-                                onOpenExports: () => _openExports(document),
-                                onOpenLatestExportDetail:
-                                    document.latestExportJobId == null
-                                        ? null
-                                        : () =>
-                                            _openLatestExportDetail(document),
-                                onOpenLatestExportResult: document
-                                                .latestExportStatus !=
-                                            'succeeded' ||
-                                        document.latestExportJobId == null
-                                    ? null
-                                    : () => _openLatestExportResult(document),
-                                onSelectionChanged: (selected) {
-                                  _setSelection(document.id, selected);
-                                },
-                                onDuplicate: () => _duplicateDocument(document),
-                                onRename: () => _renameDocument(document),
-                                onRemove: () => _removeDocument(document),
+                              )
+                              .fold<int>(
+                                0,
+                                (sum, document) => sum + document.questionCount,
                               ),
+                          selectedLayoutTotal: filteredDocuments
+                              .where(
+                                (document) =>
+                                    _selectedDocumentIds.contains(document.id),
+                              )
+                              .fold<int>(
+                                0,
+                                (sum, document) => sum + document.layoutCount,
+                              ),
+                          filteredCount: filteredDocuments.length,
+                          selectedFilteredCount: filteredDocuments
+                              .where(
+                                (document) =>
+                                    _selectedDocumentIds.contains(document.id),
+                              )
+                              .length,
+                          allFilteredSelected: allFilteredSelected,
+                          handoutCount: handoutCount,
+                          paperCount: paperCount,
+                          notStartedCount: notStartedCount,
+                          inProgressCount: inProgressCount,
+                          failedCount: failedCount,
+                          succeededCount: succeededCount,
+                          canceledCount: canceledCount,
+                          exportingSelected: _exportingSelected,
+                          duplicatingSelected: _duplicatingSelected,
+                          addingSelectedToDocument: _addingSelectedToDocument,
+                          mergingSelected: _mergingSelected,
+                          removingSelected: _removingSelected,
+                          showOnlySelected: _showOnlySelectedDocuments,
+                          onSelectAll: () =>
+                              _selectAllFiltered(filteredDocuments),
+                          onSelectHandouts: () =>
+                              _selectFilteredDocumentsByKind(
+                            filteredDocuments,
+                            'handout',
+                          ),
+                          onSelectPapers: () => _selectFilteredDocumentsByKind(
+                            filteredDocuments,
+                            'paper',
+                          ),
+                          onSelectNotStarted: () =>
+                              _selectFilteredDocumentsByExportStatus(
+                            filteredDocuments,
+                            'not_started',
+                          ),
+                          onSelectInProgress: () =>
+                              _selectFilteredDocumentsByExportStatus(
+                            filteredDocuments,
+                            'in_progress',
+                          ),
+                          onSelectFailed: () =>
+                              _selectFilteredDocumentsByExportStatus(
+                            filteredDocuments,
+                            'failed',
+                          ),
+                          onSelectSucceeded: () =>
+                              _selectFilteredDocumentsByExportStatus(
+                            filteredDocuments,
+                            'succeeded',
+                          ),
+                          onSelectCanceled: () =>
+                              _selectFilteredDocumentsByExportStatus(
+                            filteredDocuments,
+                            'canceled',
+                          ),
+                          onInvertSelection: () =>
+                              _invertFilteredSelection(filteredDocuments),
+                          onClearSelection: _clearSelection,
+                          onShowOnlySelectedChanged: (value) {
+                            setState(() {
+                              _showOnlySelectedDocuments = value;
+                            });
+                            _rememberViewState();
+                          },
+                          onExportSelected: () =>
+                              _exportSelectedDocuments(filteredDocuments),
+                          onDuplicateSelected: () =>
+                              _duplicateSelectedDocuments(filteredDocuments),
+                          onAddSelectedToDocument: () =>
+                              _addSelectedDocumentsToDocument(
+                                  filteredDocuments),
+                          onMergeSelected: () =>
+                              _mergeSelectedDocumentsIntoNewDocument(
+                            filteredDocuments,
+                          ),
+                          onRemoveSelected: () =>
+                              _removeSelectedDocuments(filteredDocuments),
+                        ),
+                        const SizedBox(height: 12),
+                        ...filteredDocuments.map(
+                          (document) => Padding(
+                            key: _keyForDocument(document.id),
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _DocumentCard(
+                              document: document,
+                              isSelected:
+                                  _selectedDocumentIds.contains(document.id),
+                              highlighted: _focusedDocumentId == document.id,
+                              recentlyAddedQuestionCount:
+                                  _focusedDocumentId == document.id
+                                      ? _recentlyAddedQuestionCount
+                                      : null,
+                              highlightTitle: _focusedDocumentId == document.id
+                                  ? _highlightTitle
+                                  : null,
+                              highlightDetail: _focusedDocumentId == document.id
+                                  ? _highlightDetail
+                                  : null,
+                              feedbackBadgeLabel:
+                                  _focusedDocumentId == document.id
+                                      ? _feedbackBadgeLabel
+                                      : null,
+                              onOpenDetail: () => _openDocumentDetail(document),
+                              onOpenLibrary: () =>
+                                  _openLibraryForDocument(document),
+                              onOpenBasket: () =>
+                                  _openBasketForDocument(document),
+                              onExport: _exportingDocumentId == document.id
+                                  ? null
+                                  : () => _exportDocument(document),
+                              exporting: _exportingDocumentId == document.id,
+                              onOpenExports: () => _openExports(document),
+                              onOpenLatestExportDetail:
+                                  document.latestExportJobId == null
+                                      ? null
+                                      : () => _openLatestExportDetail(document),
+                              onOpenLatestExportResult:
+                                  document.latestExportStatus != 'succeeded' ||
+                                          document.latestExportJobId == null
+                                      ? null
+                                      : () => _openLatestExportResult(document),
+                              onSelectionChanged: (selected) {
+                                _setSelection(document.id, selected);
+                              },
+                              onDuplicate: () => _duplicateDocument(document),
+                              onRename: () => _renameDocument(document),
+                              onRemove: () => _removeDocument(document),
                             ),
-                          )
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -2294,8 +2312,7 @@ class _DocumentsSelectionBar extends StatelessWidget {
             label: Text(compact ? '清空' : '清空选择'),
           ),
           WorkspaceFilterPill(
-            label:
-                showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
+            label: showOnlySelected ? (compact ? '已选中' : '只看已选中') : '只看已选',
             selected: showOnlySelected,
             onTap: selectedCount == 0
                 ? null
