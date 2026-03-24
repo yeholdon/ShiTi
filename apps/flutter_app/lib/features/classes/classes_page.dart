@@ -495,28 +495,28 @@ class _ClassDetailRail extends StatelessWidget {
             message: classroom.nextStep,
           ),
           const SizedBox(height: 14),
-          const WorkspaceModuleQuickActions(
+          WorkspaceModuleQuickActions(
             currentModule: WorkspaceModule.classes,
             actions: [
-              WorkspaceFlowAction(
+              const WorkspaceFlowAction(
                 module: WorkspaceModule.students,
                 icon: Icons.school_outlined,
-                label: '打开学生',
+                label: '回看重点学生',
                 description: '',
               ),
               WorkspaceFlowAction(
                 module: WorkspaceModule.lessons,
                 icon: Icons.schedule_outlined,
-                label: '打开课堂',
+                label: '查看${classroom.lessonFocusLabel}',
                 description: '',
               ),
               WorkspaceFlowAction(
                 module: WorkspaceModule.documents,
                 icon: Icons.description_outlined,
-                label: '打开文档',
+                label: '打开${classroom.latestDocLabel}',
                 description: '',
               ),
-              WorkspaceFlowAction(
+              const WorkspaceFlowAction(
                 module: WorkspaceModule.classes,
                 icon: Icons.groups_outlined,
                 label: '当前班级页',
