@@ -40,6 +40,47 @@ class LessonDetailPage extends StatelessWidget {
     );
   }
 
+  void _openTaskTarget(
+    BuildContext context,
+    LessonWorkspaceRecord lesson,
+    LessonTaskRecord task,
+  ) {
+    switch (task.targetModule) {
+      case 'students':
+        Navigator.of(context).pushNamed(
+          AppRouter.studentDetail,
+          arguments: StudentDetailArgs(
+            studentId: task.targetRecordId,
+            flashMessage:
+                '已从 ${lesson.title} 的任务清单进入 ${task.targetLabel}，可继续回看学生反馈。',
+            sourceModule: 'lessons',
+            sourceRecordId: lesson.id,
+            sourceLabel: lesson.title,
+          ),
+        );
+        return;
+      case 'classes':
+        Navigator.of(context).pushNamed(
+          AppRouter.classDetail,
+          arguments: ClassDetailArgs(
+            classId: task.targetRecordId,
+            flashMessage:
+                '已从 ${lesson.title} 的任务清单进入 ${task.targetLabel}，可继续回看班级安排。',
+            sourceModule: 'lessons',
+            sourceRecordId: lesson.id,
+            sourceLabel: lesson.title,
+          ),
+        );
+        return;
+      case 'documents':
+        Navigator.of(context).pushNamed(
+          AppRouter.documentDetail,
+          arguments: DocumentDetailArgs(documentId: task.targetRecordId),
+        );
+        return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final lesson = findLessonWorkspaceRecord(lessonId);
@@ -59,7 +100,8 @@ class LessonDetailPage extends StatelessWidget {
       return Scaffold(
         body: WorkspaceModuleShell(
           currentModule: WorkspaceModule.lessons,
-          onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+          onSelectModule: (module) =>
+              navigateToWorkspaceModule(context, module),
           title: '课堂详情',
           subtitle: '当前课堂不存在或尚未同步到课堂列表。',
           searchHint: '搜索课堂主题、班级、资料或课后反馈',
@@ -112,7 +154,8 @@ class LessonDetailPage extends StatelessWidget {
                 AppRouter.studentDetail,
                 arguments: StudentDetailArgs(
                   studentId: sourceRecordId!,
-                  flashMessage: '已从 ${lesson.title} 返回 ${sourceLabel ?? '学生详情'}。',
+                  flashMessage:
+                      '已从 ${lesson.title} 返回 ${sourceLabel ?? '学生详情'}。',
                 ),
               );
               return;
@@ -122,7 +165,8 @@ class LessonDetailPage extends StatelessWidget {
                 AppRouter.classDetail,
                 arguments: ClassDetailArgs(
                   classId: sourceRecordId!,
-                  flashMessage: '已从 ${lesson.title} 返回 ${sourceLabel ?? '班级详情'}。',
+                  flashMessage:
+                      '已从 ${lesson.title} 返回 ${sourceLabel ?? '班级详情'}。',
                 ),
               );
               return;
@@ -319,8 +363,8 @@ class LessonDetailPage extends StatelessWidget {
                                           WorkspaceMetricPill(
                                             label: asset.kindLabel,
                                             value: asset.statusLabel,
-                                            highlight: asset.statusLabel
-                                                .contains('待'),
+                                            highlight:
+                                                asset.statusLabel.contains('待'),
                                           ),
                                         ],
                                       ),
@@ -331,6 +375,22 @@ class LessonDetailPage extends StatelessWidget {
                                           height: 1.5,
                                           color: TelegramPalette.textMuted,
                                         ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).pushNamed(
+                                            AppRouter.documentDetail,
+                                            arguments: DocumentDetailArgs(
+                                              documentId: asset.documentId,
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.description_outlined,
+                                          size: 18,
+                                        ),
+                                        label: Text(asset.actionLabel),
                                       ),
                                     ],
                                   ),
@@ -388,8 +448,8 @@ class LessonDetailPage extends StatelessWidget {
                                           WorkspaceMetricPill(
                                             label: '状态',
                                             value: task.statusLabel,
-                                            highlight: task.statusLabel
-                                                .contains('待'),
+                                            highlight:
+                                                task.statusLabel.contains('待'),
                                           ),
                                         ],
                                       ),
@@ -405,6 +465,16 @@ class LessonDetailPage extends StatelessWidget {
                                       WorkspaceInfoPill(
                                         label: '责任归属',
                                         value: task.ownerLabel,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      OutlinedButton.icon(
+                                        onPressed: () => _openTaskTarget(
+                                            context, lesson, task),
+                                        icon: const Icon(
+                                          Icons.open_in_new_outlined,
+                                          size: 18,
+                                        ),
+                                        label: Text(task.actionLabel),
                                       ),
                                     ],
                                   ),
@@ -442,7 +512,8 @@ class LessonDetailPage extends StatelessWidget {
                                     ),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Column(
@@ -461,7 +532,8 @@ class LessonDetailPage extends StatelessWidget {
                                               record.detail,
                                               style: const TextStyle(
                                                 height: 1.5,
-                                                color: TelegramPalette.textMuted,
+                                                color:
+                                                    TelegramPalette.textMuted,
                                               ),
                                             ),
                                           ],
@@ -519,7 +591,8 @@ class LessonDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.groups_outlined, size: 18),
+                                  icon: const Icon(Icons.groups_outlined,
+                                      size: 18),
                                   label: Text('查看${lesson.classScopeLabel}详情'),
                                 ),
                                 OutlinedButton.icon(
@@ -536,7 +609,8 @@ class LessonDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.school_outlined, size: 18),
+                                  icon: const Icon(Icons.school_outlined,
+                                      size: 18),
                                   label: Text('查看${lesson.focusStudentName}详情'),
                                 ),
                                 OutlinedButton.icon(
@@ -548,7 +622,8 @@ class LessonDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.description_outlined, size: 18),
+                                  icon: const Icon(Icons.description_outlined,
+                                      size: 18),
                                   label: Text('打开${lesson.documentFocus}'),
                                 ),
                               ],
@@ -651,8 +726,8 @@ class LessonDetailPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              icon:
-                                  const Icon(Icons.description_outlined, size: 18),
+                              icon: const Icon(Icons.description_outlined,
+                                  size: 18),
                               label: Text(lesson.documentFocus),
                             ),
                           ],

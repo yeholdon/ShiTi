@@ -16,12 +16,16 @@ class ClassLessonTimelineRecord {
     required this.scheduleLabel,
     required this.statusLabel,
     required this.focus,
+    required this.lessonId,
+    required this.actionLabel,
   });
 
   final String label;
   final String scheduleLabel;
   final String statusLabel;
   final String focus;
+  final String lessonId;
+  final String actionLabel;
 }
 
 class ClassWorkspaceRecord {
@@ -116,18 +120,24 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         scheduleLabel: '已完成',
         statusLabel: '反馈已回收',
         focus: '重点回看压轴题的表达链条，并把复盘结果沉淀进学生画像。',
+        lessonId: 'lesson-1',
+        actionLabel: '查看复盘课详情',
       ),
       ClassLessonTimelineRecord(
         label: '周四 · 压轴题拆解讲义',
         scheduleLabel: '进行中',
         statusLabel: '资料待补',
         focus: '围绕讲义拆分压轴题模型，课堂里继续区分冲刺层和稳固层。',
+        lessonId: 'lesson-1',
+        actionLabel: '查看当前课堂详情',
       ),
       ClassLessonTimelineRecord(
         label: '周六 · 专题复盘课',
         scheduleLabel: '待开始',
         statusLabel: '课堂待排',
         focus: '把本周周测卷和讲义回看串到同一节专题课里，验证提分节奏。',
+        lessonId: 'lesson-1',
+        actionLabel: '查看待排课堂',
       ),
     ],
     summary: '当前重点是周测卷复盘和压轴题讲解，班级对讲义中的板书提示响应较好。',
@@ -179,12 +189,16 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         scheduleLabel: '已完成',
         statusLabel: '讲义已同步',
         focus: '课堂例题和追问框反应较好，下一步需要补一轮短测回收。',
+        lessonId: 'lesson-2',
+        actionLabel: '查看讲义推进课',
       ),
       ClassLessonTimelineRecord(
         label: '周五 · 随堂短测',
         scheduleLabel: '待开始',
         statusLabel: '试卷待补',
         focus: '把讲义中的重点例题转成短测，区分主力层和跟进层的回收效果。',
+        lessonId: 'lesson-2',
+        actionLabel: '查看短测课堂',
       ),
     ],
     summary: '班级目前更适合讲义驱动，课堂中对例题拆解和追问框的反馈较好。',
@@ -236,12 +250,16 @@ const List<ClassWorkspaceRecord> sampleClassRecords = [
         scheduleLabel: '待开始',
         statusLabel: '资料已准备',
         focus: '先用一节导入课跑通模型辨析、讲义提示和反馈采样。',
+        lessonId: 'lesson-3',
+        actionLabel: '查看导入课堂',
       ),
       ClassLessonTimelineRecord(
         label: '周末 · 课堂反馈整理',
         scheduleLabel: '待开始',
         statusLabel: '任务待创建',
         focus: '把课堂里采到的反馈整理成后续任务，回写到学生画像和班级跟进。',
+        lessonId: 'lesson-3',
+        actionLabel: '查看反馈整理课',
       ),
     ],
     summary: '当前在验证课堂、学生画像和讲义之间的联动路径，班级规模适合做更细的反馈跟进。',

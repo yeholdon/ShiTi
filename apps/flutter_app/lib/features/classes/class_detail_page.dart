@@ -59,7 +59,8 @@ class ClassDetailPage extends StatelessWidget {
       return Scaffold(
         body: WorkspaceModuleShell(
           currentModule: WorkspaceModule.classes,
-          onSelectModule: (module) => navigateToWorkspaceModule(context, module),
+          onSelectModule: (module) =>
+              navigateToWorkspaceModule(context, module),
           title: '班级详情',
           subtitle: '当前班级不存在或尚未同步到班级列表。',
           searchHint: '搜索班级名称、教材版本或课堂节奏',
@@ -112,7 +113,8 @@ class ClassDetailPage extends StatelessWidget {
                 AppRouter.studentDetail,
                 arguments: StudentDetailArgs(
                   studentId: sourceRecordId!,
-                  flashMessage: '已从 ${classroom.name} 返回 ${sourceLabel ?? '学生详情'}。',
+                  flashMessage:
+                      '已从 ${classroom.name} 返回 ${sourceLabel ?? '学生详情'}。',
                 ),
               );
               return;
@@ -122,7 +124,8 @@ class ClassDetailPage extends StatelessWidget {
                 AppRouter.lessonDetail,
                 arguments: LessonDetailArgs(
                   lessonId: sourceRecordId!,
-                  flashMessage: '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
+                  flashMessage:
+                      '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
                 ),
               );
               return;
@@ -344,6 +347,26 @@ class ClassDetailPage extends StatelessWidget {
                                             label: '关联课堂',
                                             value: classroom.lessonFocusLabel,
                                           ),
+                                          OutlinedButton.icon(
+                                            onPressed: () {
+                                              Navigator.of(context).pushNamed(
+                                                AppRouter.lessonDetail,
+                                                arguments: LessonDetailArgs(
+                                                  lessonId: entry.lessonId,
+                                                  flashMessage:
+                                                      '已从 ${classroom.name} 的课堂时间线进入 ${entry.label}，可继续回看课堂资料与反馈。',
+                                                  sourceModule: 'classes',
+                                                  sourceRecordId: classroom.id,
+                                                  sourceLabel: classroom.name,
+                                                ),
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.open_in_new_outlined,
+                                              size: 18,
+                                            ),
+                                            label: Text(entry.actionLabel),
+                                          ),
                                         ],
                                       ),
                                     ],
@@ -382,7 +405,8 @@ class ClassDetailPage extends StatelessWidget {
                                     ),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Column(
@@ -401,7 +425,8 @@ class ClassDetailPage extends StatelessWidget {
                                               tier.focus,
                                               style: const TextStyle(
                                                 height: 1.5,
-                                                color: TelegramPalette.textMuted,
+                                                color:
+                                                    TelegramPalette.textMuted,
                                               ),
                                             ),
                                           ],
@@ -459,8 +484,10 @@ class ClassDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.school_outlined, size: 18),
-                                  label: Text('查看${classroom.focusStudentName}详情'),
+                                  icon: const Icon(Icons.school_outlined,
+                                      size: 18),
+                                  label:
+                                      Text('查看${classroom.focusStudentName}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
@@ -476,8 +503,10 @@ class ClassDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.schedule_outlined, size: 18),
-                                  label: Text('查看${classroom.lessonFocusLabel}详情'),
+                                  icon: const Icon(Icons.schedule_outlined,
+                                      size: 18),
+                                  label:
+                                      Text('查看${classroom.lessonFocusLabel}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
@@ -488,7 +517,8 @@ class ClassDetailPage extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.description_outlined, size: 18),
+                                  icon: const Icon(Icons.description_outlined,
+                                      size: 18),
                                   label: Text('打开${classroom.latestDocLabel}'),
                                 ),
                               ],
@@ -579,7 +609,8 @@ class ClassDetailPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.schedule_outlined, size: 18),
+                              icon:
+                                  const Icon(Icons.schedule_outlined, size: 18),
                               label: Text(classroom.lessonFocusLabel),
                             ),
                             OutlinedButton.icon(
@@ -591,8 +622,8 @@ class ClassDetailPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              icon:
-                                  const Icon(Icons.description_outlined, size: 18),
+                              icon: const Icon(Icons.description_outlined,
+                                  size: 18),
                               label: Text(classroom.latestDocLabel),
                             ),
                           ],

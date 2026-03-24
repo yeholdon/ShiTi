@@ -16,12 +16,16 @@ class LessonAssetRecord {
     required this.kindLabel,
     required this.statusLabel,
     required this.detail,
+    required this.documentId,
+    required this.actionLabel,
   });
 
   final String label;
   final String kindLabel;
   final String statusLabel;
   final String detail;
+  final String documentId;
+  final String actionLabel;
 }
 
 class LessonTaskRecord {
@@ -30,12 +34,20 @@ class LessonTaskRecord {
     required this.ownerLabel,
     required this.statusLabel,
     required this.detail,
+    required this.targetModule,
+    required this.targetRecordId,
+    required this.targetLabel,
+    required this.actionLabel,
   });
 
   final String label;
   final String ownerLabel;
   final String statusLabel;
   final String detail;
+  final String targetModule;
+  final String targetRecordId;
+  final String targetLabel;
+  final String actionLabel;
 }
 
 class LessonWorkspaceRecord {
@@ -126,12 +138,16 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         kindLabel: '试卷',
         statusLabel: '已上课',
         detail: '本节课堂先用周测卷复盘，定位压轴题表达链条。',
+        documentId: 'doc-2',
+        actionLabel: '查看试卷详情',
       ),
       LessonAssetRecord(
         label: '压轴题拆解讲义',
         kindLabel: '讲义',
         statusLabel: '待补充',
         detail: '需要补一页压轴题拆解讲义，承接课后复盘和下节专题课。',
+        documentId: 'doc-2',
+        actionLabel: '查看讲义详情',
       ),
     ],
     taskRecords: [
@@ -140,12 +156,20 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         ownerLabel: '课堂记录',
         statusLabel: '待处理',
         detail: '先补齐重点学生口头讲解，再回写到学生画像。',
+        targetModule: 'students',
+        targetRecordId: 'student-1',
+        targetLabel: '林之涵',
+        actionLabel: '查看学生详情',
       ),
       LessonTaskRecord(
         label: '整理函数压轴题订正稿',
         ownerLabel: '课后任务',
         statusLabel: '进行中',
         detail: '已收回一半订正稿，剩余部分需要在晚自习后补齐。',
+        targetModule: 'documents',
+        targetRecordId: 'doc-2',
+        targetLabel: '二次函数周测卷',
+        actionLabel: '查看资料详情',
       ),
     ],
     summary: '这节课会先复盘周测卷，再补一页压轴题拆解讲义，课后需要回收错题与口头讲解反馈。',
@@ -195,12 +219,16 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         kindLabel: '讲义',
         statusLabel: '已使用',
         detail: '讲义版式和例题顺序已稳定，可直接承接短测回看。',
+        documentId: 'doc-1',
+        actionLabel: '查看讲义详情',
       ),
       LessonAssetRecord(
         label: '相似三角形短测卷',
         kindLabel: '试卷',
         statusLabel: '待排版',
         detail: '短测卷还要补齐两道层级题，再进入周末班级复盘。',
+        documentId: 'doc-1',
+        actionLabel: '查看试卷详情',
       ),
     ],
     taskRecords: [
@@ -209,12 +237,20 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         ownerLabel: '班级跟进',
         statusLabel: '待处理',
         detail: '需要把课堂追问中的高频卡点拆回提优层和跟进层。',
+        targetModule: 'classes',
+        targetRecordId: 'class-2',
+        targetLabel: '九年级提高班',
+        actionLabel: '查看班级详情',
       ),
       LessonTaskRecord(
         label: '补周末短测卷',
         ownerLabel: '资料准备',
         statusLabel: '待开始',
         detail: '按本节课讲义重点补一份短测卷，验证分层效果。',
+        targetModule: 'documents',
+        targetRecordId: 'doc-1',
+        targetLabel: '相似三角形讲义',
+        actionLabel: '查看资料详情',
       ),
     ],
     summary: '本节以讲义推进为主，重点看例题拆解、课堂追问和课后短测之间的衔接。',
@@ -264,12 +300,16 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         kindLabel: '讲义',
         statusLabel: '排版中',
         detail: '图示和板书提示还在微调，课堂前需要完成最终导出。',
+        documentId: 'doc-1',
+        actionLabel: '查看讲义详情',
       ),
       LessonAssetRecord(
         label: '图像辨析短练',
         kindLabel: '练习',
         statusLabel: '待创建',
         detail: '计划在课堂后段使用，帮助收图像信息提取反馈。',
+        documentId: 'doc-1',
+        actionLabel: '查看资料详情',
       ),
     ],
     taskRecords: [
@@ -278,12 +318,20 @@ const List<LessonWorkspaceRecord> sampleLessonRecords = [
         ownerLabel: '资料复核',
         statusLabel: '待确认',
         detail: '课堂后需要确认讲义图示是否足够清晰，决定是否追加重排版。',
+        targetModule: 'documents',
+        targetRecordId: 'doc-1',
+        targetLabel: '力学模型讲义',
+        actionLabel: '查看资料详情',
       ),
       LessonTaskRecord(
         label: '回写模型识别反馈',
         ownerLabel: '个人工作区',
         statusLabel: '样例跟进',
         detail: '把课堂里采到的模型识别反馈先回流到个人工作区样例链路。',
+        targetModule: 'students',
+        targetRecordId: 'student-3',
+        targetLabel: '陈嘉言',
+        actionLabel: '查看学生详情',
       ),
     ],
     summary: '课堂重点是把模型图像和文字描述拆开讲，当前最需要把讲义中的示意图和板书节奏补完整。',
