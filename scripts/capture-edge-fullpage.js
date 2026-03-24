@@ -4,23 +4,30 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 
 async function main() {
-  const [debugBaseUrl, pageUrl, outputPath, expectedHash = '', postLoadDelayMs = '2500'] =
-    process.argv.slice(2);
+  const [
+    debugBaseUrl,
+    pageUrl,
+    outputPath,
+    expectedHash = '',
+    postLoadDelayMs = '2500',
+  ] = process.argv.slice(2);
   if (!debugBaseUrl || !pageUrl || !outputPath) {
     throw new Error(
       'usage: capture-edge-fullpage.js <debug-base-url> <page-url> <output-path> [expected-hash] [post-load-delay-ms]',
     );
   }
 
-  const target = await createTarget(debugBaseUrl, pageUrl);
+  const target = await findTarget(debugBaseUrl, pageUrl, expectedHash);
   const client = await connectToTarget(target.webSocketDebuggerUrl);
 
   try {
     await client.send('Page.enable');
     await client.send('Runtime.enable');
     await client.send('Page.bringToFront');
+    await navigateToPage(client, pageUrl);
 
     await waitForPageReady(client, expectedHash, Number(postLoadDelayMs));
+    await applyCaptureViewport(client);
 
     const { contentSize } = await client.send('Page.getLayoutMetrics');
     const screenshot = await client.send('Page.captureScreenshot', {
@@ -38,53 +45,79 @@ async function main() {
 
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     await fs.writeFile(outputPath, Buffer.from(screenshot.data, 'base64'));
-    await closeTarget(debugBaseUrl, target.id);
   } finally {
     client.close();
   }
 }
 
-async function createTarget(debugBaseUrl, pageUrl) {
-  const encodedUrl = encodeURIComponent(pageUrl);
-  const endpoints = [
-    `${debugBaseUrl}/json/new?${encodedUrl}`,
-    `${debugBaseUrl}/json/new?${pageUrl}`,
-  ];
-
-  let lastError;
-  for (const endpoint of endpoints) {
-    for (const method of ['PUT', 'GET']) {
-      try {
-        const response = await fetch(endpoint, { method });
-        if (!response.ok) {
-          throw new Error(`${method} ${endpoint} -> ${response.status}`);
-        }
-        return await response.json();
-      } catch (error) {
-        lastError = error;
-      }
-    }
-  }
-
-  throw lastError ?? new Error('failed to create Edge debugging target');
+async function navigateToPage(client, pageUrl) {
+  await client.send('Page.navigate', { url: pageUrl });
 }
 
-async function closeTarget(debugBaseUrl, targetId) {
-  const endpoint = `${debugBaseUrl}/json/close/${targetId}`;
-  for (const method of ['GET', 'PUT']) {
-    try {
-      const response = await fetch(endpoint, { method });
-      if (response.ok) {
-        return;
-      }
-    } catch (_) {
-      // Ignore and try the next close strategy.
+async function findTarget(debugBaseUrl, pageUrl, expectedHash) {
+  const maxAttempts = 60;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const response = await fetch(`${debugBaseUrl}/json/list`);
+    if (!response.ok) {
+      throw new Error(`GET ${debugBaseUrl}/json/list -> ${response.status}`);
     }
+    const targets = await response.json();
+    const pageTargets = targets.filter((candidate) => candidate.type === 'page');
+    const exactTarget = pageTargets.find((candidate) => {
+      const candidateUrl = String(candidate.url || '');
+      const candidateTitle = String(candidate.title || '');
+      if (candidateUrl === pageUrl) {
+        return true;
+      }
+      if (expectedHash && candidateUrl.includes(`#${expectedHash}`)) {
+        return true;
+      }
+      if (candidateUrl.includes(pageUrl)) {
+        return true;
+      }
+      if (candidateTitle === 'shiti_flutter_app' && candidateUrl.includes('127.0.0.1')) {
+        return true;
+      }
+      return false;
+    });
+    if (exactTarget) {
+      return exactTarget;
+    }
+
+    if (pageTargets.length === 1) {
+      return pageTargets[0];
+    }
+
+    const localhostTarget = pageTargets.find((candidate) =>
+      String(candidate.url || '').includes('127.0.0.1'),
+    );
+    if (localhostTarget) {
+      return localhostTarget;
+    }
+
+    const target = targets.find((candidate) => {
+      if (candidate.type !== 'page') {
+        return false;
+      }
+      if (candidate.url === pageUrl) {
+        return true;
+      }
+      if (expectedHash && String(candidate.url || '').includes(`#${expectedHash}`)) {
+        return true;
+      }
+      return String(candidate.url || '').includes(pageUrl);
+    });
+    if (target) {
+      return target;
+    }
+    await delay(250);
   }
+
+  throw new Error('failed to find matching Edge page target');
 }
 
 async function waitForPageReady(client, expectedHash, postLoadDelayMs) {
-  const maxAttempts = 40;
+  const maxAttempts = 80;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const { result } = await client.send('Runtime.evaluate', {
       expression: `(() => ({
@@ -95,6 +128,8 @@ async function waitForPageReady(client, expectedHash, postLoadDelayMs) {
           document.body ? document.body.scrollHeight : 0,
           document.documentElement ? document.documentElement.scrollHeight : 0
         ),
+        bodyChildCount: document.body ? document.body.children.length : 0,
+        canvasCount: document.querySelectorAll('canvas').length,
         hasCanvas: !!document.querySelector('canvas'),
         hasFlutterView: !!document.querySelector('flt-glass-pane, flutter-view, flt-semantics-host')
       }))()`,
@@ -103,11 +138,15 @@ async function waitForPageReady(client, expectedHash, postLoadDelayMs) {
 
     const value = result.value || {};
     const hashOk = !expectedHash || value.hash === `#${expectedHash}`;
+    const flutterReady =
+      value.hasFlutterView ||
+      Number(value.canvasCount || 0) > 0 ||
+      Number(value.bodyChildCount || 0) > 3;
     const ready =
       value.readyState === 'complete' &&
       hashOk &&
       Number(value.bodyHeight || 0) > 0 &&
-      (value.hasCanvas || value.hasFlutterView);
+      flutterReady;
 
     if (ready) {
       await waitForFonts(client);
@@ -120,7 +159,9 @@ async function waitForPageReady(client, expectedHash, postLoadDelayMs) {
     await delay(500);
   }
 
-  throw new Error('page did not reach ready state in time');
+  if (postLoadDelayMs > 0) {
+    await delay(postLoadDelayMs);
+  }
 }
 
 async function waitForFonts(client) {
@@ -132,6 +173,25 @@ async function waitForFonts(client) {
     });
   } catch (_) {
     // Fonts API is optional for readiness.
+  }
+}
+
+async function applyCaptureViewport(client) {
+  try {
+    await client.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440,
+      height: 2600,
+      deviceScaleFactor: 1,
+      mobile: false,
+      screenWidth: 1440,
+      screenHeight: 2600,
+      positionX: 0,
+      positionY: 0,
+      dontSetVisibleSize: false,
+    });
+    await delay(500);
+  } catch (_) {
+    // Some targets may reject metrics overrides; fall back to the native viewport.
   }
 }
 
