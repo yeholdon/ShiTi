@@ -79,6 +79,9 @@ model Tenant {
   personalOwner User?          @relation("PersonalTenantOwner", fields: [personalOwnerUserId], references: [id])
   members       TenantMember[]
   questionBanks QuestionBank[]
+  students      StudentProfile[]
+  classes       TeachingClass[]
+  lessons       LessonSession[]
 }
 
 model Stage {
@@ -199,6 +202,110 @@ model QuestionBankGrant {
   @@id([tenantId, questionBankId, userId])
   @@index([userId])
   @@index([grantedByUserId])
+}
+
+model StudentProfile {
+  tenantId            String   @db.Uuid
+  id                  String
+  name                String
+  classId             String?
+  className           String?
+  lessonId            String?
+  documentId          String?
+  documentName        String?
+  gradeLabel          String
+  subjectLabel        String
+  textbookLabel       String
+  trendLabel          String
+  habitTag            String
+  habitInsight        String
+  followUpLevel       String
+  summary             String
+  scoreLabel          String
+  historyTrendLabel   String
+  wrongCountLabel     String
+  wrongCount          Int      @default(0)
+  scoreRecords        Json
+  feedbackRecords     Json
+  wrongQuestionRecords Json
+  highlights          Json
+  nextStep            String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, id])
+  @@index([classId])
+  @@index([lessonId])
+}
+
+model TeachingClass {
+  tenantId          String   @db.Uuid
+  id                String
+  name              String
+  lessonId          String?
+  documentId        String?
+  focusStudentId    String?
+  focusStudentName  String?
+  stageLabel        String
+  teacherLabel      String
+  textbookLabel     String
+  focusLabel        String
+  activityLabel     String
+  classSizeLabel    String
+  lessonFocusLabel  String
+  structureInsight  String
+  studentCount      Int      @default(0)
+  weeklyLessonCount Int      @default(0)
+  latestDocLabel    String
+  assetLinks        Json
+  memberTiers       Json
+  lessonTimeline    Json
+  summary           String
+  highlights        Json
+  nextStep          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, id])
+  @@index([lessonId])
+  @@index([focusStudentId])
+}
+
+model LessonSession {
+  tenantId         String   @db.Uuid
+  id               String
+  title            String
+  classId          String?
+  className        String?
+  focusStudentId   String?
+  focusStudentName String?
+  teacherLabel     String
+  scheduleLabel    String
+  scheduleTag      String
+  classScopeLabel  String
+  documentFocus    String
+  documentId       String?
+  feedbackStatus   String
+  followUpLabel    String
+  feedbackInsight  String
+  feedbackRecords  Json
+  assetRecords     Json
+  taskRecords      Json
+  summary          String
+  highlights       Json
+  nextStep         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, id])
+  @@index([classId])
+  @@index([focusStudentId])
 }
 
 model Subject {

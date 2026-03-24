@@ -1032,3 +1032,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 学生详情页新增“课堂反馈记录”分区，把学生对象上的课堂反馈回收与后续跟进也拉进正文层，而不只停在课堂入口和摘要文案里。
 - [x] Tooling: `npm run local:restart` 的 Flutter 前端启动方式已改成“先 build 再静态预览”，不再依赖 `flutter run -d web-server` 的后台 TTY 和 CDN 资源链路，避免 `4111` 偶发白页或直接拒绝连接。
 - [x] Tooling: `npm run local:restart` 的后台服务启动已改成 `python3 subprocess(start_new_session=True)` 脱离 `npm` 进程组，修复 `4111` 在脚本结束后立即消失的问题。
+- [x] Backend: 新增 `GET /students`、`GET /students/:id`、`GET /classes`、`GET /classes/:id`、`GET /lessons`、`GET /lessons/:id`，把学生/班级/课堂样例结构接进真实数据库只读接口。

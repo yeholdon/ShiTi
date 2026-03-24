@@ -22,6 +22,9 @@ import { RateLimitModule } from '../../src/common/rate-limit/rate-limit.module';
 import { AuditModule } from './audit/audit.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { AgentTeamModule } from './agent-team/agent-team.module';
+import { StudentsModule } from './students/students.module';
+import { ClassesModule } from './classes/classes.module';
+import { LessonsModule } from './lessons/lessons.module';
 
 @Module({
   imports: [
@@ -50,7 +53,10 @@ import { AgentTeamModule } from './agent-team/agent-team.module';
     StagesModule,
     GradesModule,
     LayoutElementsModule,
-    AssetsModule
+    AssetsModule,
+    StudentsModule,
+    ClassesModule,
+    LessonsModule
   ]
 })
 export class AppModule implements NestModule {
