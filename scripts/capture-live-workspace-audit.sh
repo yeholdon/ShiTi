@@ -170,6 +170,49 @@ payload["routes"] = {
             }
         )
     ),
+    "question_detail_student_context": (
+        f"{web_base_url}/#/questions/detail?"
+        + urllib.parse.urlencode(
+            {
+                "questionId": primary_question["id"],
+                "initialSubjectLabel": primary_student["subjectLabel"],
+                "initialStageLabel": primary_student_stage,
+                "initialTextbookLabel": primary_student["textbookLabel"],
+                "flashMessage": f"已定位到 {primary_student['name']} 的题库上下文，可继续按当前学生筛题。",
+                "highlightTitle": "当前学生题库上下文",
+                "highlightDetail": (
+                    f"{primary_student['name']} 的学科、学段和教材条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "学生筛题",
+                "sourceModule": "students",
+                "sourceRecordId": primary_student["id"],
+                "sourceLabel": primary_student["name"],
+            }
+        )
+    ),
+    "question_detail_lesson_context": (
+        f"{web_base_url}/#/questions/detail?"
+        + urllib.parse.urlencode(
+            {
+                "questionId": primary_question["id"],
+                "initialQuery": primary_lesson["title"],
+                "initialSubjectLabel": primary_lesson_student["subjectLabel"],
+                "initialStageLabel": primary_lesson_stage,
+                "initialTextbookLabel": primary_lesson_student["textbookLabel"],
+                "flashMessage": f"已定位到 {primary_lesson['title']} 的题库上下文，可继续按当前课堂筛题。",
+                "highlightTitle": "当前课堂题库上下文",
+                "highlightDetail": (
+                    f"{primary_lesson['title']} 的课堂主题和关联学生条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "课堂筛题",
+                "sourceModule": "lessons",
+                "sourceRecordId": primary_lesson["id"],
+                "sourceLabel": primary_lesson["title"],
+            }
+        )
+    ),
     "document_detail": (
         f"{web_base_url}/#/documents/detail?documentId={primary_document['id']}"
     ),
@@ -403,6 +446,14 @@ capture_via_storage_state \
 capture_via_storage_state \
   "question_detail_library_context" \
   "${output_dir}/question-detail-library-context-live.png"
+
+capture_via_storage_state \
+  "question_detail_student_context" \
+  "${output_dir}/question-detail-student-context-live.png"
+
+capture_via_storage_state \
+  "question_detail_lesson_context" \
+  "${output_dir}/question-detail-lesson-context-live.png"
 
 capture_via_storage_state \
   "document_detail" \
