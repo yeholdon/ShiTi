@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/class_detail_args.dart';
 import '../../core/models/classes_page_args.dart';
 import '../../core/models/documents_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
@@ -172,6 +173,18 @@ class _ClassesPageState extends State<ClassesPage> {
         highlightDetail:
             '${classroom.latestDocLabel} 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
         feedbackBadgeLabel: '班级资料',
+      ),
+    );
+  }
+
+  void _openLibrary(ClassWorkspaceRecord classroom) {
+    final stageLabel = classroom.stageLabel.split('·').first.trim();
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: LibraryPageArgs(
+        initialStageLabel: stageLabel,
+        initialTextbookLabel: classroom.textbookLabel.trim(),
       ),
     );
   }
@@ -479,6 +492,7 @@ class _ClassesPageState extends State<ClassesPage> {
                                   onOpenStudents: () => _openStudents(selectedClass),
                                   onOpenLesson: () => _openLesson(selectedClass),
                                   onOpenDocument: () => _openDocument(selectedClass),
+                                  onOpenLibrary: () => _openLibrary(selectedClass),
                                 ),
                               ),
                             ],
@@ -498,6 +512,7 @@ class _ClassesPageState extends State<ClassesPage> {
                         onOpenStudents: () => _openStudents(selectedClass),
                         onOpenLesson: () => _openLesson(selectedClass),
                         onOpenDocument: () => _openDocument(selectedClass),
+                        onOpenLibrary: () => _openLibrary(selectedClass),
                       ),
                       const SizedBox(height: 16),
                       _ClassListPanel(
@@ -752,6 +767,7 @@ class _ClassDetailRail extends StatelessWidget {
     required this.onOpenStudents,
     required this.onOpenLesson,
     required this.onOpenDocument,
+    required this.onOpenLibrary,
   });
 
   final ClassWorkspaceRecord classroom;
@@ -759,6 +775,7 @@ class _ClassDetailRail extends StatelessWidget {
   final VoidCallback onOpenStudents;
   final VoidCallback onOpenLesson;
   final VoidCallback onOpenDocument;
+  final VoidCallback onOpenLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -853,6 +870,11 @@ class _ClassDetailRail extends StatelessWidget {
                 onPressed: onOpenDocument,
                 icon: const Icon(Icons.description_outlined, size: 18),
                 label: Text('打开${classroom.latestDocLabel}'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenLibrary,
+                icon: const Icon(Icons.search_outlined, size: 18),
+                label: const Text('关联题库'),
               ),
               const WorkspaceFilterPill(
                 label: '当前班级页',

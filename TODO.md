@@ -1052,3 +1052,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 题库页已支持对象上下文初始筛选参数，可承接学科/学段/教材三类初始过滤。
 
 - [x] Flutter: 学生/班级/课堂详情页已补“关联题库”入口，可按对象上下文把学科/学段/教材初始筛选带入题库检索。
+- [x] Flutter: 学生/班级/课堂工作页也已补“关联题库”入口，可直接把当前对象上下文带入题库检索。

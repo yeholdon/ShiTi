@@ -4,6 +4,7 @@ import '../../core/models/classes_page_args.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
@@ -182,6 +183,16 @@ class _LessonsPageState extends State<LessonsPage> {
         highlightDetail:
             '${lesson.documentFocus} 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
         feedbackBadgeLabel: '课堂资料',
+      ),
+    );
+  }
+
+  void _openLibrary(LessonWorkspaceRecord lesson) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: LibraryPageArgs(
+        initialQuery: lesson.title,
       ),
     );
   }
@@ -458,6 +469,7 @@ class _LessonsPageState extends State<LessonsPage> {
                             onOpenClass: () => _openClass(selectedLesson),
                             onOpenStudents: () => _openStudents(selectedLesson),
                             onOpenDocument: () => _openDocument(selectedLesson),
+                            onOpenLibrary: () => _openLibrary(selectedLesson),
                           ),
                         ),
                       ],
@@ -469,6 +481,7 @@ class _LessonsPageState extends State<LessonsPage> {
                       onOpenClass: () => _openClass(selectedLesson),
                       onOpenStudents: () => _openStudents(selectedLesson),
                       onOpenDocument: () => _openDocument(selectedLesson),
+                      onOpenLibrary: () => _openLibrary(selectedLesson),
                     ),
                     const SizedBox(height: 16),
                     _LessonListPanel(
@@ -724,6 +737,7 @@ class _LessonDetailRail extends StatelessWidget {
     required this.onOpenClass,
     required this.onOpenStudents,
     required this.onOpenDocument,
+    required this.onOpenLibrary,
   });
 
   final LessonWorkspaceRecord lesson;
@@ -731,6 +745,7 @@ class _LessonDetailRail extends StatelessWidget {
   final VoidCallback onOpenClass;
   final VoidCallback onOpenStudents;
   final VoidCallback onOpenDocument;
+  final VoidCallback onOpenLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -823,6 +838,11 @@ class _LessonDetailRail extends StatelessWidget {
                 onPressed: onOpenDocument,
                 icon: const Icon(Icons.description_outlined, size: 18),
                 label: Text('打开${lesson.documentFocus}'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenLibrary,
+                icon: const Icon(Icons.search_outlined, size: 18),
+                label: const Text('关联题库'),
               ),
               const WorkspaceFilterPill(
                 label: '当前课堂页',

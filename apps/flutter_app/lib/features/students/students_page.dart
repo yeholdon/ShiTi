@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/models/classes_page_args.dart';
 import '../../core/models/documents_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
@@ -172,6 +173,19 @@ class _StudentsPageState extends State<StudentsPage> {
         highlightDetail:
             '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
         feedbackBadgeLabel: '学生跟进',
+      ),
+    );
+  }
+
+  void _openLibrary(StudentWorkspaceRecord student) {
+    final stageLabel = student.gradeLabel.split('·').first.trim();
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: LibraryPageArgs(
+        initialSubjectLabel: student.subjectLabel.trim(),
+        initialStageLabel: stageLabel,
+        initialTextbookLabel: student.textbookLabel.trim(),
       ),
     );
   }
@@ -479,6 +493,7 @@ class _StudentsPageState extends State<StudentsPage> {
                                   onOpenClass: () => _openClass(selectedRecord),
                                   onOpenLesson: () => _openLesson(selectedRecord),
                                   onOpenDocument: () => _openDocument(selectedRecord),
+                                  onOpenLibrary: () => _openLibrary(selectedRecord),
                                 ),
                               ),
                             ],
@@ -498,6 +513,7 @@ class _StudentsPageState extends State<StudentsPage> {
                         onOpenClass: () => _openClass(selectedRecord),
                         onOpenLesson: () => _openLesson(selectedRecord),
                         onOpenDocument: () => _openDocument(selectedRecord),
+                        onOpenLibrary: () => _openLibrary(selectedRecord),
                       ),
                       const SizedBox(height: 16),
                       _StudentRosterPanel(
@@ -754,6 +770,7 @@ class _StudentDetailRail extends StatelessWidget {
     required this.onOpenClass,
     required this.onOpenLesson,
     required this.onOpenDocument,
+    required this.onOpenLibrary,
   });
 
   final StudentWorkspaceRecord student;
@@ -761,6 +778,7 @@ class _StudentDetailRail extends StatelessWidget {
   final VoidCallback onOpenClass;
   final VoidCallback onOpenLesson;
   final VoidCallback onOpenDocument;
+  final VoidCallback onOpenLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -854,6 +872,11 @@ class _StudentDetailRail extends StatelessWidget {
                 onPressed: onOpenDocument,
                 icon: const Icon(Icons.description_outlined, size: 18),
                 label: Text('打开${student.documentName}'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onOpenLibrary,
+                icon: const Icon(Icons.search_outlined, size: 18),
+                label: const Text('关联题库'),
               ),
               const WorkspaceFilterPill(
                 label: '当前学生页',
