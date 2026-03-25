@@ -18,6 +18,15 @@ abstract class StudentRepository {
     required String textbookLabel,
     String? className,
   });
+
+  Future<StudentWorkspaceRecord> updateStudent({
+    required String studentId,
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  });
 }
 
 class FakeStudentRepository implements StudentRepository {
@@ -98,6 +107,50 @@ class FakeStudentRepository implements StudentRepository {
     _records.insert(0, created);
     return created;
   }
+
+  @override
+  Future<StudentWorkspaceRecord> updateStudent({
+    required String studentId,
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  }) async {
+    final index = _records.indexWhere((student) => student.id == studentId);
+    if (index < 0) {
+      throw StateError('Student not found');
+    }
+    final current = _records[index];
+    final updated = StudentWorkspaceRecord(
+      id: current.id,
+      name: name,
+      classId: current.classId,
+      className: className ?? '',
+      lessonId: current.lessonId,
+      documentId: current.documentId,
+      documentName: current.documentName,
+      gradeLabel: gradeLabel,
+      subjectLabel: subjectLabel,
+      textbookLabel: textbookLabel,
+      trendLabel: current.trendLabel,
+      habitTag: current.habitTag,
+      habitInsight: current.habitInsight,
+      followUpLevel: current.followUpLevel,
+      summary: current.summary,
+      scoreLabel: current.scoreLabel,
+      historyTrendLabel: current.historyTrendLabel,
+      wrongCountLabel: current.wrongCountLabel,
+      wrongCount: current.wrongCount,
+      scoreRecords: current.scoreRecords,
+      feedbackRecords: current.feedbackRecords,
+      wrongQuestionRecords: current.wrongQuestionRecords,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+    );
+    _records[index] = updated;
+    return updated;
+  }
 }
 
 class RemoteStudentRepository implements StudentRepository {
@@ -158,6 +211,28 @@ class RemoteStudentRepository implements StudentRepository {
         'textbookLabel': textbookLabel,
         if (className != null && className.trim().isNotEmpty)
           'className': className.trim(),
+      },
+    );
+    return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<StudentWorkspaceRecord> updateStudent({
+    required String studentId,
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  }) async {
+    final response = await _client.patchObject(
+      '/students/$studentId',
+      body: {
+        'name': name,
+        'gradeLabel': gradeLabel,
+        'subjectLabel': subjectLabel,
+        'textbookLabel': textbookLabel,
+        'className': className,
       },
     );
     return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);

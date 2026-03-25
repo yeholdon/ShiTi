@@ -210,4 +210,102 @@ describe('StudentsController', () => {
 
     expect(result.student.id).toBe('student-1');
   });
+
+  it('updates student profile under current tenant', async () => {
+    const findUnique = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'student-1',
+      name: '林之涵',
+      classId: null,
+      className: '九年级尖子班',
+      lessonId: null,
+      documentId: null,
+      documentName: null,
+      gradeLabel: '初中 · 九年级下',
+      subjectLabel: '数学',
+      textbookLabel: '浙教版',
+      trendLabel: '近期进步',
+      habitTag: '订正及时',
+      habitInsight: 'detail',
+      followUpLevel: '常规关注',
+      summary: 'summary',
+      scoreLabel: '92 / 100',
+      historyTrendLabel: '86 → 89 → 92',
+      wrongCountLabel: '6 道',
+      wrongCount: 6,
+      scoreRecords: [],
+      feedbackRecords: [],
+      wrongQuestionRecords: [],
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const update = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'student-1',
+      name: '林之涵（更新）',
+      classId: null,
+      className: '九年级提高班',
+      lessonId: null,
+      documentId: null,
+      documentName: null,
+      gradeLabel: '初中 · 九年级下',
+      subjectLabel: '数学',
+      textbookLabel: '人教版',
+      trendLabel: '近期进步',
+      habitTag: '订正及时',
+      habitInsight: 'detail',
+      followUpLevel: '常规关注',
+      summary: 'summary',
+      scoreLabel: '92 / 100',
+      historyTrendLabel: '86 → 89 → 92',
+      wrongCountLabel: '6 道',
+      wrongCount: 6,
+      scoreRecords: [],
+      feedbackRecords: [],
+      wrongQuestionRecords: [],
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const prisma = makePrisma({
+      studentProfile: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique,
+        update,
+      },
+    });
+
+    const ctrl = new StudentsController(prisma);
+    const result = await ctrl.update(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      'student-1',
+      {
+        name: '林之涵（更新）',
+        className: '九年级提高班',
+        textbookLabel: '人教版',
+      },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId_id: {
+            tenantId: 't1',
+            id: 'student-1',
+          },
+        },
+        data: expect.objectContaining({
+          name: '林之涵（更新）',
+          className: '九年级提高班',
+          textbookLabel: '人教版',
+        }),
+      }),
+    );
+    expect(result.student.name).toBe('林之涵（更新）');
+  });
 });

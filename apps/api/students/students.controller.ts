@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,6 +20,7 @@ import {
   requireUserId,
 } from '../../../src/tenant/tenant-guards';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
 
 function mapStudentRecord(student: any) {
   return {
@@ -141,6 +143,73 @@ export class StudentsController {
     );
 
     return { students: students.map(mapStudentRecord) };
+  }
+
+  @Patch(':id')
+  async update(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: UpdateStudentDto,
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    const current = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.studentProfile.findUnique({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+      }),
+    );
+
+    if (!current) {
+      throw new NotFoundException('Student not found');
+    }
+
+    const normalizedName = body.name?.trim();
+    const normalizedGradeLabel = body.gradeLabel?.trim();
+    const normalizedSubjectLabel = body.subjectLabel?.trim();
+    const normalizedTextbookLabel = body.textbookLabel?.trim();
+    const normalizedClassName = body.className?.trim();
+
+    const student = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.studentProfile.update({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+        data: {
+          name: normalizedName != null && normalizedName.length > 0
+              ? normalizedName
+              : current.name,
+          gradeLabel:
+              normalizedGradeLabel != null && normalizedGradeLabel.length > 0
+                  ? normalizedGradeLabel
+                  : current.gradeLabel,
+          subjectLabel:
+              normalizedSubjectLabel != null && normalizedSubjectLabel.length > 0
+                  ? normalizedSubjectLabel
+                  : current.subjectLabel,
+          textbookLabel: normalizedTextbookLabel != null &&
+                  normalizedTextbookLabel.length > 0
+              ? normalizedTextbookLabel
+              : current.textbookLabel,
+          className: body.className == null
+              ? current.className
+              : (normalizedClassName != null && normalizedClassName.length > 0
+                  ? normalizedClassName
+                  : null),
+        },
+      }),
+    );
+
+    return { student: mapStudentRecord(student) };
   }
 
   @Get(':id')
