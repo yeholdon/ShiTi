@@ -1048,3 +1048,5 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页“当前聚焦”里的文档入口也已改成带上下文高亮的文档工作页，首页到文档的两条主入口语义现已统一。
 
 - [x] Tooling: live 工作台验收脚本已改成动态获取真实学生/班级/课堂/文档 id，并覆盖首页最近任务与当前聚焦到文档工作页的两条主入口。
+
+- [x] Flutter: 题库页已支持对象上下文初始筛选参数，可承接学科/学段/教材三类初始过滤。

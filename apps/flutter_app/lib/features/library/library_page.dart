@@ -72,6 +72,7 @@ class _LibraryPageState extends State<LibraryPage> {
   String _gradeFilter = 'all';
   String _chapterFilter = 'all';
   String _sortBy = 'results';
+  bool _didApplyContextualFilters = false;
 
   DocumentSummary? get _preferredTargetDocument =>
       widget.args?.preferredDocumentSnapshot;
@@ -79,6 +80,10 @@ class _LibraryPageState extends State<LibraryPage> {
   String? get _insertAfterItemTitle => widget.args?.insertAfterItemTitle;
   bool get _hasContextualEntry =>
       widget.args?.preferredDocumentSnapshot != null ||
+      ((widget.args?.initialQuery ?? '').trim().isNotEmpty) ||
+      ((widget.args?.initialSubjectLabel ?? '').trim().isNotEmpty) ||
+      ((widget.args?.initialStageLabel ?? '').trim().isNotEmpty) ||
+      ((widget.args?.initialTextbookLabel ?? '').trim().isNotEmpty) ||
       ((widget.args?.insertAfterItemId ?? '').trim().isNotEmpty) ||
       ((widget.args?.insertAfterItemTitle ?? '').trim().isNotEmpty);
 
@@ -103,6 +108,12 @@ class _LibraryPageState extends State<LibraryPage> {
       _chapterFilter = savedViewState.chapterFilter;
       _sortBy = savedViewState.sortBy;
       _searchController.text = savedViewState.filters.query;
+    } else {
+      final contextualQuery = widget.args?.initialQuery?.trim();
+      if (contextualQuery != null && contextualQuery.isNotEmpty) {
+        _filters = _filters.copyWith(query: contextualQuery);
+        _searchController.text = contextualQuery;
+      }
     }
     _loadTaxonomyOptions();
     _reload();
@@ -174,6 +185,7 @@ class _LibraryPageState extends State<LibraryPage> {
         _subjectOptions = <TaxonomyOption>[_allSubjects, ...subjects];
         _stageOptions = <TaxonomyOption>[_allStages, ...stages];
         _textbookOptions = <TaxonomyOption>[_allTextbooks, ...textbooks];
+        _applyContextualFiltersIfNeeded();
       });
     } catch (_) {
       if (!mounted) {
@@ -183,8 +195,44 @@ class _LibraryPageState extends State<LibraryPage> {
         _subjectOptions = const <TaxonomyOption>[_allSubjects];
         _stageOptions = const <TaxonomyOption>[_allStages];
         _textbookOptions = const <TaxonomyOption>[_allTextbooks];
+        _applyContextualFiltersIfNeeded();
       });
     }
+  }
+
+  void _applyContextualFiltersIfNeeded() {
+    if (_didApplyContextualFilters || !_hasContextualEntry) {
+      return;
+    }
+    final subjectLabel = widget.args?.initialSubjectLabel?.trim();
+    final stageLabel = widget.args?.initialStageLabel?.trim();
+    final textbookLabel = widget.args?.initialTextbookLabel?.trim();
+    final query = widget.args?.initialQuery?.trim();
+    final subjectOption = _subjectOptions.cast<TaxonomyOption?>().firstWhere(
+          (option) => option?.label == subjectLabel,
+          orElse: () => null,
+        );
+    final stageOption = _stageOptions.cast<TaxonomyOption?>().firstWhere(
+          (option) => option?.label == stageLabel,
+          orElse: () => null,
+        );
+    final textbookOption = _textbookOptions.cast<TaxonomyOption?>().firstWhere(
+          (option) => option?.label == textbookLabel,
+          orElse: () => null,
+        );
+    _filters = _filters.copyWith(
+      query: (query?.isNotEmpty ?? false) ? query : _filters.query,
+      subject: subjectOption?.label ?? _filters.subject,
+      subjectId: subjectOption?.id ?? _filters.subjectId,
+      stage: stageOption?.label ?? _filters.stage,
+      stageId: stageOption?.id ?? _filters.stageId,
+      textbook: textbookOption?.label ?? _filters.textbook,
+      textbookId: textbookOption?.id ?? _filters.textbookId,
+    );
+    if ((query?.isNotEmpty ?? false)) {
+      _searchController.text = query!;
+    }
+    _didApplyContextualFilters = true;
   }
 
   void _updateFilters(LibraryFilterState next) {
