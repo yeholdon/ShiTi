@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/document_detail_args.dart';
+import '../../core/models/documents_page_args.dart';
 import '../../core/models/document_summary.dart';
 import '../../core/models/exports_page_args.dart';
 import '../../core/models/library_filter_state.dart';
@@ -383,10 +384,15 @@ class _HomePageState extends State<HomePage> {
           return;
         }
         await Navigator.of(context).pushNamed(
-          AppRouter.documentDetail,
-          arguments: DocumentDetailArgs(
-            documentId: document.id,
+          AppRouter.documents,
+          arguments: DocumentsPageArgs(
+            focusDocumentId: document.id,
             documentSnapshot: document,
+            flashMessage: '已定位到 ${document.name}，可继续整理当前工作资料。',
+            highlightTitle: '当前工作台资料',
+            highlightDetail:
+                '${document.name} 是你刚刚从工作台进入的资料，可继续回看题目、版式和导出节奏。',
+            feedbackBadgeLabel: '工作台回看',
           ),
         );
         break;
