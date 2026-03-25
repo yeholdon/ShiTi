@@ -1060,3 +1060,4 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `auth_bridge.html` 和 `SessionPersistence` 已对齐 Web 持久化格式，修复 live 会话桥接后题库页初始化崩溃；`capture-live-workspace-audit.sh` 也已补进学生/班级/课堂到题库的三张 live 验收图。
 - [x] Tooling: `capture-live-workspace-audit.sh` 已在 `4111 + 3000` 的本地 live 环境下完整跑通，当前主链固定产物为 11 张整页图；脚本里的 `mktemp` 临时文件模板也已修正，避免在当前环境下直接撞文件名失败。
 - [x] Flutter: 从学生/班级/课堂详情页进入题库后，返回动作现在会优先回到对应详情页，而不是统一退回模块列表；详情链路与工作页链路已分开承接来源语义。
+- [x] Flutter: 文档工作页也已补来源上下文和返回语义；首页、学生/班级/课堂工作页，以及三类对象详情页进入文档后，返回动作会优先回到对应来源页，而不再固定只回工作台。

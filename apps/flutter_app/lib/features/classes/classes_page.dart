@@ -173,6 +173,9 @@ class _ClassesPageState extends State<ClassesPage> {
         highlightDetail:
             '${classroom.latestDocLabel} 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
         feedbackBadgeLabel: '班级资料',
+        sourceModule: 'classes',
+        sourceRecordId: classroom.id,
+        sourceLabel: classroom.name,
       ),
     );
   }

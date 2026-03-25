@@ -102,6 +102,9 @@ class LessonDetailPage extends StatelessWidget {
         highlightDetail:
             '$targetDocumentLabel 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
         feedbackBadgeLabel: '课堂资料',
+        sourceModule: 'lesson_detail',
+        sourceRecordId: lesson.id,
+        sourceLabel: lesson.title,
       ),
     );
   }

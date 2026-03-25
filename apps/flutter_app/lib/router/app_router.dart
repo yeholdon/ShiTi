@@ -142,6 +142,18 @@ class AppRouter {
             routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
                 ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
                 : null;
+        final sourceModule =
+            routeUri?.queryParameters['sourceModule']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceModule']!.trim()
+                : null;
+        final sourceRecordId =
+            routeUri?.queryParameters['sourceRecordId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceRecordId']!.trim()
+                : null;
+        final sourceLabel =
+            routeUri?.queryParameters['sourceLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
           builder: (_) => DocumentsPage(
             args: args ??
@@ -151,6 +163,9 @@ class AppRouter {
                   highlightTitle: highlightTitle,
                   highlightDetail: highlightDetail,
                   feedbackBadgeLabel: feedbackBadgeLabel,
+                  sourceModule: sourceModule,
+                  sourceRecordId: sourceRecordId,
+                  sourceLabel: sourceLabel,
                 ),
           ),
           settings: settings,

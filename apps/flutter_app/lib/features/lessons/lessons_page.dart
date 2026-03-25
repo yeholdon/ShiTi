@@ -183,6 +183,9 @@ class _LessonsPageState extends State<LessonsPage> {
         highlightDetail:
             '${lesson.documentFocus} 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
         feedbackBadgeLabel: '课堂资料',
+        sourceModule: 'lessons',
+        sourceRecordId: lesson.id,
+        sourceLabel: lesson.title,
       ),
     );
   }

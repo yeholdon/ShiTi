@@ -9,6 +9,9 @@ class DocumentsPageArgs {
     this.highlightDetail,
     this.recentlyAddedQuestionCount,
     this.feedbackBadgeLabel,
+    this.sourceModule,
+    this.sourceRecordId,
+    this.sourceLabel,
   });
 
   final String? focusDocumentId;
@@ -18,4 +21,7 @@ class DocumentsPageArgs {
   final String? highlightDetail;
   final int? recentlyAddedQuestionCount;
   final String? feedbackBadgeLabel;
+  final String? sourceModule;
+  final String? sourceRecordId;
+  final String? sourceLabel;
 }

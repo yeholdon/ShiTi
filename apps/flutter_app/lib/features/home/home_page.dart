@@ -474,6 +474,8 @@ class _HomePageState extends State<HomePage> {
             highlightDetail:
                 '${document.name} 是你刚刚从工作台进入的资料，可继续回看题目、版式和导出节奏。',
             feedbackBadgeLabel: '工作台回看',
+            sourceModule: 'home',
+            sourceLabel: '工作台',
           ),
         );
         break;
@@ -654,6 +656,8 @@ class _HomePageState extends State<HomePage> {
         highlightDetail:
             '${document.name} 是当前工作台聚焦的文档，可继续回看题目、版式和导出节奏。',
         feedbackBadgeLabel: '工作台聚焦',
+        sourceModule: 'home',
+        sourceLabel: '工作台',
       ),
     );
     if (!mounted) {

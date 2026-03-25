@@ -173,6 +173,9 @@ class _StudentsPageState extends State<StudentsPage> {
         highlightDetail:
             '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
         feedbackBadgeLabel: '学生跟进',
+        sourceModule: 'students',
+        sourceRecordId: student.id,
+        sourceLabel: student.name,
       ),
     );
   }

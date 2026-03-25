@@ -59,6 +59,9 @@ class ClassDetailPage extends StatelessWidget {
         highlightDetail:
             '$targetDocumentLabel 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
         feedbackBadgeLabel: '班级资料',
+        sourceModule: 'class_detail',
+        sourceRecordId: classroom.id,
+        sourceLabel: classroom.name,
       ),
     );
   }

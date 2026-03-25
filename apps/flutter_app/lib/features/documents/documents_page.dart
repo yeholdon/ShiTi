@@ -8,9 +8,15 @@ import '../../core/models/document_summary.dart';
 import '../../core/models/export_detail_args.dart';
 import '../../core/models/export_job_summary.dart';
 import '../../core/models/exports_page_args.dart';
+import '../../core/models/class_detail_args.dart';
+import '../../core/models/classes_page_args.dart';
+import '../../core/models/lesson_detail_args.dart';
+import '../../core/models/lessons_page_args.dart';
 import '../../core/models/library_page_args.dart';
 import '../../core/models/layout_element_summary.dart';
 import '../../core/models/question_basket_page_args.dart';
+import '../../core/models/student_detail_args.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
@@ -64,6 +70,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
   String? _highlightDetail;
   int? _recentlyAddedQuestionCount;
   String? _feedbackBadgeLabel;
+  String? get _sourceModule => widget.args?.sourceModule;
+  String? get _sourceRecordId => widget.args?.sourceRecordId;
+  String? get _sourceLabel => widget.args?.sourceLabel;
   String _query = '';
   String _kindFilter = 'all';
   String _exportStatusFilter = 'all';
@@ -75,7 +84,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
       (widget.args?.highlightTitle?.trim().isNotEmpty ?? false) ||
       (widget.args?.highlightDetail?.trim().isNotEmpty ?? false) ||
       widget.args?.recentlyAddedQuestionCount != null ||
-      (widget.args?.feedbackBadgeLabel?.trim().isNotEmpty ?? false);
+      (widget.args?.feedbackBadgeLabel?.trim().isNotEmpty ?? false) ||
+      (widget.args?.sourceModule?.trim().isNotEmpty ?? false) ||
+      (widget.args?.sourceRecordId?.trim().isNotEmpty ?? false) ||
+      (widget.args?.sourceLabel?.trim().isNotEmpty ?? false);
 
   @override
   void initState() {
@@ -1480,8 +1492,103 @@ class _DocumentsPageState extends State<DocumentsPage> {
     );
   }
 
+  String get _returnActionLabel {
+    switch (_sourceModule) {
+      case 'students':
+        return '返回学生页';
+      case 'student_detail':
+        return '返回学生详情';
+      case 'classes':
+        return '返回班级页';
+      case 'class_detail':
+        return '返回班级详情';
+      case 'lessons':
+        return '返回课堂页';
+      case 'lesson_detail':
+        return '返回课堂详情';
+      default:
+        return '返回工作台';
+    }
+  }
+
   void _openWorkspace() {
-    PrimaryNavigationBar.navigateToSection(context, PrimaryAppSection.home);
+    switch (_sourceModule) {
+      case 'students':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.students,
+          (route) => false,
+          arguments: StudentsPageArgs(
+            focusStudentId: _sourceRecordId,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '学生页'}，可继续回看当前学生的资料安排。',
+            highlightTitle: '当前学生资料上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前学生'} 的资料落点仍保留在当前工作链路里，可继续回看跟进与课堂反馈。',
+            feedbackBadgeLabel: '文档回看',
+          ),
+        );
+        return;
+      case 'student_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.studentDetail,
+          (route) => false,
+          arguments: StudentDetailArgs(
+            studentId: _sourceRecordId!,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '学生详情'}，可继续回看当前学生资料。',
+          ),
+        );
+        return;
+      case 'classes':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.classes,
+          (route) => false,
+          arguments: ClassesPageArgs(
+            focusClassId: _sourceRecordId,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '班级页'}，可继续回看当前班级的资料安排。',
+            highlightTitle: '当前班级资料上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前班级'} 的资料落点仍保留在当前工作链路里，可继续回看课堂和资料节奏。',
+            feedbackBadgeLabel: '文档回看',
+          ),
+        );
+        return;
+      case 'class_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.classDetail,
+          (route) => false,
+          arguments: ClassDetailArgs(
+            classId: _sourceRecordId!,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '班级详情'}，可继续回看当前班级资料。',
+          ),
+        );
+        return;
+      case 'lessons':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.lessons,
+          (route) => false,
+          arguments: LessonsPageArgs(
+            focusLessonId: _sourceRecordId,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '课堂页'}，可继续回看当前课堂的资料安排。',
+            highlightTitle: '当前课堂资料上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前课堂'} 的资料落点仍保留在当前工作链路里，可继续回看课堂资料与反馈。',
+            feedbackBadgeLabel: '文档回看',
+          ),
+        );
+        return;
+      case 'lesson_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.lessonDetail,
+          (route) => false,
+          arguments: LessonDetailArgs(
+            lessonId: _sourceRecordId!,
+            flashMessage: '已从文档返回 ${_sourceLabel ?? '课堂详情'}，可继续回看当前课堂资料。',
+          ),
+        );
+        return;
+      default:
+        PrimaryNavigationBar.navigateToSection(context, PrimaryAppSection.home);
+        return;
+    }
   }
 
   @override
@@ -1519,7 +1626,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         ],
         trailing: IconButton.filledTonal(
           onPressed: _openWorkspace,
-          tooltip: '返回工作台',
+          tooltip: _returnActionLabel,
           icon: const Icon(Icons.home_outlined),
         ),
         body: workspaceConstrainedContent(
@@ -1589,8 +1696,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
                         hasFocusedContext: _focusedDocumentId != null ||
                             (_flashMessage?.trim().isNotEmpty ?? false) ||
                             (_highlightTitle?.trim().isNotEmpty ?? false) ||
-                            (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
+                            (_feedbackBadgeLabel?.trim().isNotEmpty ?? false) ||
+                            (_sourceLabel?.trim().isNotEmpty ?? false),
                         onOpenWorkspace: _openWorkspace,
+                        returnActionLabel: _returnActionLabel,
                       ),
                     ),
                     const SizedBox(width: 18),
@@ -1622,8 +1731,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
                   hasFocusedContext: _focusedDocumentId != null ||
                       (_flashMessage?.trim().isNotEmpty ?? false) ||
                       (_highlightTitle?.trim().isNotEmpty ?? false) ||
-                      (_feedbackBadgeLabel?.trim().isNotEmpty ?? false),
+                      (_feedbackBadgeLabel?.trim().isNotEmpty ?? false) ||
+                      (_sourceLabel?.trim().isNotEmpty ?? false),
                   onOpenWorkspace: _openWorkspace,
+                  returnActionLabel: _returnActionLabel,
                 ),
                 const SizedBox(height: 18),
                 _DocumentsStatusCard(
@@ -2062,6 +2173,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
     required this.pendingExportCount,
     required this.hasFocusedContext,
     required this.onOpenWorkspace,
+    required this.returnActionLabel,
   });
 
   final int documentCount;
@@ -2070,6 +2182,7 @@ class _DocumentsHeroStrip extends StatelessWidget {
   final int pendingExportCount;
   final bool hasFocusedContext;
   final VoidCallback onOpenWorkspace;
+  final String returnActionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -2118,7 +2231,11 @@ class _DocumentsHeroStrip extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenWorkspace,
                 icon: const Icon(Icons.home_outlined),
-                label: Text(compact ? '工作台' : '返回工作台'),
+                label: Text(
+                  compact
+                      ? returnActionLabel.replaceFirst('返回', '')
+                      : returnActionLabel,
+                ),
               ),
             ],
           ),
