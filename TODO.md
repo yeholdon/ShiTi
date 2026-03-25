@@ -1053,3 +1053,4 @@ When work status changes, update this file in the same change.
 
 - [x] Flutter: 学生/班级/课堂详情页已补“关联题库”入口，可按对象上下文把学科/学段/教材初始筛选带入题库检索。
 - [x] Flutter: 学生/班级/课堂工作页也已补“关联题库”入口，可直接把当前对象上下文带入题库检索。
+- [x] Flutter: 题库页路由已支持 query 上下文筛选，可直接通过深链验收学生/班级/课堂到题库的 live 检索落点。

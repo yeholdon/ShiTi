@@ -335,8 +335,32 @@ class AppRouter {
         );
       case library:
         final args = settings.arguments as LibraryPageArgs?;
+        final initialQuery =
+            routeUri?.queryParameters['initialQuery']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['initialQuery']!.trim()
+                : null;
+        final initialSubjectLabel =
+            routeUri?.queryParameters['initialSubjectLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['initialSubjectLabel']!.trim()
+                : null;
+        final initialStageLabel =
+            routeUri?.queryParameters['initialStageLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['initialStageLabel']!.trim()
+                : null;
+        final initialTextbookLabel =
+            routeUri?.queryParameters['initialTextbookLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['initialTextbookLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
-          builder: (_) => LibraryPage(args: args),
+          builder: (_) => LibraryPage(
+            args: args ??
+                LibraryPageArgs(
+                  initialQuery: initialQuery,
+                  initialSubjectLabel: initialSubjectLabel,
+                  initialStageLabel: initialStageLabel,
+                  initialTextbookLabel: initialTextbookLabel,
+                ),
+          ),
           settings: settings,
         );
       case home:
