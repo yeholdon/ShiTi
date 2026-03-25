@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
+import '../../core/models/document_summary.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
@@ -45,16 +46,20 @@ class StudentDetailPage extends StatelessWidget {
 
   void _openDocumentsWorkspace(
     BuildContext context,
-    StudentWorkspaceRecord student,
-  ) {
+    StudentWorkspaceRecord student, {
+    String? documentId,
+    String? documentName,
+  }) {
+    final currentDocumentId = documentId ?? student.documentId;
+    final currentDocumentName = documentName ?? student.documentName;
     Navigator.of(context).pushNamed(
       AppRouter.documents,
       arguments: DocumentsPageArgs(
-        focusDocumentId: student.documentId,
-        flashMessage: '已定位到 ${student.documentName}，可继续整理学生跟进资料。',
+        focusDocumentId: currentDocumentId,
+        flashMessage: '已定位到 $currentDocumentName，可继续整理学生跟进资料。',
         highlightTitle: '当前学生跟进资料',
         highlightDetail:
-            '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
+            '$currentDocumentName 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
         feedbackBadgeLabel: '学生跟进',
         sourceModule: 'student_detail',
         sourceRecordId: student.id,
@@ -103,22 +108,24 @@ class StudentDetailPage extends StatelessWidget {
       if (AppConfig.useMockData) {
         final student = findStudentWorkspaceRecord(studentId);
         if (student == null) {
-          return (null, null, null);
+          return (null, null, null, null);
         }
         return (
           student,
           findClassWorkspaceRecord(student.classId),
           findLessonWorkspaceRecord(student.lessonId),
+          null,
         );
       }
 
       final student = await AppServices.instance.studentRepository.getStudent(studentId);
       if (student == null) {
-        return (null, null, null);
+        return (null, null, null, null);
       }
       final results = await Future.wait([
         AppServices.instance.classRepository.listClasses(studentId: student.id),
         AppServices.instance.lessonRepository.listLessons(studentId: student.id),
+        AppServices.instance.documentRepository.getDocument(student.documentId),
       ]);
       final relatedClasses = results[0] as List<ClassWorkspaceRecord>;
       final relatedLessons = results[1] as List<LessonWorkspaceRecord>;
@@ -126,6 +133,7 @@ class StudentDetailPage extends StatelessWidget {
         student,
         relatedClasses.isEmpty ? null : relatedClasses.first,
         relatedLessons.isEmpty ? null : relatedLessons.first,
+        results[2] as DocumentSummary?,
       );
     }();
 
@@ -133,6 +141,7 @@ class StudentDetailPage extends StatelessWidget {
       StudentWorkspaceRecord?,
       ClassWorkspaceRecord?,
       LessonWorkspaceRecord?,
+      DocumentSummary?,
     )>(
       future: detailFuture,
       builder: (context, snapshot) {
@@ -171,6 +180,7 @@ class StudentDetailPage extends StatelessWidget {
         final student = snapshot.data?.$1;
         final relatedClass = snapshot.data?.$2;
         final relatedLesson = snapshot.data?.$3;
+        final relatedDocument = snapshot.data?.$4;
         if (student == null) {
           return Scaffold(
             body: WorkspaceModuleShell(
@@ -202,6 +212,9 @@ class StudentDetailPage extends StatelessWidget {
             ),
           );
         }
+
+        final currentDocumentId = relatedDocument?.id ?? student.documentId;
+        final currentDocumentName = relatedDocument?.name ?? student.documentName;
 
         return Scaffold(
           body: WorkspaceModuleShell(
@@ -537,7 +550,7 @@ class StudentDetailPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${relatedClass?.name ?? student.className} -> ${relatedLesson?.title ?? '关联课堂'} -> ${student.documentName}',
+                                    '${relatedClass?.name ?? student.className} -> ${relatedLesson?.title ?? '关联课堂'} -> $currentDocumentName',
                                     style: const TextStyle(
                                       height: 1.5,
                                       color: TelegramPalette.textMuted,
@@ -558,7 +571,7 @@ class StudentDetailPage extends StatelessWidget {
                                       ),
                                       WorkspaceInfoPill(
                                         label: '资料',
-                                        value: student.documentName,
+                                        value: currentDocumentName,
                                       ),
                                       WorkspaceInfoPill(
                                         label: '教材',
@@ -616,6 +629,8 @@ class StudentDetailPage extends StatelessWidget {
                                           _openDocumentsWorkspace(
                                             context,
                                             student,
+                                            documentId: currentDocumentId,
+                                            documentName: currentDocumentName,
                                           );
                                         },
                                         icon: const Icon(
@@ -623,7 +638,7 @@ class StudentDetailPage extends StatelessWidget {
                                           size: 18,
                                         ),
                                         label:
-                                            Text('打开${student.documentName}'),
+                                            Text('打开$currentDocumentName'),
                                       ),
                                     ],
                                   ),
@@ -793,11 +808,16 @@ class StudentDetailPage extends StatelessWidget {
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    _openDocumentsWorkspace(context, student);
+                                    _openDocumentsWorkspace(
+                                      context,
+                                      student,
+                                      documentId: currentDocumentId,
+                                      documentName: currentDocumentName,
+                                    );
                                   },
                                   icon: const Icon(Icons.description_outlined,
                                       size: 18),
-                                  label: Text('打开${student.documentName}'),
+                                  label: Text('打开$currentDocumentName'),
                                 ),
                               ],
                             ),
@@ -835,7 +855,7 @@ class StudentDetailPage extends StatelessWidget {
                             ),
                             WorkspaceInfoPill(
                               label: '资料',
-                              value: student.documentName,
+                              value: currentDocumentName,
                             ),
                             WorkspaceInfoPill(
                               label: '跟进级别',
@@ -894,11 +914,16 @@ class StudentDetailPage extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
-                                _openDocumentsWorkspace(context, student);
+                                _openDocumentsWorkspace(
+                                  context,
+                                  student,
+                                  documentId: currentDocumentId,
+                                  documentName: currentDocumentName,
+                                );
                               },
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
-                              label: Text(student.documentName),
+                              label: Text(currentDocumentName),
                             ),
                             OutlinedButton.icon(
                               onPressed: () {

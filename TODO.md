@@ -1067,3 +1067,4 @@ When work status changes, update this file in the same change.
 - [x] Tooling: `npm run local:restart` 的正式本地入口已补轻量 supervisor，API / worker / 4111 前端异常退出后会自动拉起，并输出 `tmp/local-run/*.status` 供排障查看。
 - [x] Backend/Flutter: `GET /classes` 已支持 `studentId / lessonId`，`GET /lessons` 已支持 `studentId / classId`；学生详情页在 live 模式下改为优先通过上下文过滤接口回填当前班级与课堂对象。
 - [x] Flutter: 班级详情页和课堂详情页在 live 模式下也已改成优先通过上下文过滤接口回填对方对象，班级-课堂之间的标题、按钮和跳转现在优先使用真实过滤结果，而不是只依赖当前记录里的嵌入字段。
+- Flutter：学生、班级、课堂详情页的主资料承接已改成 live 文档对象优先回填，摘要与主入口不再只依赖当前记录里的文档名称字段。

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
+import '../../core/models/document_summary.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
@@ -159,21 +160,27 @@ class LessonDetailPage extends StatelessWidget {
       if (AppConfig.useMockData) {
         final lesson = findLessonWorkspaceRecord(lessonId);
         if (lesson == null) {
-          return (null, const <StudentWorkspaceRecord>[], null);
+          return (null, const <StudentWorkspaceRecord>[], null, null);
         }
         final relatedStudents = sampleStudentRecords
             .where((student) => student.lessonId == lessonId)
             .toList(growable: false);
-        return (lesson, relatedStudents, findClassWorkspaceRecord(lesson.classId));
+        return (
+          lesson,
+          relatedStudents,
+          findClassWorkspaceRecord(lesson.classId),
+          null,
+        );
       }
 
       final lesson = await AppServices.instance.lessonRepository.getLesson(lessonId);
       if (lesson == null) {
-        return (null, const <StudentWorkspaceRecord>[], null);
+        return (null, const <StudentWorkspaceRecord>[], null, null);
       }
       final results = await Future.wait([
         AppServices.instance.studentRepository.listStudents(lessonId: lessonId),
         AppServices.instance.classRepository.listClasses(lessonId: lessonId),
+        AppServices.instance.documentRepository.getDocument(lesson.documentId),
       ]);
       final relatedStudents = results[0] as List<StudentWorkspaceRecord>;
       final relatedClasses = results[1] as List<ClassWorkspaceRecord>;
@@ -181,6 +188,7 @@ class LessonDetailPage extends StatelessWidget {
         lesson,
         relatedStudents,
         relatedClasses.isEmpty ? null : relatedClasses.first,
+        results[2] as DocumentSummary?,
       );
     }();
 
@@ -189,6 +197,7 @@ class LessonDetailPage extends StatelessWidget {
         LessonWorkspaceRecord?,
         List<StudentWorkspaceRecord>,
         ClassWorkspaceRecord?,
+        DocumentSummary?,
       )
     >(
       future: detailFuture,
@@ -229,6 +238,7 @@ class LessonDetailPage extends StatelessWidget {
         final relatedStudents =
             snapshot.data?.$2 ?? const <StudentWorkspaceRecord>[];
         final relatedClass = snapshot.data?.$3;
+        final relatedDocument = snapshot.data?.$4;
 
         if (lesson == null) {
           return Scaffold(
@@ -264,6 +274,9 @@ class LessonDetailPage extends StatelessWidget {
 
         final currentClassId = relatedClass?.id ?? lesson.classId;
         final currentClassLabel = relatedClass?.name ?? lesson.classScopeLabel;
+        final currentDocumentId = relatedDocument?.id ?? lesson.documentId;
+        final currentDocumentLabel =
+            relatedDocument?.name ?? lesson.documentFocus;
 
         return Scaffold(
           body: WorkspaceModuleShell(
@@ -383,7 +396,7 @@ class LessonDetailPage extends StatelessWidget {
                         ),
                         WorkspaceMetricPill(
                           label: '主资料',
-                          value: lesson.documentFocus,
+                          value: currentDocumentLabel,
                         ),
                         WorkspaceMetricPill(
                           label: '反馈状态',
@@ -879,11 +892,16 @@ class LessonDetailPage extends StatelessWidget {
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    _openDocumentsWorkspace(context, lesson);
+                                    _openDocumentsWorkspace(
+                                      context,
+                                      lesson,
+                                      documentId: currentDocumentId,
+                                      documentLabel: currentDocumentLabel,
+                                    );
                                   },
                                   icon: const Icon(Icons.description_outlined,
                                       size: 18),
-                                  label: Text('打开${lesson.documentFocus}'),
+                                  label: Text('打开$currentDocumentLabel'),
                                 ),
                               ],
                             ),
@@ -917,7 +935,7 @@ class LessonDetailPage extends StatelessWidget {
                             ),
                             WorkspaceInfoPill(
                               label: '主资料',
-                              value: lesson.documentFocus,
+                              value: currentDocumentLabel,
                             ),
                             WorkspaceInfoPill(
                               label: '反馈学生',
@@ -978,11 +996,16 @@ class LessonDetailPage extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
-                                _openDocumentsWorkspace(context, lesson);
+                                _openDocumentsWorkspace(
+                                  context,
+                                  lesson,
+                                  documentId: currentDocumentId,
+                                  documentLabel: currentDocumentLabel,
+                                );
                               },
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
-                              label: Text(lesson.documentFocus),
+                              label: Text(currentDocumentLabel),
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
