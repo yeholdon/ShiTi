@@ -123,6 +123,45 @@ payload["routes"] = {
                     "可继续补讲义、试卷和课堂节奏。"
                 ),
                 "feedbackBadgeLabel": "课堂资料",
+                "sourceModule": "lesson_detail",
+                "sourceRecordId": primary_lesson["id"],
+                "sourceLabel": primary_lesson["title"],
+            }
+        )
+    ),
+    "documents_student_context": (
+        f"{web_base_url}/#/documents?"
+        + urllib.parse.urlencode(
+            {
+                "focusDocumentId": primary_document["id"],
+                "flashMessage": f"已定位到 {primary_document['name']}，可继续整理学生跟进资料。",
+                "highlightTitle": "当前学生跟进资料",
+                "highlightDetail": (
+                    f"{primary_document['name']} 正承接 {primary_student['name']} 的跟进任务，"
+                    "可继续补讲义、试卷与课堂反馈。"
+                ),
+                "feedbackBadgeLabel": "学生跟进",
+                "sourceModule": "student_detail",
+                "sourceRecordId": primary_student["id"],
+                "sourceLabel": primary_student["name"],
+            }
+        )
+    ),
+    "documents_class_context": (
+        f"{web_base_url}/#/documents?"
+        + urllib.parse.urlencode(
+            {
+                "focusDocumentId": primary_document["id"],
+                "flashMessage": f"已定位到 {primary_document['name']}，可继续整理班级资料。",
+                "highlightTitle": "当前班级资料",
+                "highlightDetail": (
+                    f"{primary_document['name']} 正承接 {primary_class['name']} 的资料安排，"
+                    "可继续补讲义、试卷和课堂节奏。"
+                ),
+                "feedbackBadgeLabel": "班级资料",
+                "sourceModule": "class_detail",
+                "sourceRecordId": primary_class["id"],
+                "sourceLabel": primary_class["name"],
             }
         )
     ),
@@ -140,6 +179,8 @@ payload["routes"] = {
                     "可继续整理内容和导出节奏。"
                 ),
                 "feedbackBadgeLabel": "最近任务",
+                "sourceModule": "home",
+                "sourceLabel": "工作台",
             }
         )
     ),
@@ -157,6 +198,8 @@ payload["routes"] = {
                     "可继续回看题目、版式和导出节奏。"
                 ),
                 "feedbackBadgeLabel": "工作台聚焦",
+                "sourceModule": "home",
+                "sourceLabel": "工作台",
             }
         )
     ),
@@ -281,6 +324,14 @@ capture_via_bridge \
 capture_via_bridge \
   "documents_lesson_context" \
   "${output_dir}/documents-lesson-context-live.png"
+
+capture_via_bridge \
+  "documents_student_context" \
+  "${output_dir}/documents-student-context-live.png"
+
+capture_via_bridge \
+  "documents_class_context" \
+  "${output_dir}/documents-class-context-live.png"
 
 capture_via_bridge \
   "documents_home_recent" \
