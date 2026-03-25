@@ -1063,3 +1063,4 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 文档工作页也已补来源上下文和返回语义；首页、学生/班级/课堂工作页，以及三类对象详情页进入文档后，返回动作会优先回到对应来源页，而不再固定只回工作台。
 - [x] Tooling: `capture-live-workspace-audit.sh` 现已覆盖 13 张固定 live 整页图，除首页、对象详情、题库上下文和首页文档上下文外，也补进了学生/班级/课堂三类对象进入文档工作页的来源上下文验收图。
 - [x] Flutter: 从带对象上下文的题库页进入题目详情后，题目详情现在会保留当前题库筛题上下文；即使不是直接靠浏览器返回，也能回到同一套题库上下文继续挑题。
+- [x] Tooling: live 工作台验收脚本已改成直接注入 storage state，不再依赖 `auth_bridge.html` 页面跳转；对象进入题库页的 live 整页图现在可稳定落到真实目标页。

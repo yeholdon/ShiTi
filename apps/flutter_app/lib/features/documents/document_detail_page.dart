@@ -30,6 +30,10 @@ class DocumentDetailPage extends StatefulWidget {
     this.focusItemTitle,
     this.focusExportJobId,
     this.recentlyAddedQuestionCount,
+    this.flashMessage,
+    this.highlightTitle,
+    this.highlightDetail,
+    this.feedbackBadgeLabel,
     super.key,
   });
 
@@ -39,6 +43,10 @@ class DocumentDetailPage extends StatefulWidget {
   final String? focusItemTitle;
   final String? focusExportJobId;
   final int? recentlyAddedQuestionCount;
+  final String? flashMessage;
+  final String? highlightTitle;
+  final String? highlightDetail;
+  final String? feedbackBadgeLabel;
 
   static DocumentDetailPage fromArgs(DocumentDetailArgs args) {
     return DocumentDetailPage(
@@ -48,6 +56,10 @@ class DocumentDetailPage extends StatefulWidget {
       focusItemTitle: args.focusItemTitle,
       focusExportJobId: args.focusExportJobId,
       recentlyAddedQuestionCount: args.recentlyAddedQuestionCount,
+      flashMessage: args.flashMessage,
+      highlightTitle: args.highlightTitle,
+      highlightDetail: args.highlightDetail,
+      feedbackBadgeLabel: args.feedbackBadgeLabel,
     );
   }
 
@@ -69,6 +81,10 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
   late String? _focusedItemTitle = widget.focusItemTitle;
   late String? _focusedExportJobId = widget.focusExportJobId;
   int? _recentlyAddedQuestionCount;
+  late final String? _flashMessage = widget.flashMessage;
+  late final String? _highlightTitle = widget.highlightTitle;
+  late final String? _highlightDetail = widget.highlightDetail;
+  late final String? _feedbackBadgeLabel = widget.feedbackBadgeLabel;
   String? _lastScrolledItemId;
   int? _liveQuestionCount;
   int? _liveLayoutCount;
@@ -2564,6 +2580,24 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                         highlightLatestExport: _focusedExportJobId != null &&
                             _focusedExportJobId == document.latestExportJobId,
                       ),
+                      if ((_flashMessage ?? '').trim().isNotEmpty ||
+                          (_highlightTitle ?? '').trim().isNotEmpty ||
+                          (_highlightDetail ?? '').trim().isNotEmpty) ...[
+                        const SizedBox(height: 18),
+                        WorkspaceMessageBanner.info(
+                          title: (_highlightTitle ?? '').trim().isEmpty
+                              ? '当前上下文'
+                              : _highlightTitle!,
+                          message: [
+                            if ((_flashMessage ?? '').trim().isNotEmpty)
+                              _flashMessage!,
+                            if ((_highlightDetail ?? '').trim().isNotEmpty)
+                              _highlightDetail!,
+                            if ((_feedbackBadgeLabel ?? '').trim().isNotEmpty)
+                              '标签：${_feedbackBadgeLabel!}',
+                          ].join(' '),
+                        ),
+                      ],
                       const SizedBox(height: 18),
                       _DocumentContextCard(
                         modeLabel: AppConfig.dataModeLabel,

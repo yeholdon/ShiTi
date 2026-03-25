@@ -11,8 +11,10 @@ output_dir="${1:-/tmp/shiti-live-audit}"
 mkdir -p "$output_dir"
 
 bridge_payload_file="$(mktemp /tmp/shiti-live-audit-payload.XXXXXX).json"
+storage_state_file="$(mktemp /tmp/shiti-live-audit-storage.XXXXXX).json"
 cleanup() {
   rm -f "$bridge_payload_file"
+  rm -f "$storage_state_file"
 }
 trap cleanup EXIT
 
@@ -101,7 +103,21 @@ primary_student = students[0]
 primary_class = classes[0]
 primary_lesson = lessons[0]
 primary_student_stage = primary_student["gradeLabel"].split("·")[0].strip()
+primary_class_student = next(
+    (student for student in students if student["classId"] == primary_class["id"]),
+    primary_student,
+)
+primary_lesson_student = next(
+    (
+        student
+        for student in students
+        if student["id"] == primary_lesson.get("focusStudentId")
+        or student["lessonId"] == primary_lesson["id"]
+    ),
+    primary_student,
+)
 primary_class_stage = primary_class["stageLabel"].split("·")[0].strip()
+primary_lesson_stage = primary_lesson_student["gradeLabel"].split("·")[0].strip()
 
 payload["routes"] = {
     "home": f"{web_base_url}/#/",
@@ -227,6 +243,7 @@ payload["routes"] = {
         f"{web_base_url}/#/library?"
         + urllib.parse.urlencode(
             {
+                "initialSubjectLabel": primary_class_student["subjectLabel"],
                 "initialStageLabel": primary_class_stage,
                 "initialTextbookLabel": primary_class["textbookLabel"],
                 "flashMessage": f"已定位到 {primary_class['name']} 的题库上下文，可继续按当前班级筛题。",
@@ -247,6 +264,9 @@ payload["routes"] = {
         + urllib.parse.urlencode(
             {
                 "initialQuery": primary_lesson["title"],
+                "initialSubjectLabel": primary_lesson_student["subjectLabel"],
+                "initialStageLabel": primary_lesson_stage,
+                "initialTextbookLabel": primary_lesson_student["textbookLabel"],
                 "flashMessage": f"已定位到 {primary_lesson['title']} 的题库上下文，可继续按当前课堂筛题。",
                 "highlightTitle": "当前课堂题库上下文",
                 "highlightDetail": (
@@ -266,90 +286,100 @@ with open(output_path, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, ensure_ascii=False)
 PY
 
-capture_via_bridge() {
+capture_via_storage_state() {
   local route_key="$1"
   local output_path="$2"
-  python3 - "$web_base_url" "$bridge_payload_file" "$route_key" "$output_path" <<'PY'
+  python3 - "$bridge_payload_file" "$storage_state_file" <<'PY'
 import json
-import subprocess
 import sys
-import urllib.parse
 
-web_base_url, payload_file, route_key, output_path = sys.argv[1:]
+payload_file, output_path = sys.argv[1:]
 with open(payload_file, "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
-redirect_url = payload["routes"][route_key]
-bridge_url = web_base_url + "/auth_bridge.html?" + urllib.parse.urlencode(
-    {
-        "session": payload["session"],
-        "tenant": payload["tenant"],
-        "redirect": redirect_url,
-    }
-)
-
-subprocess.run(
-    [
-        "/Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh",
-        bridge_url,
-        output_path,
-    ],
-    check=True,
-)
+with open(output_path, "w", encoding="utf-8") as handle:
+    json.dump(
+        {
+            "auth_session": payload["session"],
+            "active_tenant": payload["tenant"],
+            "flutter.auth_session": payload["session"],
+            "flutter.active_tenant": payload["tenant"],
+        },
+        handle,
+        ensure_ascii=False,
+    )
 PY
+
+  local route_url
+  route_url="$(
+    python3 - "$bridge_payload_file" "$route_key" <<'PY'
+import json
+import sys
+
+payload_file, route_key = sys.argv[1:]
+with open(payload_file, "r", encoding="utf-8") as handle:
+    payload = json.load(handle)
+print(payload["routes"][route_key])
+PY
+  )"
+
+  /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh \
+    "$route_url" \
+    "$output_path" \
+    "$storage_state_file"
 }
 
 echo "Capturing live workspace audit into $output_dir"
 
-capture_via_bridge \
+capture_via_storage_state \
   "home" \
   "${output_dir}/home-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "student_detail" \
   "${output_dir}/student-detail-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "class_detail" \
   "${output_dir}/class-detail-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "lesson_detail" \
   "${output_dir}/lesson-detail-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "document_detail" \
   "${output_dir}/document-detail-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "documents_lesson_context" \
   "${output_dir}/documents-lesson-context-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "documents_student_context" \
   "${output_dir}/documents-student-context-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "documents_class_context" \
   "${output_dir}/documents-class-context-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "documents_home_recent" \
   "${output_dir}/documents-home-recent-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "documents_home_focus" \
   "${output_dir}/documents-home-focus-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "library_student_context" \
   "${output_dir}/library-student-context-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "library_class_context" \
   "${output_dir}/library-class-context-live.png"
 
-capture_via_bridge \
+capture_via_storage_state \
   "library_lesson_context" \
   "${output_dir}/library-lesson-context-live.png"
 

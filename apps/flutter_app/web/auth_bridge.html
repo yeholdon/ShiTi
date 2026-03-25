@@ -34,17 +34,13 @@
         const redirect = params.get("redirect") || "/";
 
         if (session) {
-          window.localStorage.setItem(
-            "flutter.auth_session",
-            JSON.stringify(session),
-          );
+          window.localStorage.setItem("auth_session", session);
+          window.localStorage.setItem("flutter.auth_session", session);
         }
 
         if (tenant) {
-          window.localStorage.setItem(
-            "flutter.active_tenant",
-            JSON.stringify(tenant),
-          );
+          window.localStorage.setItem("active_tenant", tenant);
+          window.localStorage.setItem("flutter.active_tenant", tenant);
         }
 
         window.location.replace(redirect);
