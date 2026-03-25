@@ -322,9 +322,110 @@ class AppRouter {
             routeUri?.queryParameters['questionId']?.trim().isNotEmpty == true
                 ? routeUri!.queryParameters['questionId']!.trim()
                 : 'q-1';
+        final initialQuery =
+            routeUri?.queryParameters['initialQuery']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['initialQuery']!.trim()
+                : null;
+        final initialSubjectLabel =
+            routeUri?.queryParameters['initialSubjectLabel']?.trim().isNotEmpty ==
+                    true
+                ? routeUri!.queryParameters['initialSubjectLabel']!.trim()
+                : null;
+        final initialStageLabel =
+            routeUri?.queryParameters['initialStageLabel']?.trim().isNotEmpty ==
+                    true
+                ? routeUri!.queryParameters['initialStageLabel']!.trim()
+                : null;
+        final initialTextbookLabel = routeUri
+                    ?.queryParameters['initialTextbookLabel']
+                    ?.trim()
+                    .isNotEmpty ==
+                true
+            ? routeUri!.queryParameters['initialTextbookLabel']!.trim()
+            : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel = routeUri
+                    ?.queryParameters['feedbackBadgeLabel']
+                    ?.trim()
+                    .isNotEmpty ==
+                true
+            ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+            : null;
+        final sourceModule =
+            routeUri?.queryParameters['sourceModule']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceModule']!.trim()
+                : null;
+        final sourceRecordId =
+            routeUri?.queryParameters['sourceRecordId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceRecordId']!.trim()
+                : null;
+        final sourceLabel =
+            routeUri?.queryParameters['sourceLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceLabel']!.trim()
+                : null;
+        final insertAfterItemId = routeUri
+                    ?.queryParameters['insertAfterItemId']
+                    ?.trim()
+                    .isNotEmpty ==
+                true
+            ? routeUri!.queryParameters['insertAfterItemId']!.trim()
+            : null;
+        final insertAfterItemTitle = routeUri
+                    ?.queryParameters['insertAfterItemTitle']
+                    ?.trim()
+                    .isNotEmpty ==
+                true
+            ? routeUri!.queryParameters['insertAfterItemTitle']!.trim()
+            : null;
+        final hasLibraryContext = [
+          initialQuery,
+          initialSubjectLabel,
+          initialStageLabel,
+          initialTextbookLabel,
+          flashMessage,
+          highlightTitle,
+          highlightDetail,
+          feedbackBadgeLabel,
+          sourceModule,
+          sourceRecordId,
+          sourceLabel,
+          insertAfterItemId,
+          insertAfterItemTitle,
+        ].any((value) => (value ?? '').trim().isNotEmpty);
         return MaterialPageRoute<void>(
           builder: (_) => QuestionDetailPage.fromArgs(
-            args ?? QuestionDetailArgs(questionId: questionId),
+            args ??
+                QuestionDetailArgs(
+                  questionId: questionId,
+                  insertAfterItemId: insertAfterItemId,
+                  insertAfterItemTitle: insertAfterItemTitle,
+                  libraryContextArgs: hasLibraryContext
+                      ? LibraryPageArgs(
+                          initialQuery: initialQuery,
+                          initialSubjectLabel: initialSubjectLabel,
+                          initialStageLabel: initialStageLabel,
+                          initialTextbookLabel: initialTextbookLabel,
+                          flashMessage: flashMessage,
+                          highlightTitle: highlightTitle,
+                          highlightDetail: highlightDetail,
+                          feedbackBadgeLabel: feedbackBadgeLabel,
+                          sourceModule: sourceModule,
+                          sourceRecordId: sourceRecordId,
+                          sourceLabel: sourceLabel,
+                        )
+                      : null,
+                ),
           ),
           settings: settings,
         );

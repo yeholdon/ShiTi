@@ -148,6 +148,28 @@ payload["routes"] = {
     "class_detail": f"{web_base_url}/#/classes/detail?classId={primary_class['id']}",
     "lesson_detail": f"{web_base_url}/#/lessons/detail?lessonId={primary_lesson['id']}",
     "question_detail": f"{web_base_url}/#/questions/detail?questionId={primary_question['id']}",
+    "question_detail_library_context": (
+        f"{web_base_url}/#/questions/detail?"
+        + urllib.parse.urlencode(
+            {
+                "questionId": primary_question["id"],
+                "initialQuery": primary_class["name"],
+                "initialSubjectLabel": primary_class_student["subjectLabel"],
+                "initialStageLabel": primary_class_stage,
+                "initialTextbookLabel": primary_class["textbookLabel"],
+                "flashMessage": f"已定位到 {primary_class['name']} 的题库上下文，可继续按当前班级筛题。",
+                "highlightTitle": "当前班级题库上下文",
+                "highlightDetail": (
+                    f"{primary_class['name']} 的学段、教材和关联学科条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "班级筛题",
+                "sourceModule": "classes",
+                "sourceRecordId": primary_class["id"],
+                "sourceLabel": primary_class["name"],
+            }
+        )
+    ),
     "document_detail": (
         f"{web_base_url}/#/documents/detail?documentId={primary_document['id']}"
     ),
@@ -377,6 +399,10 @@ capture_via_storage_state \
 capture_via_storage_state \
   "question_detail" \
   "${output_dir}/question-detail-live.png"
+
+capture_via_storage_state \
+  "question_detail_library_context" \
+  "${output_dir}/question-detail-library-context-live.png"
 
 capture_via_storage_state \
   "document_detail" \
