@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
 import '../../core/models/documents_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
@@ -55,6 +56,21 @@ class StudentDetailPage extends StatelessWidget {
         highlightDetail:
             '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
         feedbackBadgeLabel: '学生跟进',
+      ),
+    );
+  }
+
+  void _openLibraryWorkspace(
+    BuildContext context,
+    StudentWorkspaceRecord student,
+  ) {
+    final stageLabel = student.gradeLabel.split('·').first.trim();
+    Navigator.of(context).pushNamed(
+      AppRouter.library,
+      arguments: LibraryPageArgs(
+        initialSubjectLabel: student.subjectLabel.trim(),
+        initialStageLabel: stageLabel,
+        initialTextbookLabel: student.textbookLabel.trim(),
       ),
     );
   }
@@ -870,6 +886,13 @@ class StudentDetailPage extends StatelessWidget {
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
                               label: Text(student.documentName),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                _openLibraryWorkspace(context, student);
+                              },
+                              icon: const Icon(Icons.search_outlined, size: 18),
+                              label: const Text('关联题库'),
                             ),
                           ],
                         ),

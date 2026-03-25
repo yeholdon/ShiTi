@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
 import '../../core/models/documents_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/student_detail_args.dart';
@@ -101,6 +102,29 @@ class LessonDetailPage extends StatelessWidget {
         highlightDetail:
             '$targetDocumentLabel 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
         feedbackBadgeLabel: '课堂资料',
+      ),
+    );
+  }
+
+  void _openLibraryWorkspace(
+    BuildContext context,
+    LessonWorkspaceRecord lesson,
+    List<StudentWorkspaceRecord> relatedStudents,
+  ) {
+    final referenceStudent =
+        relatedStudents.isNotEmpty ? relatedStudents.first : null;
+    final stageLabel = referenceStudent?.gradeLabel.split('·').first.trim();
+    final subjectLabel = referenceStudent?.subjectLabel.trim();
+    final textbookLabel = referenceStudent?.textbookLabel.trim();
+    Navigator.of(context).pushNamed(
+      AppRouter.library,
+      arguments: LibraryPageArgs(
+        initialSubjectLabel:
+            (subjectLabel?.isNotEmpty ?? false) ? subjectLabel : null,
+        initialStageLabel:
+            (stageLabel?.isNotEmpty ?? false) ? stageLabel : null,
+        initialTextbookLabel:
+            (textbookLabel?.isNotEmpty ?? false) ? textbookLabel : null,
       ),
     );
   }
@@ -923,6 +947,17 @@ class LessonDetailPage extends StatelessWidget {
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
                               label: Text(lesson.documentFocus),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                _openLibraryWorkspace(
+                                  context,
+                                  lesson,
+                                  relatedStudents,
+                                );
+                              },
+                              icon: const Icon(Icons.search_outlined, size: 18),
+                              label: const Text('关联题库'),
                             ),
                           ],
                         ),

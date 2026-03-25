@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
 import '../../core/models/documents_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/classes_page_args.dart';
@@ -58,6 +59,25 @@ class ClassDetailPage extends StatelessWidget {
         highlightDetail:
             '$targetDocumentLabel 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
         feedbackBadgeLabel: '班级资料',
+      ),
+    );
+  }
+
+  void _openLibraryWorkspace(
+    BuildContext context,
+    ClassWorkspaceRecord classroom,
+    List<StudentWorkspaceRecord> relatedStudents,
+  ) {
+    final stageLabel = classroom.stageLabel.split('·').first.trim();
+    final subjectLabel = relatedStudents.isNotEmpty
+        ? relatedStudents.first.subjectLabel.trim()
+        : '';
+    Navigator.of(context).pushNamed(
+      AppRouter.library,
+      arguments: LibraryPageArgs(
+        initialSubjectLabel: subjectLabel.isEmpty ? null : subjectLabel,
+        initialStageLabel: stageLabel,
+        initialTextbookLabel: classroom.textbookLabel.trim(),
       ),
     );
   }
@@ -930,6 +950,17 @@ class ClassDetailPage extends StatelessWidget {
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
                               label: Text(classroom.latestDocLabel),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                _openLibraryWorkspace(
+                                  context,
+                                  classroom,
+                                  relatedStudents,
+                                );
+                              },
+                              icon: const Icon(Icons.search_outlined, size: 18),
+                              label: const Text('关联题库'),
                             ),
                           ],
                         ),
