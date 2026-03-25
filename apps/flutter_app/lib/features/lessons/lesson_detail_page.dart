@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
-import '../../core/models/document_detail_args.dart';
+import '../../core/models/documents_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/student_detail_args.dart';
@@ -74,12 +74,35 @@ class LessonDetailPage extends StatelessWidget {
         );
         return;
       case 'documents':
-        Navigator.of(context).pushNamed(
-          AppRouter.documentDetail,
-          arguments: DocumentDetailArgs(documentId: task.targetRecordId),
+        _openDocumentsWorkspace(
+          context,
+          lesson,
+          documentId: task.targetRecordId,
+          documentLabel: task.targetLabel,
         );
         return;
     }
+  }
+
+  void _openDocumentsWorkspace(
+    BuildContext context,
+    LessonWorkspaceRecord lesson, {
+    String? documentId,
+    String? documentLabel,
+  }) {
+    final targetDocumentId = documentId ?? lesson.documentId;
+    final targetDocumentLabel = documentLabel ?? lesson.documentFocus;
+    Navigator.of(context).pushNamed(
+      AppRouter.documents,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: targetDocumentId,
+        flashMessage: '已定位到 $targetDocumentLabel，可继续整理这节课使用的资料。',
+        highlightTitle: '当前课堂资料',
+        highlightDetail:
+            '$targetDocumentLabel 正承接 ${lesson.title} 的主资料，可继续调整课堂资料与反馈回收。',
+        feedbackBadgeLabel: '课堂资料',
+      ),
+    );
   }
 
   @override
@@ -560,11 +583,11 @@ class LessonDetailPage extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       OutlinedButton.icon(
                                         onPressed: () {
-                                          Navigator.of(context).pushNamed(
-                                            AppRouter.documentDetail,
-                                            arguments: DocumentDetailArgs(
-                                              documentId: asset.documentId,
-                                            ),
+                                          _openDocumentsWorkspace(
+                                            context,
+                                            lesson,
+                                            documentId: asset.documentId,
+                                            documentLabel: asset.label,
                                           );
                                         },
                                         icon: const Icon(
@@ -796,12 +819,7 @@ class LessonDetailPage extends StatelessWidget {
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamed(
-                                      AppRouter.documentDetail,
-                                      arguments: DocumentDetailArgs(
-                                        documentId: lesson.documentId,
-                                      ),
-                                    );
+                                    _openDocumentsWorkspace(context, lesson);
                                   },
                                   icon: const Icon(Icons.description_outlined,
                                       size: 18),
@@ -900,12 +918,7 @@ class LessonDetailPage extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
-                                Navigator.of(context).pushNamed(
-                                  AppRouter.documentDetail,
-                                  arguments: DocumentDetailArgs(
-                                    documentId: lesson.documentId,
-                                  ),
-                                );
+                                _openDocumentsWorkspace(context, lesson);
                               },
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),

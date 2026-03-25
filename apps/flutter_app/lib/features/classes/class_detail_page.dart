@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
-import '../../core/models/document_detail_args.dart';
+import '../../core/models/documents_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/classes_page_args.dart';
@@ -38,6 +38,27 @@ class ClassDetailPage extends StatelessWidget {
       sourceModule: args.sourceModule,
       sourceRecordId: args.sourceRecordId,
       sourceLabel: args.sourceLabel,
+    );
+  }
+
+  void _openDocumentsWorkspace(
+    BuildContext context,
+    ClassWorkspaceRecord classroom, {
+    String? documentId,
+    String? documentLabel,
+  }) {
+    final targetDocumentId = documentId ?? classroom.documentId;
+    final targetDocumentLabel = documentLabel ?? classroom.latestDocLabel;
+    Navigator.of(context).pushNamed(
+      AppRouter.documents,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: targetDocumentId,
+        flashMessage: '已定位到 $targetDocumentLabel，可继续整理班级资料。',
+        highlightTitle: '当前班级资料',
+        highlightDetail:
+            '$targetDocumentLabel 正承接 ${classroom.name} 的资料安排，可继续补讲义、试卷和课堂节奏。',
+        feedbackBadgeLabel: '班级资料',
+      ),
     );
   }
 
@@ -540,11 +561,12 @@ class ClassDetailPage extends StatelessWidget {
                                             ),
                                             OutlinedButton.icon(
                                               onPressed: () {
-                                                Navigator.of(context).pushNamed(
-                                                  AppRouter.documentDetail,
-                                                  arguments: DocumentDetailArgs(
-                                                    documentId: asset.documentId,
-                                                  ),
+                                                _openDocumentsWorkspace(
+                                                  context,
+                                                  classroom,
+                                                  documentId: asset.documentId,
+                                                  documentLabel:
+                                                      asset.documentLabel,
                                                 );
                                               },
                                               icon: const Icon(
@@ -803,12 +825,7 @@ class ClassDetailPage extends StatelessWidget {
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamed(
-                                      AppRouter.documentDetail,
-                                      arguments: DocumentDetailArgs(
-                                        documentId: classroom.documentId,
-                                      ),
-                                    );
+                                    _openDocumentsWorkspace(context, classroom);
                                   },
                                   icon: const Icon(Icons.description_outlined,
                                       size: 18),
@@ -908,12 +925,7 @@ class ClassDetailPage extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
-                                Navigator.of(context).pushNamed(
-                                  AppRouter.documentDetail,
-                                  arguments: DocumentDetailArgs(
-                                    documentId: classroom.documentId,
-                                  ),
-                                );
+                                _openDocumentsWorkspace(context, classroom);
                               },
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),

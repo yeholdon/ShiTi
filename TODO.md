@@ -1043,3 +1043,4 @@ When work status changes, update this file in the same change.
 - [x] Tooling: 新增 `scripts/capture-live-workspace-audit.sh`，可通过 `auth_bridge.html` 一次性产出首页、学生/班级/课堂详情、文档详情和课堂资料文档页的 live 整页验收图。
 - [x] Backend/Flutter: `GET /students` 已支持 `classId / lessonId` 过滤，班级详情和课堂详情的关联学生在 live 模式下改为直接走服务端过滤，不再前端全量拉取后再筛选。
 - [x] Flutter: 学生详情页里的班级/课堂承接摘要已改成真实班级与真实课堂对象回填，live 模式下不再依赖 `lesson-1 / lesson-2` 这类样例分支来推断课堂标题。
+- [x] Flutter: 学生/班级/课堂详情页里的文档入口已统一改成进入带上下文高亮的文档工作页，而不是直接裸开文档详情；课堂任务和资料清单会优先带当前点击的那份文档上下文。

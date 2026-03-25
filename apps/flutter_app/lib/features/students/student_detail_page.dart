@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/models/class_detail_args.dart';
-import '../../core/models/document_detail_args.dart';
+import '../../core/models/documents_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
@@ -39,6 +39,23 @@ class StudentDetailPage extends StatelessWidget {
       sourceModule: args.sourceModule,
       sourceRecordId: args.sourceRecordId,
       sourceLabel: args.sourceLabel,
+    );
+  }
+
+  void _openDocumentsWorkspace(
+    BuildContext context,
+    StudentWorkspaceRecord student,
+  ) {
+    Navigator.of(context).pushNamed(
+      AppRouter.documents,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: student.documentId,
+        flashMessage: '已定位到 ${student.documentName}，可继续整理学生跟进资料。',
+        highlightTitle: '当前学生跟进资料',
+        highlightDetail:
+            '${student.documentName} 正承接 ${student.name} 的跟进任务，可继续补讲义、试卷与课堂反馈。',
+        feedbackBadgeLabel: '学生跟进',
+      ),
     );
   }
 
@@ -567,11 +584,9 @@ class StudentDetailPage extends StatelessWidget {
                                       ),
                                       OutlinedButton.icon(
                                         onPressed: () {
-                                          Navigator.of(context).pushNamed(
-                                            AppRouter.documentDetail,
-                                            arguments: DocumentDetailArgs(
-                                              documentId: student.documentId,
-                                            ),
+                                          _openDocumentsWorkspace(
+                                            context,
+                                            student,
                                           );
                                         },
                                         icon: const Icon(
@@ -749,12 +764,7 @@ class StudentDetailPage extends StatelessWidget {
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    Navigator.of(context).pushNamed(
-                                      AppRouter.documentDetail,
-                                      arguments: DocumentDetailArgs(
-                                        documentId: student.documentId,
-                                      ),
-                                    );
+                                    _openDocumentsWorkspace(context, student);
                                   },
                                   icon: const Icon(Icons.description_outlined,
                                       size: 18),
@@ -855,12 +865,7 @@ class StudentDetailPage extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
-                                Navigator.of(context).pushNamed(
-                                  AppRouter.documentDetail,
-                                  arguments: DocumentDetailArgs(
-                                    documentId: student.documentId,
-                                  ),
-                                );
+                                _openDocumentsWorkspace(context, student);
                               },
                               icon: const Icon(Icons.description_outlined,
                                   size: 18),
