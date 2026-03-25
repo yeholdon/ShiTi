@@ -13,6 +13,7 @@ import '../../router/app_router.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../lessons/lesson_workspace_data.dart';
 import '../students/student_workspace_data.dart';
 import 'class_workspace_data.dart';
 
@@ -109,20 +110,39 @@ class ClassDetailPage extends StatelessWidget {
     final detailFuture = () async {
       if (AppConfig.useMockData) {
         final classroom = findClassWorkspaceRecord(classId);
+        if (classroom == null) {
+          return (null, const <StudentWorkspaceRecord>[], null);
+        }
         final relatedStudents = sampleStudentRecords
             .where((student) => student.classId == classId)
             .toList(growable: false);
-        return (classroom, relatedStudents);
+        return (classroom, relatedStudents, findLessonWorkspaceRecord(classroom.lessonId));
       }
 
       final classroom = await AppServices.instance.classRepository.getClass(classId);
-      final relatedStudents = await AppServices.instance.studentRepository.listStudents(
-        classId: classId,
+      if (classroom == null) {
+        return (null, const <StudentWorkspaceRecord>[], null);
+      }
+      final results = await Future.wait([
+        AppServices.instance.studentRepository.listStudents(classId: classId),
+        AppServices.instance.lessonRepository.listLessons(classId: classId),
+      ]);
+      final relatedStudents = results[0] as List<StudentWorkspaceRecord>;
+      final relatedLessons = results[1] as List<LessonWorkspaceRecord>;
+      return (
+        classroom,
+        relatedStudents,
+        relatedLessons.isEmpty ? null : relatedLessons.first,
       );
-      return (classroom, relatedStudents);
     }();
 
-    return FutureBuilder<(ClassWorkspaceRecord?, List<StudentWorkspaceRecord>)>(
+    return FutureBuilder<
+      (
+        ClassWorkspaceRecord?,
+        List<StudentWorkspaceRecord>,
+        LessonWorkspaceRecord?,
+      )
+    >(
       future: detailFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -159,6 +179,7 @@ class ClassDetailPage extends StatelessWidget {
 
         final classroom = snapshot.data?.$1;
         final relatedStudents = snapshot.data?.$2 ?? const <StudentWorkspaceRecord>[];
+        final relatedLesson = snapshot.data?.$3;
 
         if (classroom == null) {
           return Scaffold(
@@ -191,6 +212,10 @@ class ClassDetailPage extends StatelessWidget {
             ),
           );
         }
+
+        final currentLessonId = relatedLesson?.id ?? classroom.lessonId;
+        final currentLessonLabel =
+            relatedLesson?.title ?? classroom.lessonFocusLabel;
 
         return Scaffold(
           body: WorkspaceModuleShell(
@@ -228,7 +253,7 @@ class ClassDetailPage extends StatelessWidget {
                   Navigator.of(context).pushNamed(
                     AppRouter.lessonDetail,
                     arguments: LessonDetailArgs(
-                      lessonId: sourceRecordId!,
+                                        lessonId: sourceRecordId!,
                       flashMessage:
                           '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
                     ),
@@ -314,7 +339,7 @@ class ClassDetailPage extends StatelessWidget {
                         ),
                         WorkspaceMetricPill(
                           label: '当前课堂',
-                          value: classroom.lessonFocusLabel,
+                          value: currentLessonLabel,
                         ),
                         WorkspaceMetricPill(
                           label: '最近资料',
@@ -840,9 +865,9 @@ class ClassDetailPage extends StatelessWidget {
                                     Navigator.of(context).pushNamed(
                                       AppRouter.lessonDetail,
                                       arguments: LessonDetailArgs(
-                                        lessonId: classroom.lessonId,
+                                        lessonId: currentLessonId,
                                         flashMessage:
-                                            '已从 ${classroom.name} 的班级档案进入 ${classroom.lessonFocusLabel}，可继续回看课堂资料与反馈。',
+                                            '已从 ${classroom.name} 的班级档案进入 $currentLessonLabel，可继续回看课堂资料与反馈。',
                                         sourceModule: 'classes',
                                         sourceRecordId: classroom.id,
                                         sourceLabel: classroom.name,
@@ -851,8 +876,7 @@ class ClassDetailPage extends StatelessWidget {
                                   },
                                   icon: const Icon(Icons.schedule_outlined,
                                       size: 18),
-                                  label:
-                                      Text('查看${classroom.lessonFocusLabel}详情'),
+                                  label: Text('查看$currentLessonLabel详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
@@ -898,7 +922,7 @@ class ClassDetailPage extends StatelessWidget {
                             ),
                             WorkspaceInfoPill(
                               label: '当前课堂',
-                              value: classroom.lessonFocusLabel,
+                              value: currentLessonLabel,
                             ),
                             WorkspaceInfoPill(
                               label: '资料',
@@ -941,9 +965,9 @@ class ClassDetailPage extends StatelessWidget {
                                 Navigator.of(context).pushNamed(
                                   AppRouter.lessonDetail,
                                   arguments: LessonDetailArgs(
-                                    lessonId: classroom.lessonId,
+                                    lessonId: currentLessonId,
                                     flashMessage:
-                                        '已从 ${classroom.name} 的班级档案进入 ${classroom.lessonFocusLabel}，可继续回看课堂资料与反馈。',
+                                        '已从 ${classroom.name} 的班级档案进入 $currentLessonLabel，可继续回看课堂资料与反馈。',
                                     sourceModule: 'classes',
                                     sourceRecordId: classroom.id,
                                     sourceLabel: classroom.name,
@@ -952,7 +976,7 @@ class ClassDetailPage extends StatelessWidget {
                               },
                               icon:
                                   const Icon(Icons.schedule_outlined, size: 18),
-                              label: Text(classroom.lessonFocusLabel),
+                              label: Text(currentLessonLabel),
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
