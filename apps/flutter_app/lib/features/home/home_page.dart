@@ -264,6 +264,7 @@ class _HomePageState extends State<HomePage> {
           detail: '${lessons.first.className} · ${lessons.first.scheduleLabel}',
           action: _TaskAction.lesson,
           recordId: lessons.first.id,
+          libraryArgs: _libraryArgsFromLesson(lessons.first, students),
         ),
       if (classes.isNotEmpty)
         _TaskData(
@@ -271,6 +272,7 @@ class _HomePageState extends State<HomePage> {
           detail: '${classes.first.studentCount} 人 · ${classes.first.lessonFocusLabel}',
           action: _TaskAction.classroom,
           recordId: classes.first.id,
+          libraryArgs: _libraryArgsFromClass(classes.first, students),
         ),
       if (students.isNotEmpty)
         _TaskData(
@@ -278,6 +280,7 @@ class _HomePageState extends State<HomePage> {
           detail: '${students.first.className} · ${students.first.trendLabel}',
           action: _TaskAction.student,
           recordId: students.first.id,
+          libraryArgs: _libraryArgsFromStudent(students.first),
         ),
       if (basketCount > 0)
         _TaskData(
@@ -503,6 +506,20 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     _reloadSnapshot();
+  }
+
+  Future<void> _openTaskLibrary(_TaskData task) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: task.libraryArgs,
+    );
   }
 
   Future<void> _openSummaryCard(_SummaryCardData card) async {
@@ -885,15 +902,16 @@ class _HomePageState extends State<HomePage> {
                                         _recentTaskFilter = value;
                                       });
                                     },
-                                    onSortChanged: (value) {
-                                      setState(() {
-                                        _recentTaskSort = value;
-                                      });
-                                    },
-                                    onRefresh: _reloadSnapshot,
-                                    onOpenTask: _openTask,
-                                  ),
+                                  onSortChanged: (value) {
+                                    setState(() {
+                                      _recentTaskSort = value;
+                                    });
+                                  },
+                                  onRefresh: _reloadSnapshot,
+                                  onOpenTask: _openTask,
+                                  onOpenTaskLibrary: _openTaskLibrary,
                                 ),
+                              ),
                                 const SizedBox(width: 16),
                                 SizedBox(
                                   width:
@@ -905,9 +923,9 @@ class _HomePageState extends State<HomePage> {
                           else
                             Column(
                               children: [
-                                _RecentTasksPanel(
-                                  tasks: recentTasks,
-                                  visibleTasks: sortedRecentTasks,
+                      _RecentTasksPanel(
+                        tasks: recentTasks,
+                        visibleTasks: sortedRecentTasks,
                                   filter: _recentTaskFilter,
                                   sort: _recentTaskSort,
                                   onFilterChanged: (value) {
@@ -919,10 +937,11 @@ class _HomePageState extends State<HomePage> {
                                     setState(() {
                                       _recentTaskSort = value;
                                     });
-                                  },
-                                  onRefresh: _reloadSnapshot,
-                                  onOpenTask: _openTask,
-                                ),
+                        },
+                        onRefresh: _reloadSnapshot,
+                        onOpenTask: _openTask,
+                        onOpenTaskLibrary: _openTaskLibrary,
+                      ),
                                 const SizedBox(height: 16),
                                 const _QuestionBasketPanel(),
                               ],
@@ -2125,6 +2144,7 @@ class _RecentTasksPanel extends StatelessWidget {
     required this.onSortChanged,
     required this.onRefresh,
     required this.onOpenTask,
+    required this.onOpenTaskLibrary,
   });
 
   final List<_TaskData> tasks;
@@ -2135,6 +2155,7 @@ class _RecentTasksPanel extends StatelessWidget {
   final ValueChanged<_RecentTaskSort> onSortChanged;
   final VoidCallback onRefresh;
   final ValueChanged<_TaskData> onOpenTask;
+  final ValueChanged<_TaskData> onOpenTaskLibrary;
 
   List<(String, String)> get _activeFilterEntries {
     final entries = <(String, String)>[];
@@ -2344,6 +2365,9 @@ class _RecentTasksPanel extends StatelessWidget {
               onTap: task.action == _TaskAction.none
                   ? null
                   : () => onOpenTask(task),
+              onOpenLibrary: task.libraryArgs == null
+                  ? null
+                  : () => onOpenTaskLibrary(task),
             ),
           ),
         ],
@@ -2356,10 +2380,12 @@ class _TaskRow extends StatelessWidget {
   const _TaskRow({
     required this.task,
     this.onTap,
+    this.onOpenLibrary,
   });
 
   final _TaskData task;
   final VoidCallback? onTap;
+  final VoidCallback? onOpenLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -2396,6 +2422,17 @@ class _TaskRow extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (onOpenLibrary != null) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: '关联题库',
+                    onPressed: onOpenLibrary,
+                    icon: const Icon(
+                      Icons.search_outlined,
+                      color: TelegramPalette.textSoft,
+                    ),
+                  ),
+                ],
                 if (onTap != null) ...[
                   const SizedBox(width: 12),
                   const Icon(
@@ -2528,6 +2565,7 @@ class _TaskData {
     this.document,
     this.focusJobId,
     this.recordId,
+    this.libraryArgs,
   });
 
   final String title;
@@ -2536,6 +2574,7 @@ class _TaskData {
   final DocumentSummary? document;
   final String? focusJobId;
   final String? recordId;
+  final LibraryPageArgs? libraryArgs;
 }
 
 class _WorkspaceSnapshot {
