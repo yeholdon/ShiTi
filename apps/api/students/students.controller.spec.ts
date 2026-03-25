@@ -70,6 +70,34 @@ describe('StudentsController', () => {
     expect(result.students[0].id).toBe('student-1');
   });
 
+  it('passes classId and lessonId filters to student list query', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const prisma = makePrisma({
+      studentProfile: {
+        findMany,
+        findUnique: jest.fn(),
+      },
+    });
+
+    const ctrl = new StudentsController(prisma);
+    await ctrl.list(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      '林',
+      'class-3',
+      'lesson-3',
+    );
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 't1',
+          classId: 'class-3',
+          lessonId: 'lesson-3',
+        }),
+      }),
+    );
+  });
+
   it('returns student detail by composite id', async () => {
     const prisma = makePrisma({
       studentProfile: {

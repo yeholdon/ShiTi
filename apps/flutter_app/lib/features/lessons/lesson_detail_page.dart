@@ -105,10 +105,9 @@ class LessonDetailPage extends StatelessWidget {
       }
 
       final lesson = await AppServices.instance.lessonRepository.getLesson(lessonId);
-      final students = await AppServices.instance.studentRepository.listStudents();
-      final relatedStudents = students
-          .where((student) => student.lessonId == lessonId)
-          .toList(growable: false);
+      final relatedStudents = await AppServices.instance.studentRepository.listStudents(
+        lessonId: lessonId,
+      );
       return (lesson, relatedStudents);
     }();
 

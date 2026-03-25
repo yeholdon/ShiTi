@@ -64,10 +64,9 @@ class ClassDetailPage extends StatelessWidget {
       }
 
       final classroom = await AppServices.instance.classRepository.getClass(classId);
-      final students = await AppServices.instance.studentRepository.listStudents();
-      final relatedStudents = students
-          .where((student) => student.classId == classId)
-          .toList(growable: false);
+      final relatedStudents = await AppServices.instance.studentRepository.listStudents(
+        classId: classId,
+      );
       return (classroom, relatedStudents);
     }();
 

@@ -54,25 +54,40 @@ export class StudentsController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  async list(@Req() req: Request, @Query('q') query?: string) {
+  async list(
+    @Req() req: Request,
+    @Query('q') query?: string,
+    @Query('classId') classId?: string,
+    @Query('lessonId') lessonId?: string,
+  ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
 
     const keyword = query?.trim();
+    const normalizedClassId = classId?.trim();
+    const normalizedLessonId = lessonId?.trim();
     const students = await this.prisma.withTenant(tenantId, (tx) =>
       tx.studentProfile.findMany({
-        where: keyword
-          ? {
-              tenantId,
-              OR: [
-                { name: { contains: keyword, mode: 'insensitive' } },
-                { className: { contains: keyword, mode: 'insensitive' } },
-                { documentName: { contains: keyword, mode: 'insensitive' } },
-                { summary: { contains: keyword, mode: 'insensitive' } },
-              ],
-            }
-          : { tenantId },
+        where: {
+          tenantId,
+          ...(normalizedClassId == null || normalizedClassId === ''
+              ? {}
+              : {'classId': normalizedClassId}),
+          ...(normalizedLessonId == null || normalizedLessonId === ''
+              ? {}
+              : {'lessonId': normalizedLessonId}),
+          ...(keyword == null || keyword === ''
+              ? {}
+              : {
+                  'OR': [
+                    { name: { contains: keyword, mode: 'insensitive' } },
+                    { className: { contains: keyword, mode: 'insensitive' } },
+                    { documentName: { contains: keyword, mode: 'insensitive' } },
+                    { summary: { contains: keyword, mode: 'insensitive' } },
+                  ],
+                }),
+        },
         orderBy: [{ updatedAt: 'desc' }, { name: 'asc' }],
       }),
     );
