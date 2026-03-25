@@ -5,6 +5,7 @@ import '../../core/models/document_detail_args.dart';
 import '../../core/models/documents_page_args.dart';
 import '../../core/models/document_summary.dart';
 import '../../core/models/exports_page_args.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/library_filter_state.dart';
 import '../../core/models/question_summary.dart';
 import '../../core/models/classes_page_args.dart';
@@ -14,12 +15,15 @@ import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
+import '../classes/class_workspace_data.dart';
 import '../documents/create_document_dialog.dart';
+import '../lessons/lesson_workspace_data.dart';
 import '../shared/primary_navigation_bar.dart';
 import '../shared/primary_page_scroll_memory.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../students/student_workspace_data.dart';
 
 bool _hasWorkspaceSession() => AppServices.instance.session != null;
 
@@ -27,6 +31,48 @@ bool _hasWorkspaceTenant() => AppServices.instance.activeTenant != null;
 
 bool _canLoadRemoteWorkspaceData() =>
     AppConfig.useMockData || (_hasWorkspaceSession() && _hasWorkspaceTenant());
+
+LibraryPageArgs _libraryArgsFromStudent(StudentWorkspaceRecord student) {
+  return LibraryPageArgs(
+    initialSubjectLabel: student.subjectLabel.trim(),
+    initialStageLabel: student.gradeLabel.split('·').first.trim(),
+    initialTextbookLabel: student.textbookLabel.trim(),
+  );
+}
+
+LibraryPageArgs _libraryArgsFromClass(
+  ClassWorkspaceRecord classroom,
+  Iterable<StudentWorkspaceRecord> students,
+) {
+  final subjectLabel = students
+      .where((student) => student.classId == classroom.id)
+      .map((student) => student.subjectLabel.trim())
+      .firstWhere((label) => label.isNotEmpty, orElse: () => '');
+  return LibraryPageArgs(
+    initialSubjectLabel: subjectLabel.isEmpty ? null : subjectLabel,
+    initialStageLabel: classroom.stageLabel.split('·').first.trim(),
+    initialTextbookLabel: classroom.textbookLabel.trim(),
+  );
+}
+
+LibraryPageArgs _libraryArgsFromLesson(
+  LessonWorkspaceRecord lesson,
+  Iterable<StudentWorkspaceRecord> students,
+) {
+  final focusStudent = students.firstWhere(
+    (student) => student.id == lesson.focusStudentId,
+    orElse: () => students.firstWhere(
+      (student) => student.lessonId == lesson.id,
+      orElse: () => students.first,
+    ),
+  );
+  return LibraryPageArgs(
+    initialSubjectLabel: focusStudent.subjectLabel.trim(),
+    initialStageLabel: focusStudent.gradeLabel.split('·').first.trim(),
+    initialTextbookLabel: focusStudent.textbookLabel.trim(),
+    initialQuery: lesson.title,
+  );
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -250,6 +296,13 @@ class _HomePageState extends State<HomePage> {
                 : students.isNotEmpty
                     ? students.first.name
                     : topDocument?.name ?? '开始新的讲义或试卷';
+    final focusLibraryArgs = lessons.isNotEmpty
+        ? _libraryArgsFromLesson(lessons.first, students)
+        : classes.isNotEmpty
+            ? _libraryArgsFromClass(classes.first, students)
+            : students.isNotEmpty
+                ? _libraryArgsFromStudent(students.first)
+                : null;
 
     return _WorkspaceSnapshot(
       cards: cards,
@@ -269,6 +322,7 @@ class _HomePageState extends State<HomePage> {
       focusStudentLabel: students.isEmpty ? '暂无学生' : students.first.name,
       focusClassLabel: classes.isEmpty ? '暂无班级' : classes.first.name,
       focusLessonLabel: lessons.isEmpty ? '暂无课堂' : lessons.first.title,
+      focusLibraryArgs: focusLibraryArgs,
       questionCount: questionCount,
       documentCount: documentCount,
       basketCount: basketCount,
@@ -333,6 +387,7 @@ class _HomePageState extends State<HomePage> {
       focusStudentLabel: '待连接',
       focusClassLabel: '待连接',
       focusLessonLabel: '待连接',
+      focusLibraryArgs: null,
       questionCount: 0,
       documentCount: 0,
       basketCount: 0,
@@ -569,6 +624,20 @@ class _HomePageState extends State<HomePage> {
     _reloadSnapshot();
   }
 
+  Future<void> _openFocusLibrary(LibraryPageArgs? args) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: args,
+    );
+  }
+
   Future<void> _openSectionFromEntry(PrimaryAppSection section) async {
     if (!await _ensureWorkspaceAccess()) {
       return;
@@ -701,6 +770,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         onOpenFocus: _openFocusTarget,
                         onOpenDocumentFocus: _openFocusDocument,
+                        onOpenLibraryFocus: _openFocusLibrary,
                       );
                     },
                   ),
@@ -1287,6 +1357,7 @@ class _HeroSection extends StatelessWidget {
     required this.onOpenLibrary,
     required this.onOpenFocus,
     required this.onOpenDocumentFocus,
+    required this.onOpenLibraryFocus,
   });
 
   final bool wide;
@@ -1295,6 +1366,7 @@ class _HeroSection extends StatelessWidget {
   final VoidCallback onOpenLibrary;
   final ValueChanged<_WorkspaceFocusTarget> onOpenFocus;
   final ValueChanged<DocumentSummary?> onOpenDocumentFocus;
+  final ValueChanged<LibraryPageArgs?> onOpenLibraryFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -1341,6 +1413,7 @@ class _HeroSection extends StatelessWidget {
                     onRefresh: onRefresh,
                     onOpenFocus: onOpenFocus,
                     onOpenDocumentFocus: onOpenDocumentFocus,
+                    onOpenLibraryFocus: onOpenLibraryFocus,
                   ),
                 ),
               ],
@@ -1357,6 +1430,7 @@ class _HeroSection extends StatelessWidget {
                   onRefresh: onRefresh,
                   onOpenFocus: onOpenFocus,
                   onOpenDocumentFocus: onOpenDocumentFocus,
+                  onOpenLibraryFocus: onOpenLibraryFocus,
                 ),
               ],
             ),
@@ -1703,12 +1777,14 @@ class _HeroPanel extends StatelessWidget {
     required this.onRefresh,
     required this.onOpenFocus,
     required this.onOpenDocumentFocus,
+    required this.onOpenLibraryFocus,
   });
 
   final AsyncSnapshot<_WorkspaceSnapshot> snapshot;
   final VoidCallback onRefresh;
   final ValueChanged<_WorkspaceFocusTarget> onOpenFocus;
   final ValueChanged<DocumentSummary?> onOpenDocumentFocus;
+  final ValueChanged<LibraryPageArgs?> onOpenLibraryFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -1726,6 +1802,7 @@ class _HeroPanel extends StatelessWidget {
     final studentLabel = hasError ? '需处理' : data?.focusStudentLabel ?? '--';
     final classLabel = hasError ? '需处理' : data?.focusClassLabel ?? '--';
     final lessonLabel = hasError ? '需处理' : data?.focusLessonLabel ?? '--';
+    final focusLibraryArgs = data?.focusLibraryArgs;
     final errorMessage = _workspaceLoadMessage(error);
     return WorkspacePanel(
       padding: workspacePanelPadding(
@@ -1796,6 +1873,14 @@ class _HeroPanel extends StatelessWidget {
                   label: Text(compact ? '机构' : '切换机构'),
                 ),
               ],
+            ),
+          ],
+          if (!hasError) ...[
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => onOpenLibraryFocus(focusLibraryArgs),
+              icon: const Icon(Icons.search_outlined),
+              label: Text(compact ? '题库' : '关联题库'),
             ),
           ],
           const SizedBox(height: 10),
@@ -2465,6 +2550,7 @@ class _WorkspaceSnapshot {
     required this.focusStudentLabel,
     required this.focusClassLabel,
     required this.focusLessonLabel,
+    required this.focusLibraryArgs,
     required this.questionCount,
     required this.documentCount,
     required this.basketCount,
@@ -2480,6 +2566,7 @@ class _WorkspaceSnapshot {
   final String focusStudentLabel;
   final String focusClassLabel;
   final String focusLessonLabel;
+  final LibraryPageArgs? focusLibraryArgs;
   final int questionCount;
   final int documentCount;
   final int basketCount;
