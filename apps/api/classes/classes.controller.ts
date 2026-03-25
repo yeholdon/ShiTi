@@ -1,12 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
   NotFoundException,
   Param,
+  Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../../../src/prisma/prisma.service';
@@ -15,6 +18,7 @@ import {
   requireTenantId,
   requireUserId,
 } from '../../../src/tenant/tenant-guards';
+import { CreateClassDto } from './dto/create-class.dto';
 
 function mapClassRecord(classroom: any) {
   return {
@@ -51,6 +55,49 @@ function mapClassRecord(classroom: any) {
 @UseGuards(JwtAuthGuard)
 export class ClassesController {
   constructor(private readonly prisma: PrismaService) {}
+
+  @Post()
+  async create(@Req() req: Request, @Body() body: CreateClassDto) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+    const normalizedFocusLabel = body.focusLabel?.trim();
+
+    const classroom = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.teachingClass.create({
+        data: {
+          tenantId,
+          id: randomUUID(),
+          name: body.name.trim(),
+          lessonId: null,
+          documentId: null,
+          focusStudentId: null,
+          focusStudentName: null,
+          stageLabel: body.stageLabel.trim(),
+          teacherLabel: body.teacherLabel.trim(),
+          textbookLabel: body.textbookLabel.trim(),
+          focusLabel: normalizedFocusLabel != null && normalizedFocusLabel.length > 0
+              ? normalizedFocusLabel
+              : '讲义整理',
+          activityLabel: '新建档案',
+          classSizeLabel: '0 人 · 待补充',
+          lessonFocusLabel: '待安排课堂',
+          structureInsight: '新建班级档案，等待补充学生、课堂时间线与资料联动。',
+          studentCount: 0,
+          weeklyLessonCount: 0,
+          latestDocLabel: '暂无资料',
+          assetLinks: [],
+          memberTiers: [],
+          lessonTimeline: [],
+          summary: '新建班级档案，等待补充成员、课堂安排与资料联动。',
+          highlights: ['已创建班级档案，可继续补充学生、课堂和资料。'],
+          nextStep: '补充班级成员、安排第一堂课并关联资料。',
+        },
+      }),
+    );
+
+    return { class: mapClassRecord(classroom) };
+  }
 
   @Get()
   async list(

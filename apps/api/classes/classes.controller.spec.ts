@@ -5,6 +5,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     findFirst: jest.fn().mockResolvedValue({ role: 'member', status: 'active' }),
   };
   const teachingClass = overrides.teachingClass ?? {
+    create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
   };
@@ -23,9 +24,74 @@ function makePrisma(overrides: Partial<any> = {}) {
 }
 
 describe('ClassesController', () => {
+  it('creates class profile under current tenant', async () => {
+    const create = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'class-4',
+      name: '九年级新班',
+      lessonId: null,
+      documentId: null,
+      focusStudentId: null,
+      focusStudentName: null,
+      stageLabel: '初中 · 九年级',
+      teacherLabel: '主讲：王老师',
+      textbookLabel: '浙教版',
+      focusLabel: '讲义整理',
+      activityLabel: '新建档案',
+      classSizeLabel: '0 人 · 待补充',
+      lessonFocusLabel: '待安排课堂',
+      structureInsight: 'insight',
+      studentCount: 0,
+      weeklyLessonCount: 0,
+      latestDocLabel: '暂无资料',
+      assetLinks: [],
+      memberTiers: [],
+      lessonTimeline: [],
+      summary: 'summary',
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      teachingClass: {
+        create,
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    });
+
+    const ctrl = new ClassesController(prisma);
+    const result = await ctrl.create(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      {
+        name: '九年级新班',
+        stageLabel: '初中 · 九年级',
+        teacherLabel: '主讲：王老师',
+        textbookLabel: '浙教版',
+        focusLabel: '讲义整理',
+      },
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: 't1',
+          name: '九年级新班',
+          stageLabel: '初中 · 九年级',
+          teacherLabel: '主讲：王老师',
+          textbookLabel: '浙教版',
+          focusLabel: '讲义整理',
+        }),
+      }),
+    );
+    expect(result.class.name).toBe('九年级新班');
+  });
+
   it('lists classes under current tenant', async () => {
     const prisma = makePrisma({
       teachingClass: {
+        create: jest.fn(),
         findMany: jest.fn().mockResolvedValue([
           {
             tenantId: 't1',
@@ -73,6 +139,7 @@ describe('ClassesController', () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = makePrisma({
       teachingClass: {
+        create: jest.fn(),
         findMany,
         findUnique: jest.fn(),
       },
@@ -101,6 +168,7 @@ describe('ClassesController', () => {
   it('returns class detail by composite id', async () => {
     const prisma = makePrisma({
       teachingClass: {
+        create: jest.fn(),
         findUnique: jest.fn().mockResolvedValue({
           tenantId: 't1',
           id: 'class-1',

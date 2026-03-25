@@ -9,12 +9,14 @@ import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../../core/network/http_json_client.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
+import 'create_class_dialog.dart';
 import 'class_workspace_data.dart';
 
 enum _ClassFilter {
@@ -100,7 +102,7 @@ class _ClassesPageState extends State<ClassesPage> {
         .toList(growable: false);
   }
 
-  Future<void> _loadClasses() async {
+  Future<void> _loadClasses({String? focusClassId}) async {
     setState(() {
       _isLoading = true;
       _loadError = null;
@@ -114,7 +116,11 @@ class _ClassesPageState extends State<ClassesPage> {
         _records = records;
         _isLoading = false;
         _loadError = null;
+        final preferredClassId = focusClassId ?? _selectedClassId;
         if (_records.isNotEmpty &&
+            _records.any((item) => item.id == preferredClassId)) {
+          _selectedClassId = preferredClassId;
+        } else if (_records.isNotEmpty &&
             !_records.any((item) => item.id == _selectedClassId)) {
           _selectedClassId = _records.first.id;
         }
@@ -210,6 +216,37 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
+  Future<void> _createClass() async {
+    final created = await showCreateClassDialog(context);
+    if (!mounted || created == null) {
+      return;
+    }
+
+    try {
+      await _loadClasses(focusClassId: created.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已创建班级：${created.name}')),
+      );
+    } on HttpJsonException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('班级列表刷新失败：${error.message}')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('班级列表刷新失败：$error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -249,7 +286,7 @@ class _ClassesPageState extends State<ClassesPage> {
           ),
         ],
         trailing: FilledButton.icon(
-          onPressed: () {},
+          onPressed: _createClass,
           icon: const Icon(Icons.group_add_outlined),
           label: const Text('新建班级'),
         ),
