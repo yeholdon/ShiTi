@@ -16,12 +16,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-python3 - "$api_base_url" "$username" "$password" "$bridge_payload_file" <<'PY'
+python3 - "$api_base_url" "$web_base_url" "$username" "$password" "$bridge_payload_file" <<'PY'
 import json
 import sys
+import urllib.parse
 import urllib.request
 
-api_base_url, username, password, output_path = sys.argv[1:]
+api_base_url, web_base_url, username, password, output_path = sys.argv[1:]
 
 login_request = urllib.request.Request(
     f"{api_base_url}/auth/login",
@@ -55,23 +56,128 @@ payload = {
     "tenant": json.dumps(organization, ensure_ascii=False),
 }
 
+documents_request = urllib.request.Request(
+    f"{api_base_url}/documents",
+    headers={
+        "Authorization": f"Bearer {login['accessToken']}",
+        "x-tenant-code": organization["code"],
+    },
+)
+with urllib.request.urlopen(documents_request) as response:
+    documents = json.load(response)["documents"]
+
+students_request = urllib.request.Request(
+    f"{api_base_url}/students",
+    headers={
+        "Authorization": f"Bearer {login['accessToken']}",
+        "x-tenant-code": organization["code"],
+    },
+)
+with urllib.request.urlopen(students_request) as response:
+    students = json.load(response)["students"]
+
+classes_request = urllib.request.Request(
+    f"{api_base_url}/classes",
+    headers={
+        "Authorization": f"Bearer {login['accessToken']}",
+        "x-tenant-code": organization["code"],
+    },
+)
+with urllib.request.urlopen(classes_request) as response:
+    classes = json.load(response)["classes"]
+
+lessons_request = urllib.request.Request(
+    f"{api_base_url}/lessons",
+    headers={
+        "Authorization": f"Bearer {login['accessToken']}",
+        "x-tenant-code": organization["code"],
+    },
+)
+with urllib.request.urlopen(lessons_request) as response:
+    lessons = json.load(response)["lessons"]
+
+primary_document = documents[0]
+primary_student = students[0]
+primary_class = classes[0]
+primary_lesson = lessons[0]
+
+payload["routes"] = {
+    "home": f"{web_base_url}/#/",
+    "student_detail": f"{web_base_url}/#/students/detail?studentId={primary_student['id']}",
+    "class_detail": f"{web_base_url}/#/classes/detail?classId={primary_class['id']}",
+    "lesson_detail": f"{web_base_url}/#/lessons/detail?lessonId={primary_lesson['id']}",
+    "document_detail": (
+        f"{web_base_url}/#/documents/detail?documentId={primary_document['id']}"
+    ),
+    "documents_lesson_context": (
+        f"{web_base_url}/#/documents?"
+        + urllib.parse.urlencode(
+            {
+                "focusDocumentId": primary_document["id"],
+                "flashMessage": f"已定位到 {primary_document['name']}，可继续整理课堂资料。",
+                "highlightTitle": "当前课堂资料",
+                "highlightDetail": (
+                    f"{primary_document['name']} 正承接当前课堂的资料安排，"
+                    "可继续补讲义、试卷和课堂节奏。"
+                ),
+                "feedbackBadgeLabel": "课堂资料",
+            }
+        )
+    ),
+    "documents_home_recent": (
+        f"{web_base_url}/#/documents?"
+        + urllib.parse.urlencode(
+            {
+                "focusDocumentId": primary_document["id"],
+                "flashMessage": (
+                    f"已定位到 {primary_document['name']}，可继续整理最近任务里的文档。"
+                ),
+                "highlightTitle": "最近任务资料",
+                "highlightDetail": (
+                    f"{primary_document['name']} 来自首页最近任务，"
+                    "可继续整理内容和导出节奏。"
+                ),
+                "feedbackBadgeLabel": "最近任务",
+            }
+        )
+    ),
+    "documents_home_focus": (
+        f"{web_base_url}/#/documents?"
+        + urllib.parse.urlencode(
+            {
+                "focusDocumentId": primary_document["id"],
+                "flashMessage": (
+                    f"已定位到 {primary_document['name']}，可继续整理当前聚焦资料。"
+                ),
+                "highlightTitle": "当前聚焦资料",
+                "highlightDetail": (
+                    f"{primary_document['name']} 是当前工作台聚焦的文档，"
+                    "可继续回看题目、版式和导出节奏。"
+                ),
+                "feedbackBadgeLabel": "工作台聚焦",
+            }
+        )
+    ),
+}
+
 with open(output_path, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, ensure_ascii=False)
 PY
 
 capture_via_bridge() {
-  local redirect_url="$1"
+  local route_key="$1"
   local output_path="$2"
-  python3 - "$web_base_url" "$bridge_payload_file" "$redirect_url" "$output_path" <<'PY'
+  python3 - "$web_base_url" "$bridge_payload_file" "$route_key" "$output_path" <<'PY'
 import json
 import subprocess
 import sys
 import urllib.parse
 
-web_base_url, payload_file, redirect_url, output_path = sys.argv[1:]
+web_base_url, payload_file, route_key, output_path = sys.argv[1:]
 with open(payload_file, "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
+redirect_url = payload["routes"][route_key]
 bridge_url = web_base_url + "/auth_bridge.html?" + urllib.parse.urlencode(
     {
         "session": payload["session"],
@@ -94,28 +200,36 @@ PY
 echo "Capturing live workspace audit into $output_dir"
 
 capture_via_bridge \
-  "${web_base_url}/#/" \
+  "home" \
   "${output_dir}/home-live.png"
 
 capture_via_bridge \
-  "${web_base_url}/#/students/detail?studentId=student-3" \
+  "student_detail" \
   "${output_dir}/student-detail-live.png"
 
 capture_via_bridge \
-  "${web_base_url}/#/classes/detail?classId=class-3" \
+  "class_detail" \
   "${output_dir}/class-detail-live.png"
 
 capture_via_bridge \
-  "${web_base_url}/#/lessons/detail?lessonId=lesson-3" \
+  "lesson_detail" \
   "${output_dir}/lesson-detail-live.png"
 
 capture_via_bridge \
-  "${web_base_url}/#/documents/detail?documentId=80000000-0000-0000-0000-000000000001" \
+  "document_detail" \
   "${output_dir}/document-detail-live.png"
 
 capture_via_bridge \
-  "${web_base_url}/#/documents?focusDocumentId=80000000-0000-0000-0000-000000000001&flashMessage=%E5%B7%B2%E5%AE%9A%E4%BD%8D%E5%88%B0%E5%8A%9B%E5%AD%A6%E6%A8%A1%E5%9E%8B%E8%AE%B2%E4%B9%89%EF%BC%8C%E5%8F%AF%E7%BB%A7%E7%BB%AD%E6%95%B4%E7%90%86%E8%AF%BE%E5%A0%82%E8%B5%84%E6%96%99%E3%80%82&highlightTitle=%E5%BD%93%E5%89%8D%E8%AF%BE%E5%A0%82%E8%B5%84%E6%96%99&highlightDetail=%E5%8A%9B%E5%AD%A6%E6%A8%A1%E5%9E%8B%E8%AE%B2%E4%B9%89%E6%AD%A3%E6%89%BF%E6%8E%A5%E9%AB%98%E4%B8%80%E5%8A%9B%E5%AD%A6%E6%A8%A1%E5%9E%8B%E6%8B%86%E8%A7%A3%E8%AF%BE%E7%9A%84%E8%B5%84%E6%96%99%E5%AE%89%E6%8E%92%EF%BC%8C%E5%8F%AF%E7%BB%A7%E7%BB%AD%E8%A1%A5%E8%AE%B2%E4%B9%89%E3%80%81%E8%AF%95%E5%8D%B7%E5%92%8C%E8%AF%BE%E5%A0%82%E8%8A%82%E5%A5%8F%E3%80%82&feedbackBadgeLabel=%E8%AF%BE%E5%A0%82%E8%B5%84%E6%96%99" \
+  "documents_lesson_context" \
   "${output_dir}/documents-lesson-context-live.png"
+
+capture_via_bridge \
+  "documents_home_recent" \
+  "${output_dir}/documents-home-recent-live.png"
+
+capture_via_bridge \
+  "documents_home_focus" \
+  "${output_dir}/documents-home-focus-live.png"
 
 echo "Audit screenshots:"
 find "$output_dir" -maxdepth 1 -type f -name '*.png' | sort
