@@ -12,6 +12,8 @@ import '../../router/app_router.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import '../classes/class_workspace_data.dart';
+import '../lessons/lesson_workspace_data.dart';
 import 'student_workspace_data.dart';
 
 class StudentDetailPage extends StatelessWidget {
@@ -53,14 +55,40 @@ class StudentDetailPage extends StatelessWidget {
       'lessons' => '返回${sourceLabel ?? '课堂详情'}',
       _ => '返回学生页',
     };
-    final studentFuture = AppConfig.useMockData
-        ? Future<StudentWorkspaceRecord?>.value(
-            findStudentWorkspaceRecord(studentId),
-          )
-        : AppServices.instance.studentRepository.getStudent(studentId);
+    final detailFuture = () async {
+      if (AppConfig.useMockData) {
+        final student = findStudentWorkspaceRecord(studentId);
+        if (student == null) {
+          return (null, null, null);
+        }
+        return (
+          student,
+          findClassWorkspaceRecord(student.classId),
+          findLessonWorkspaceRecord(student.lessonId),
+        );
+      }
 
-    return FutureBuilder<StudentWorkspaceRecord?>(
-      future: studentFuture,
+      final student = await AppServices.instance.studentRepository.getStudent(studentId);
+      if (student == null) {
+        return (null, null, null);
+      }
+      final results = await Future.wait([
+        AppServices.instance.classRepository.getClass(student.classId),
+        AppServices.instance.lessonRepository.getLesson(student.lessonId),
+      ]);
+      return (
+        student,
+        results[0] as ClassWorkspaceRecord?,
+        results[1] as LessonWorkspaceRecord?,
+      );
+    }();
+
+    return FutureBuilder<(
+      StudentWorkspaceRecord?,
+      ClassWorkspaceRecord?,
+      LessonWorkspaceRecord?,
+    )>(
+      future: detailFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return Scaffold(
@@ -94,7 +122,9 @@ class StudentDetailPage extends StatelessWidget {
           );
         }
 
-        final student = snapshot.data;
+        final student = snapshot.data?.$1;
+        final relatedClass = snapshot.data?.$2;
+        final relatedLesson = snapshot.data?.$3;
         if (student == null) {
           return Scaffold(
             body: WorkspaceModuleShell(
@@ -461,7 +491,7 @@ class StudentDetailPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${student.className} -> 关联课堂 -> ${student.documentName}',
+                                    '${relatedClass?.name ?? student.className} -> ${relatedLesson?.title ?? '关联课堂'} -> ${student.documentName}',
                                     style: const TextStyle(
                                       height: 1.5,
                                       color: TelegramPalette.textMuted,
@@ -474,7 +504,11 @@ class StudentDetailPage extends StatelessWidget {
                                     children: [
                                       WorkspaceInfoPill(
                                         label: '班级',
-                                        value: student.className,
+                                        value: relatedClass?.name ?? student.className,
+                                      ),
+                                      WorkspaceInfoPill(
+                                        label: '课堂',
+                                        value: relatedLesson?.title ?? '关联课堂',
                                       ),
                                       WorkspaceInfoPill(
                                         label: '资料',
@@ -498,7 +532,7 @@ class StudentDetailPage extends StatelessWidget {
                                             arguments: ClassDetailArgs(
                                               classId: student.classId,
                                               flashMessage:
-                                                  '已从 ${student.name} 的资料承接区进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                                  '已从 ${student.name} 的资料承接区进入 ${relatedClass?.name ?? student.className}，可继续回看班级节奏与资料联动。',
                                               sourceModule: 'students',
                                               sourceRecordId: student.id,
                                               sourceLabel: student.name,
@@ -509,7 +543,7 @@ class StudentDetailPage extends StatelessWidget {
                                           Icons.groups_outlined,
                                           size: 18,
                                         ),
-                                        label: Text('查看${student.className}'),
+                                        label: Text('查看${relatedClass?.name ?? student.className}'),
                                       ),
                                       OutlinedButton.icon(
                                         onPressed: () {
@@ -518,7 +552,7 @@ class StudentDetailPage extends StatelessWidget {
                                             arguments: LessonDetailArgs(
                                               lessonId: student.lessonId,
                                               flashMessage:
-                                                  '已从 ${student.name} 的资料承接区进入关联课堂，可继续回看本节课的资料与反馈。',
+                                                  '已从 ${student.name} 的资料承接区进入 ${relatedLesson?.title ?? '关联课堂'}，可继续回看本节课的资料与反馈。',
                                               sourceModule: 'students',
                                               sourceRecordId: student.id,
                                               sourceLabel: student.name,
@@ -529,7 +563,7 @@ class StudentDetailPage extends StatelessWidget {
                                           Icons.schedule_outlined,
                                           size: 18,
                                         ),
-                                        label: const Text('查看关联课堂'),
+                                        label: Text('查看${relatedLesson?.title ?? '关联课堂'}'),
                                       ),
                                       OutlinedButton.icon(
                                         onPressed: () {
@@ -684,7 +718,7 @@ class StudentDetailPage extends StatelessWidget {
                                       arguments: ClassDetailArgs(
                                         classId: student.classId,
                                         flashMessage:
-                                            '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                            '已从 ${student.name} 的学生档案进入 ${relatedClass?.name ?? student.className}，可继续回看班级节奏与资料联动。',
                                         sourceModule: 'students',
                                         sourceRecordId: student.id,
                                         sourceLabel: student.name,
@@ -693,7 +727,7 @@ class StudentDetailPage extends StatelessWidget {
                                   },
                                   icon: const Icon(Icons.groups_outlined,
                                       size: 18),
-                                  label: Text('查看${student.className}详情'),
+                                  label: Text('查看${relatedClass?.name ?? student.className}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
@@ -702,7 +736,7 @@ class StudentDetailPage extends StatelessWidget {
                                       arguments: LessonDetailArgs(
                                         lessonId: student.lessonId,
                                         flashMessage:
-                                            '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
+                                            '已从 ${student.name} 的学生档案进入 ${relatedLesson?.title ?? '关联课堂'}，可继续回看本节课的资料与反馈。',
                                         sourceModule: 'students',
                                         sourceRecordId: student.id,
                                         sourceLabel: student.name,
@@ -711,7 +745,7 @@ class StudentDetailPage extends StatelessWidget {
                                   },
                                   icon: const Icon(Icons.schedule_outlined,
                                       size: 18),
-                                  label: const Text('查看关联课堂详情'),
+                                  label: Text('查看${relatedLesson?.title ?? '关联课堂'}详情'),
                                 ),
                                 OutlinedButton.icon(
                                   onPressed: () {
@@ -754,15 +788,11 @@ class StudentDetailPage extends StatelessWidget {
                           children: [
                             WorkspaceInfoPill(
                               label: '班级',
-                              value: student.className,
+                              value: relatedClass?.name ?? student.className,
                             ),
                             WorkspaceInfoPill(
                               label: '课堂',
-                              value: student.lessonId == 'lesson-1'
-                                  ? '二次函数专题复盘课'
-                                  : student.lessonId == 'lesson-2'
-                                      ? '相似三角形讲义推进课'
-                                      : '高一力学模型拆解课',
+                              value: relatedLesson?.title ?? '关联课堂',
                             ),
                             WorkspaceInfoPill(
                               label: '资料',
@@ -793,9 +823,9 @@ class StudentDetailPage extends StatelessWidget {
                                 Navigator.of(context).pushNamed(
                                   AppRouter.classDetail,
                                   arguments: ClassDetailArgs(
-                                    classId: student.classId,
-                                    flashMessage:
-                                        '已从 ${student.name} 的学生档案进入 ${student.className}，可继续回看班级节奏与资料联动。',
+                                        classId: student.classId,
+                                        flashMessage:
+                                        '已从 ${student.name} 的学生档案进入 ${relatedClass?.name ?? student.className}，可继续回看班级节奏与资料联动。',
                                     sourceModule: 'students',
                                     sourceRecordId: student.id,
                                     sourceLabel: student.name,
@@ -803,16 +833,16 @@ class StudentDetailPage extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.groups_outlined, size: 18),
-                              label: Text(student.className),
+                              label: Text(relatedClass?.name ?? student.className),
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
                                 Navigator.of(context).pushNamed(
                                   AppRouter.lessonDetail,
                                   arguments: LessonDetailArgs(
-                                    lessonId: student.lessonId,
-                                    flashMessage:
-                                        '已从 ${student.name} 的学生档案进入关联课堂，可继续回看本节课的资料与反馈。',
+                                        lessonId: student.lessonId,
+                                        flashMessage:
+                                        '已从 ${student.name} 的学生档案进入 ${relatedLesson?.title ?? '关联课堂'}，可继续回看本节课的资料与反馈。',
                                     sourceModule: 'students',
                                     sourceRecordId: student.id,
                                     sourceLabel: student.name,
@@ -821,7 +851,7 @@ class StudentDetailPage extends StatelessWidget {
                               },
                               icon:
                                   const Icon(Icons.schedule_outlined, size: 18),
-                              label: const Text('当前课堂'),
+                              label: Text(relatedLesson?.title ?? '当前课堂'),
                             ),
                             OutlinedButton.icon(
                               onPressed: () {
