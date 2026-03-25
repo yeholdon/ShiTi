@@ -100,6 +100,8 @@ primary_document = documents[0]
 primary_student = students[0]
 primary_class = classes[0]
 primary_lesson = lessons[0]
+primary_student_stage = primary_student["gradeLabel"].split("·")[0].strip()
+primary_class_stage = primary_class["stageLabel"].split("·")[0].strip()
 
 payload["routes"] = {
     "home": f"{web_base_url}/#/",
@@ -155,6 +157,63 @@ payload["routes"] = {
                     "可继续回看题目、版式和导出节奏。"
                 ),
                 "feedbackBadgeLabel": "工作台聚焦",
+            }
+        )
+    ),
+    "library_student_context": (
+        f"{web_base_url}/#/library?"
+        + urllib.parse.urlencode(
+            {
+                "initialSubjectLabel": primary_student["subjectLabel"],
+                "initialStageLabel": primary_student_stage,
+                "initialTextbookLabel": primary_student["textbookLabel"],
+                "flashMessage": f"已定位到 {primary_student['name']} 的题库上下文，可继续按当前学生筛题。",
+                "highlightTitle": "当前学生题库上下文",
+                "highlightDetail": (
+                    f"{primary_student['name']} 的学科、学段和教材条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "学生筛题",
+                "sourceModule": "students",
+                "sourceRecordId": primary_student["id"],
+                "sourceLabel": primary_student["name"],
+            }
+        )
+    ),
+    "library_class_context": (
+        f"{web_base_url}/#/library?"
+        + urllib.parse.urlencode(
+            {
+                "initialStageLabel": primary_class_stage,
+                "initialTextbookLabel": primary_class["textbookLabel"],
+                "flashMessage": f"已定位到 {primary_class['name']} 的题库上下文，可继续按当前班级筛题。",
+                "highlightTitle": "当前班级题库上下文",
+                "highlightDetail": (
+                    f"{primary_class['name']} 的学段、教材和关联学科条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "班级筛题",
+                "sourceModule": "classes",
+                "sourceRecordId": primary_class["id"],
+                "sourceLabel": primary_class["name"],
+            }
+        )
+    ),
+    "library_lesson_context": (
+        f"{web_base_url}/#/library?"
+        + urllib.parse.urlencode(
+            {
+                "initialQuery": primary_lesson["title"],
+                "flashMessage": f"已定位到 {primary_lesson['title']} 的题库上下文，可继续按当前课堂筛题。",
+                "highlightTitle": "当前课堂题库上下文",
+                "highlightDetail": (
+                    f"{primary_lesson['title']} 的课堂主题和关联学生条件已带入题库，"
+                    "可继续筛题、入篮或送入文档。"
+                ),
+                "feedbackBadgeLabel": "课堂筛题",
+                "sourceModule": "lessons",
+                "sourceRecordId": primary_lesson["id"],
+                "sourceLabel": primary_lesson["title"],
             }
         )
     ),
@@ -230,6 +289,18 @@ capture_via_bridge \
 capture_via_bridge \
   "documents_home_focus" \
   "${output_dir}/documents-home-focus-live.png"
+
+capture_via_bridge \
+  "library_student_context" \
+  "${output_dir}/library-student-context-live.png"
+
+capture_via_bridge \
+  "library_class_context" \
+  "${output_dir}/library-class-context-live.png"
+
+capture_via_bridge \
+  "library_lesson_context" \
+  "${output_dir}/library-lesson-context-live.png"
 
 echo "Audit screenshots:"
 find "$output_dir" -maxdepth 1 -type f -name '*.png' | sort
