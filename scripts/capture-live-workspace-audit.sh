@@ -110,10 +110,21 @@ lessons_request = urllib.request.Request(
 with urllib.request.urlopen(lessons_request) as response:
     lessons = json.load(response)["lessons"]
 
+questions_request = urllib.request.Request(
+    f"{api_base_url}/questions?include=tags,summary",
+    headers={
+        "Authorization": f"Bearer {login['accessToken']}",
+        "x-tenant-code": organization["code"],
+    },
+)
+with urllib.request.urlopen(questions_request) as response:
+    questions = json.load(response)["questions"]
+
 primary_document = documents[0]
 primary_student = students[0]
 primary_class = classes[0]
 primary_lesson = lessons[0]
+primary_question = questions[0]
 primary_student_stage = primary_student["gradeLabel"].split("·")[0].strip()
 primary_class_student = next(
     (student for student in students if student["classId"] == primary_class["id"]),
@@ -136,6 +147,7 @@ payload["routes"] = {
     "student_detail": f"{web_base_url}/#/students/detail?studentId={primary_student['id']}",
     "class_detail": f"{web_base_url}/#/classes/detail?classId={primary_class['id']}",
     "lesson_detail": f"{web_base_url}/#/lessons/detail?lessonId={primary_lesson['id']}",
+    "question_detail": f"{web_base_url}/#/questions/detail?questionId={primary_question['id']}",
     "document_detail": (
         f"{web_base_url}/#/documents/detail?documentId={primary_document['id']}"
     ),
@@ -361,6 +373,10 @@ capture_via_storage_state \
 capture_via_storage_state \
   "lesson_detail" \
   "${output_dir}/lesson-detail-live.png"
+
+capture_via_storage_state \
+  "question_detail" \
+  "${output_dir}/question-detail-live.png"
 
 capture_via_storage_state \
   "document_detail" \
