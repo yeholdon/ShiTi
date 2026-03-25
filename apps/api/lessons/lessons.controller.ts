@@ -51,25 +51,45 @@ export class LessonsController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  async list(@Req() req: Request, @Query('q') query?: string) {
+  async list(
+    @Req() req: Request,
+    @Query('q') query?: string,
+    @Query('studentId') studentId?: string,
+    @Query('classId') classId?: string,
+  ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
 
     const keyword = query?.trim();
+    const normalizedStudentId = studentId?.trim();
+    const normalizedClassId = classId?.trim();
     const lessons = await this.prisma.withTenant(tenantId, (tx) =>
       tx.lessonSession.findMany({
-        where: keyword
-          ? {
-              tenantId,
-              OR: [
-                { title: { contains: keyword, mode: 'insensitive' } },
-                { className: { contains: keyword, mode: 'insensitive' } },
-                { documentFocus: { contains: keyword, mode: 'insensitive' } },
-                { summary: { contains: keyword, mode: 'insensitive' } },
-              ],
-            }
-          : { tenantId },
+        where: {
+          tenantId,
+          ...(normalizedStudentId != null && normalizedStudentId.length > 0
+              ? { focusStudentId: normalizedStudentId }
+              : {}),
+          ...(normalizedClassId != null && normalizedClassId.length > 0
+              ? { classId: normalizedClassId }
+              : {}),
+          ...(keyword != null && keyword.length > 0
+              ? {
+                  OR: [
+                    { title: { contains: keyword, mode: 'insensitive' } },
+                    { className: { contains: keyword, mode: 'insensitive' } },
+                    {
+                      documentFocus: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                      },
+                    },
+                    { summary: { contains: keyword, mode: 'insensitive' } },
+                  ],
+                }
+              : {}),
+        },
         orderBy: [{ updatedAt: 'desc' }, { title: 'asc' }],
       }),
     );

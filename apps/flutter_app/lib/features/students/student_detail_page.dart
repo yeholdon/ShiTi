@@ -117,13 +117,15 @@ class StudentDetailPage extends StatelessWidget {
         return (null, null, null);
       }
       final results = await Future.wait([
-        AppServices.instance.classRepository.getClass(student.classId),
-        AppServices.instance.lessonRepository.getLesson(student.lessonId),
+        AppServices.instance.classRepository.listClasses(studentId: student.id),
+        AppServices.instance.lessonRepository.listLessons(studentId: student.id),
       ]);
+      final relatedClasses = results[0] as List<ClassWorkspaceRecord>;
+      final relatedLessons = results[1] as List<LessonWorkspaceRecord>;
       return (
         student,
-        results[0] as ClassWorkspaceRecord?,
-        results[1] as LessonWorkspaceRecord?,
+        relatedClasses.isEmpty ? null : relatedClasses.first,
+        relatedLessons.isEmpty ? null : relatedLessons.first,
       );
     }();
 

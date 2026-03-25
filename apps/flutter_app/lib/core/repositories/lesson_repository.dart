@@ -3,7 +3,11 @@ import '../network/http_json_client.dart';
 import '../../features/lessons/lesson_workspace_data.dart';
 
 abstract class LessonRepository {
-  Future<List<LessonWorkspaceRecord>> listLessons({String? query});
+  Future<List<LessonWorkspaceRecord>> listLessons({
+    String? query,
+    String? studentId,
+    String? classId,
+  });
 
   Future<LessonWorkspaceRecord?> getLesson(String lessonId);
 }
@@ -12,18 +16,28 @@ class FakeLessonRepository implements LessonRepository {
   const FakeLessonRepository(ShiTiApiClient apiClient);
 
   @override
-  Future<List<LessonWorkspaceRecord>> listLessons({String? query}) async {
+  Future<List<LessonWorkspaceRecord>> listLessons({
+    String? query,
+    String? studentId,
+    String? classId,
+  }) async {
     final keyword = query?.trim().toLowerCase() ?? '';
-    if (keyword.isEmpty) {
-      return sampleLessonRecords;
-    }
+    final normalizedStudentId = studentId?.trim();
+    final normalizedClassId = classId?.trim();
     return sampleLessonRecords
         .where(
           (item) =>
-              item.title.toLowerCase().contains(keyword) ||
-              item.className.toLowerCase().contains(keyword) ||
-              item.documentFocus.toLowerCase().contains(keyword) ||
-              item.followUpLabel.toLowerCase().contains(keyword),
+              (keyword.isEmpty ||
+                  item.title.toLowerCase().contains(keyword) ||
+                  item.className.toLowerCase().contains(keyword) ||
+                  item.documentFocus.toLowerCase().contains(keyword) ||
+                  item.followUpLabel.toLowerCase().contains(keyword)) &&
+              (normalizedStudentId == null ||
+                  normalizedStudentId.isEmpty ||
+                  item.focusStudentId == normalizedStudentId) &&
+              (normalizedClassId == null ||
+                  normalizedClassId.isEmpty ||
+                  item.classId == normalizedClassId),
         )
         .toList(growable: false);
   }
@@ -40,10 +54,24 @@ class RemoteLessonRepository implements LessonRepository {
   final HttpJsonClient _client;
 
   @override
-  Future<List<LessonWorkspaceRecord>> listLessons({String? query}) async {
+  Future<List<LessonWorkspaceRecord>> listLessons({
+    String? query,
+    String? studentId,
+    String? classId,
+  }) async {
+    final requestQuery = <String, String>{};
+    if (query != null && query.trim().isNotEmpty) {
+      requestQuery['q'] = query.trim();
+    }
+    if (studentId != null && studentId.trim().isNotEmpty) {
+      requestQuery['studentId'] = studentId.trim();
+    }
+    if (classId != null && classId.trim().isNotEmpty) {
+      requestQuery['classId'] = classId.trim();
+    }
     final response = await _client.getList(
       '/lessons',
-      query: query != null && query.trim().isNotEmpty ? {'q': query.trim()} : null,
+      query: requestQuery.isEmpty ? null : requestQuery,
       listKey: 'lessons',
     );
     return response

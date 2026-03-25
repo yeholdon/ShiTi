@@ -53,25 +53,47 @@ export class ClassesController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  async list(@Req() req: Request, @Query('q') query?: string) {
+  async list(
+    @Req() req: Request,
+    @Query('q') query?: string,
+    @Query('studentId') studentId?: string,
+    @Query('lessonId') lessonId?: string,
+  ) {
     const tenantId = requireTenantId(req);
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
 
     const keyword = query?.trim();
+    const normalizedStudentId = studentId?.trim();
+    const normalizedLessonId = lessonId?.trim();
     const classes = await this.prisma.withTenant(tenantId, (tx) =>
       tx.teachingClass.findMany({
-        where: keyword
-          ? {
-              tenantId,
-              OR: [
-                { name: { contains: keyword, mode: 'insensitive' } },
-                { teacherLabel: { contains: keyword, mode: 'insensitive' } },
-                { latestDocLabel: { contains: keyword, mode: 'insensitive' } },
-                { summary: { contains: keyword, mode: 'insensitive' } },
-              ],
-            }
-          : { tenantId },
+        where: {
+          tenantId,
+          ...(normalizedStudentId != null && normalizedStudentId.length > 0
+              ? { focusStudentId: normalizedStudentId }
+              : {}),
+          ...(normalizedLessonId != null && normalizedLessonId.length > 0
+              ? { lessonId: normalizedLessonId }
+              : {}),
+          ...(keyword != null && keyword.length > 0
+              ? {
+                  OR: [
+                    { name: { contains: keyword, mode: 'insensitive' } },
+                    {
+                      teacherLabel: { contains: keyword, mode: 'insensitive' },
+                    },
+                    {
+                      latestDocLabel: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                      },
+                    },
+                    { summary: { contains: keyword, mode: 'insensitive' } },
+                  ],
+                }
+              : {}),
+        },
         orderBy: [{ updatedAt: 'desc' }, { name: 'asc' }],
       }),
     );

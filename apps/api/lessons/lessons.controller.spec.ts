@@ -67,6 +67,35 @@ describe('LessonsController', () => {
     expect(result.lessons[0].id).toBe('lesson-1');
   });
 
+  it('passes studentId and classId filters into lesson listing', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const prisma = makePrisma({
+      lessonSession: {
+        findMany,
+        findUnique: jest.fn(),
+      },
+    });
+
+    const ctrl = new LessonsController(prisma);
+    await ctrl.list(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      '复盘',
+      'student-1',
+      'class-2',
+    );
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 't1',
+          focusStudentId: 'student-1',
+          classId: 'class-2',
+          OR: expect.any(Array),
+        }),
+      }),
+    );
+  });
+
   it('returns lesson detail by composite id', async () => {
     const prisma = makePrisma({
       lessonSession: {
