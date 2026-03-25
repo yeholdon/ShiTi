@@ -1,12 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
   NotFoundException,
   Param,
+  Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../../../src/prisma/prisma.service';
@@ -15,6 +18,7 @@ import {
   requireTenantId,
   requireUserId,
 } from '../../../src/tenant/tenant-guards';
+import { CreateLessonDto } from './dto/create-lesson.dto';
 
 function mapLessonRecord(lesson: any) {
   return {
@@ -49,6 +53,52 @@ function mapLessonRecord(lesson: any) {
 @UseGuards(JwtAuthGuard)
 export class LessonsController {
   constructor(private readonly prisma: PrismaService) {}
+
+  @Post()
+  async create(@Req() req: Request, @Body() body: CreateLessonDto) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+    const normalizedClassScopeLabel = body.classScopeLabel?.trim();
+
+    const lesson = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.lessonSession.create({
+        data: {
+          tenantId,
+          id: randomUUID(),
+          title: body.title.trim(),
+          classId: null,
+          className: normalizedClassScopeLabel != null &&
+                  normalizedClassScopeLabel.length > 0 &&
+                  normalizedClassScopeLabel != '未绑定班级'
+              ? normalizedClassScopeLabel
+              : null,
+          focusStudentId: null,
+          focusStudentName: null,
+          teacherLabel: body.teacherLabel.trim(),
+          scheduleLabel: body.scheduleLabel.trim(),
+          scheduleTag: '待安排',
+          classScopeLabel: normalizedClassScopeLabel != null &&
+                  normalizedClassScopeLabel.length > 0
+              ? normalizedClassScopeLabel
+              : '未绑定班级',
+          documentFocus: '未绑定资料',
+          documentId: null,
+          feedbackStatus: '待回收',
+          followUpLabel: '待安排',
+          feedbackInsight: '新建课堂档案，等待补充资料、反馈明细与课后任务。',
+          feedbackRecords: [],
+          assetRecords: [],
+          taskRecords: [],
+          summary: '新建课堂档案，等待补充班级、资料和课后反馈。',
+          highlights: ['已创建课堂档案，可继续补充班级、资料与反馈任务。'],
+          nextStep: '绑定班级、安排主资料并补充首轮课后反馈。',
+        },
+      }),
+    );
+
+    return { lesson: mapLessonRecord(lesson) };
+  }
 
   @Get()
   async list(

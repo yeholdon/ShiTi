@@ -5,6 +5,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     findFirst: jest.fn().mockResolvedValue({ role: 'member', status: 'active' }),
   };
   const lessonSession = overrides.lessonSession ?? {
+    create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
   };
@@ -23,9 +24,70 @@ function makePrisma(overrides: Partial<any> = {}) {
 }
 
 describe('LessonsController', () => {
+  it('creates lesson profile under current tenant', async () => {
+    const create = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'lesson-4',
+      title: '新课堂',
+      classId: null,
+      className: '九年级尖子班',
+      focusStudentId: null,
+      focusStudentName: null,
+      teacherLabel: '主讲：李老师',
+      scheduleLabel: '周五 19:00',
+      scheduleTag: '待安排',
+      classScopeLabel: '九年级尖子班',
+      documentFocus: '未绑定资料',
+      documentId: null,
+      feedbackStatus: '待回收',
+      followUpLabel: '待安排',
+      feedbackInsight: 'insight',
+      feedbackRecords: [],
+      assetRecords: [],
+      taskRecords: [],
+      summary: 'summary',
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      lessonSession: {
+        create,
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    });
+
+    const ctrl = new LessonsController(prisma);
+    const result = await ctrl.create(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      {
+        title: '新课堂',
+        teacherLabel: '主讲：李老师',
+        scheduleLabel: '周五 19:00',
+        classScopeLabel: '九年级尖子班',
+      },
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: 't1',
+          title: '新课堂',
+          teacherLabel: '主讲：李老师',
+          scheduleLabel: '周五 19:00',
+          classScopeLabel: '九年级尖子班',
+        }),
+      }),
+    );
+    expect(result.lesson.title).toBe('新课堂');
+  });
+
   it('lists lessons under current tenant', async () => {
     const prisma = makePrisma({
       lessonSession: {
+        create: jest.fn(),
         findMany: jest.fn().mockResolvedValue([
           {
             tenantId: 't1',
@@ -71,6 +133,7 @@ describe('LessonsController', () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = makePrisma({
       lessonSession: {
+        create: jest.fn(),
         findMany,
         findUnique: jest.fn(),
       },
@@ -99,6 +162,7 @@ describe('LessonsController', () => {
   it('returns lesson detail by composite id', async () => {
     const prisma = makePrisma({
       lessonSession: {
+        create: jest.fn(),
         findUnique: jest.fn().mockResolvedValue({
           tenantId: 't1',
           id: 'lesson-1',

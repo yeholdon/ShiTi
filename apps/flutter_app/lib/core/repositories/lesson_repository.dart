@@ -10,10 +10,20 @@ abstract class LessonRepository {
   });
 
   Future<LessonWorkspaceRecord?> getLesson(String lessonId);
+
+  Future<LessonWorkspaceRecord> createLesson({
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    String? classScopeLabel,
+  });
 }
 
 class FakeLessonRepository implements LessonRepository {
   const FakeLessonRepository(ShiTiApiClient apiClient);
+
+  static final List<LessonWorkspaceRecord> _records =
+      List<LessonWorkspaceRecord>.of(sampleLessonRecords);
 
   @override
   Future<List<LessonWorkspaceRecord>> listLessons({
@@ -24,7 +34,7 @@ class FakeLessonRepository implements LessonRepository {
     final keyword = query?.trim().toLowerCase() ?? '';
     final normalizedStudentId = studentId?.trim();
     final normalizedClassId = classId?.trim();
-    return sampleLessonRecords
+    return _records
         .where(
           (item) =>
               (keyword.isEmpty ||
@@ -44,7 +54,45 @@ class FakeLessonRepository implements LessonRepository {
 
   @override
   Future<LessonWorkspaceRecord?> getLesson(String lessonId) async {
-    return findLessonWorkspaceRecord(lessonId);
+    try {
+      return _records.firstWhere((item) => item.id == lessonId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<LessonWorkspaceRecord> createLesson({
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    String? classScopeLabel,
+  }) async {
+    final created = LessonWorkspaceRecord(
+      id: 'lesson-${_records.length + 1}',
+      title: title,
+      classId: '',
+      className: classScopeLabel == '未绑定班级' ? '' : (classScopeLabel ?? ''),
+      focusStudentId: '',
+      focusStudentName: '',
+      teacherLabel: teacherLabel,
+      scheduleLabel: scheduleLabel,
+      scheduleTag: '待安排',
+      classScopeLabel: classScopeLabel ?? '未绑定班级',
+      documentFocus: '未绑定资料',
+      documentId: '',
+      feedbackStatus: '待回收',
+      followUpLabel: '待安排',
+      feedbackInsight: '新建课堂档案，等待补充资料、反馈明细与课后任务。',
+      feedbackRecords: const [],
+      assetRecords: const [],
+      taskRecords: const [],
+      summary: '新建课堂档案，等待补充班级、资料和课后反馈。',
+      highlights: const ['已创建课堂档案，可继续补充班级、资料与反馈任务。'],
+      nextStep: '绑定班级、安排主资料并补充首轮课后反馈。',
+    );
+    _records.insert(0, created);
+    return created;
   }
 }
 
@@ -87,5 +135,25 @@ class RemoteLessonRepository implements LessonRepository {
       return null;
     }
     return LessonWorkspaceRecord.fromJson(response);
+  }
+
+  @override
+  Future<LessonWorkspaceRecord> createLesson({
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    String? classScopeLabel,
+  }) async {
+    final response = await _client.postObject(
+      '/lessons',
+      body: {
+        'title': title,
+        'teacherLabel': teacherLabel,
+        'scheduleLabel': scheduleLabel,
+        if (classScopeLabel != null && classScopeLabel.trim().isNotEmpty)
+          'classScopeLabel': classScopeLabel.trim(),
+      },
+    );
+    return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
   }
 }

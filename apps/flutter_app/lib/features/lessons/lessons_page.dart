@@ -9,12 +9,14 @@ import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../../core/network/http_json_client.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
+import 'create_lesson_dialog.dart';
 import 'lesson_workspace_data.dart';
 
 enum _LessonFilter {
@@ -100,7 +102,7 @@ class _LessonsPageState extends State<LessonsPage> {
         .toList(growable: false);
   }
 
-  Future<void> _loadLessons() async {
+  Future<void> _loadLessons({String? focusLessonId}) async {
     setState(() {
       _isLoading = true;
       _loadError = null;
@@ -114,7 +116,11 @@ class _LessonsPageState extends State<LessonsPage> {
         _records = records;
         _isLoading = false;
         _loadError = null;
+        final preferredLessonId = focusLessonId ?? _selectedLessonId;
         if (_records.isNotEmpty &&
+            _records.any((item) => item.id == preferredLessonId)) {
+          _selectedLessonId = preferredLessonId;
+        } else if (_records.isNotEmpty &&
             !_records.any((item) => item.id == _selectedLessonId)) {
           _selectedLessonId = _records.first.id;
         }
@@ -208,6 +214,37 @@ class _LessonsPageState extends State<LessonsPage> {
     );
   }
 
+  Future<void> _createLesson() async {
+    final created = await showCreateLessonDialog(context);
+    if (!mounted || created == null) {
+      return;
+    }
+
+    try {
+      await _loadLessons(focusLessonId: created.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已创建课堂：${created.title}')),
+      );
+    } on HttpJsonException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('课堂列表刷新失败：${error.message}')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('课堂列表刷新失败：$error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -247,7 +284,7 @@ class _LessonsPageState extends State<LessonsPage> {
           ),
         ],
         trailing: FilledButton.icon(
-          onPressed: () {},
+          onPressed: _createLesson,
           icon: const Icon(Icons.add_task_outlined),
           label: const Text('新建课堂'),
         ),
