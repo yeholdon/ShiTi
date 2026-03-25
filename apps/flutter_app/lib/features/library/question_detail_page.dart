@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/models/document_detail_args.dart';
 import '../../core/models/document_summary.dart';
+import '../../core/models/library_page_args.dart';
 import '../../core/models/question_detail.dart';
 import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
@@ -21,6 +22,7 @@ class QuestionDetailPage extends StatefulWidget {
     this.preferredDocumentSnapshot,
     this.insertAfterItemId,
     this.insertAfterItemTitle,
+    this.libraryContextArgs,
     super.key,
   });
 
@@ -28,6 +30,7 @@ class QuestionDetailPage extends StatefulWidget {
   final DocumentSummary? preferredDocumentSnapshot;
   final String? insertAfterItemId;
   final String? insertAfterItemTitle;
+  final LibraryPageArgs? libraryContextArgs;
 
   static QuestionDetailPage fromArgs(QuestionDetailArgs args) {
     return QuestionDetailPage(
@@ -35,6 +38,7 @@ class QuestionDetailPage extends StatefulWidget {
       preferredDocumentSnapshot: args.preferredDocumentSnapshot,
       insertAfterItemId: args.insertAfterItemId,
       insertAfterItemTitle: args.insertAfterItemTitle,
+      libraryContextArgs: args.libraryContextArgs,
     );
   }
 
@@ -219,13 +223,38 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
     }
   }
 
+  void _returnToLibrary() {
+    if (widget.libraryContextArgs == null) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.library,
+      (route) => false,
+      arguments: widget.libraryContextArgs,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final showPrimaryNavigation = widget.preferredDocumentSnapshot == null &&
         widget.insertAfterItemId == null &&
         (widget.insertAfterItemTitle ?? '').isEmpty;
     return Scaffold(
-      appBar: AppBar(title: const Text('题目详情')),
+      appBar: AppBar(
+        title: const Text('题目详情'),
+        leading: widget.libraryContextArgs == null
+            ? null
+            : IconButton(
+                tooltip: '返回题库',
+                icon: const Icon(Icons.arrow_back_outlined),
+                onPressed: _returnToLibrary,
+              ),
+      ),
       body: WorkspaceBackdrop(
         child: SafeArea(
           child: FutureBuilder<_QuestionDetailViewData>(

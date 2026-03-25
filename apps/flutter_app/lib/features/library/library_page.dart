@@ -270,6 +270,35 @@ class _LibraryPageState extends State<LibraryPage> {
     await _reload();
   }
 
+  QuestionDetailArgs _buildQuestionDetailArgs(String questionId) {
+    final query = _searchController.text.trim();
+    return QuestionDetailArgs(
+      questionId: questionId,
+      preferredDocumentSnapshot: _preferredTargetDocument,
+      insertAfterItemId: _insertAfterItemId,
+      insertAfterItemTitle: _insertAfterItemTitle,
+      libraryContextArgs: LibraryPageArgs(
+        preferredDocumentSnapshot: _preferredTargetDocument,
+        insertAfterItemId: _insertAfterItemId,
+        insertAfterItemTitle: _insertAfterItemTitle,
+        initialQuery: query.isEmpty ? null : query,
+        initialSubjectLabel:
+            (_filters.subjectId ?? '').isEmpty ? null : _filters.subject,
+        initialStageLabel:
+            (_filters.stageId ?? '').isEmpty ? null : _filters.stage,
+        initialTextbookLabel:
+            (_filters.textbookId ?? '').isEmpty ? null : _filters.textbook,
+        flashMessage: _flashMessage,
+        highlightTitle: _highlightTitle,
+        highlightDetail: _highlightDetail,
+        feedbackBadgeLabel: _feedbackBadgeLabel,
+        sourceModule: _sourceModule,
+        sourceRecordId: _sourceRecordId,
+        sourceLabel: _sourceLabel,
+      ),
+    );
+  }
+
   String get _returnActionLabel {
     switch (_sourceModule) {
       case 'students':
@@ -1237,6 +1266,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         preferredTargetDocument: _preferredTargetDocument,
                         insertAfterItemId: _insertAfterItemId,
                         insertAfterItemTitle: _insertAfterItemTitle,
+                        buildQuestionDetailArgs: _buildQuestionDetailArgs,
                         onBasketChanged: (isInBasket) {
                           _setBasketMembership(question.id, isInBasket);
                         },
@@ -2366,6 +2396,7 @@ class _QuestionPreviewCard extends StatefulWidget {
     required this.question,
     required this.isInBasket,
     required this.isSelected,
+    required this.buildQuestionDetailArgs,
     this.preferredTargetDocument,
     this.insertAfterItemId,
     this.insertAfterItemTitle,
@@ -2376,6 +2407,7 @@ class _QuestionPreviewCard extends StatefulWidget {
   final QuestionSummary question;
   final bool isInBasket;
   final bool isSelected;
+  final QuestionDetailArgs Function(String questionId) buildQuestionDetailArgs;
   final DocumentSummary? preferredTargetDocument;
   final String? insertAfterItemId;
   final String? insertAfterItemTitle;
@@ -2589,12 +2621,7 @@ class _QuestionPreviewCardState extends State<_QuestionPreviewCard> {
         onTap: () {
           Navigator.of(context).pushNamed(
             AppRouter.questionDetail,
-            arguments: QuestionDetailArgs(
-              questionId: widget.question.id,
-              preferredDocumentSnapshot: widget.preferredTargetDocument,
-              insertAfterItemId: widget.insertAfterItemId,
-              insertAfterItemTitle: widget.insertAfterItemTitle,
-            ),
+            arguments: widget.buildQuestionDetailArgs(widget.question.id),
           );
         },
         child: Padding(
@@ -2692,13 +2719,8 @@ class _QuestionPreviewCardState extends State<_QuestionPreviewCard> {
                     onPressed: () {
                       Navigator.of(context).pushNamed(
                         AppRouter.questionDetail,
-                        arguments: QuestionDetailArgs(
-                          questionId: widget.question.id,
-                          preferredDocumentSnapshot:
-                              widget.preferredTargetDocument,
-                          insertAfterItemId: widget.insertAfterItemId,
-                          insertAfterItemTitle: widget.insertAfterItemTitle,
-                        ),
+                        arguments:
+                            widget.buildQuestionDetailArgs(widget.question.id),
                       );
                     },
                     icon: const Icon(Icons.open_in_new),
