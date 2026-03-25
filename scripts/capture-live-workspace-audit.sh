@@ -7,6 +7,18 @@ web_base_url="${SHITI_WEB_BASE_URL:-http://127.0.0.1:7445}"
 username="${SHITI_AUDIT_USERNAME:-teacher_demo}"
 password="${SHITI_AUDIT_PASSWORD:-demo-password}"
 output_dir="${1:-/tmp/shiti-live-audit}"
+capture_post_load_delay_ms="${CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS:-3500}"
+capture_blank_retries="${CAPTURE_FULLPAGE_BLANK_RETRIES:-6}"
+
+proxyless_env=(
+  env
+  -u http_proxy
+  -u https_proxy
+  -u HTTP_PROXY
+  -u HTTPS_PROXY
+  -u all_proxy
+  -u ALL_PROXY
+)
 
 mkdir -p "$output_dir"
 
@@ -18,7 +30,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-python3 - "$api_base_url" "$web_base_url" "$username" "$password" "$bridge_payload_file" <<'PY'
+"${proxyless_env[@]}" python3 - "$api_base_url" "$web_base_url" "$username" "$password" "$bridge_payload_file" <<'PY'
 import json
 import sys
 import urllib.parse
@@ -289,7 +301,8 @@ PY
 capture_via_storage_state() {
   local route_key="$1"
   local output_path="$2"
-  python3 - "$bridge_payload_file" "$storage_state_file" <<'PY'
+  echo "capturing route: ${route_key} -> ${output_path}"
+  "${proxyless_env[@]}" python3 - "$bridge_payload_file" "$storage_state_file" <<'PY'
 import json
 import sys
 
@@ -312,7 +325,7 @@ PY
 
   local route_url
   route_url="$(
-    python3 - "$bridge_payload_file" "$route_key" <<'PY'
+    "${proxyless_env[@]}" python3 - "$bridge_payload_file" "$route_key" <<'PY'
 import json
 import sys
 
@@ -323,7 +336,9 @@ print(payload["routes"][route_key])
 PY
   )"
 
-  /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh \
+  CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS="$capture_post_load_delay_ms" \
+  CAPTURE_FULLPAGE_BLANK_RETRIES="$capture_blank_retries" \
+  "${proxyless_env[@]}" /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh \
     "$route_url" \
     "$output_path" \
     "$storage_state_file"
