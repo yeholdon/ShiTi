@@ -37,6 +37,13 @@ LibraryPageArgs _libraryArgsFromStudent(StudentWorkspaceRecord student) {
     initialSubjectLabel: student.subjectLabel.trim(),
     initialStageLabel: student.gradeLabel.split('·').first.trim(),
     initialTextbookLabel: student.textbookLabel.trim(),
+    flashMessage: '已从工作台定位到 ${student.name} 的题库上下文，可继续按当前学生筛题。',
+    highlightTitle: '当前学生题库上下文',
+    highlightDetail:
+        '${student.name} 的学科、学段和教材条件已带入题库，可继续筛题、入篮或送入文档。',
+    feedbackBadgeLabel: '工作台筛题',
+    sourceModule: 'home',
+    sourceLabel: '工作台',
   );
 }
 
@@ -52,6 +59,13 @@ LibraryPageArgs _libraryArgsFromClass(
     initialSubjectLabel: subjectLabel.isEmpty ? null : subjectLabel,
     initialStageLabel: classroom.stageLabel.split('·').first.trim(),
     initialTextbookLabel: classroom.textbookLabel.trim(),
+    flashMessage: '已从工作台定位到 ${classroom.name} 的题库上下文，可继续按当前班级筛题。',
+    highlightTitle: '当前班级题库上下文',
+    highlightDetail:
+        '${classroom.name} 的学段、教材和关联学科条件已带入题库，可继续筛题、入篮或送入文档。',
+    feedbackBadgeLabel: '工作台筛题',
+    sourceModule: 'home',
+    sourceLabel: '工作台',
   );
 }
 
@@ -71,6 +85,13 @@ LibraryPageArgs _libraryArgsFromLesson(
     initialStageLabel: focusStudent.gradeLabel.split('·').first.trim(),
     initialTextbookLabel: focusStudent.textbookLabel.trim(),
     initialQuery: lesson.title,
+    flashMessage: '已从工作台定位到 ${lesson.title} 的题库上下文，可继续按当前课堂筛题。',
+    highlightTitle: '当前课堂题库上下文',
+    highlightDetail:
+        '${lesson.title} 的课堂主题和关联学生条件已带入题库，可继续筛题、入篮或送入文档。',
+    feedbackBadgeLabel: '工作台筛题',
+    sourceModule: 'home',
+    sourceLabel: '工作台',
   );
 }
 

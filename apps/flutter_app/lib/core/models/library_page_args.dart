@@ -9,6 +9,13 @@ class LibraryPageArgs {
     this.initialSubjectLabel,
     this.initialStageLabel,
     this.initialTextbookLabel,
+    this.flashMessage,
+    this.highlightTitle,
+    this.highlightDetail,
+    this.feedbackBadgeLabel,
+    this.sourceModule,
+    this.sourceRecordId,
+    this.sourceLabel,
   });
 
   final DocumentSummary? preferredDocumentSnapshot;
@@ -18,4 +25,11 @@ class LibraryPageArgs {
   final String? initialSubjectLabel;
   final String? initialStageLabel;
   final String? initialTextbookLabel;
+  final String? flashMessage;
+  final String? highlightTitle;
+  final String? highlightDetail;
+  final String? feedbackBadgeLabel;
+  final String? sourceModule;
+  final String? sourceRecordId;
+  final String? sourceLabel;
 }

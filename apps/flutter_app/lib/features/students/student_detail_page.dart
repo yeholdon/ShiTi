@@ -71,6 +71,14 @@ class StudentDetailPage extends StatelessWidget {
         initialSubjectLabel: student.subjectLabel.trim(),
         initialStageLabel: stageLabel,
         initialTextbookLabel: student.textbookLabel.trim(),
+        flashMessage: '已定位到 ${student.name} 的题库上下文，可继续按当前学生筛题。',
+        highlightTitle: '当前学生题库上下文',
+        highlightDetail:
+            '${student.name} 的学科、学段和教材条件已带入题库，可继续筛题、入篮或送入文档。',
+        feedbackBadgeLabel: '学生筛题',
+        sourceModule: 'students',
+        sourceRecordId: student.id,
+        sourceLabel: student.name,
       ),
     );
   }

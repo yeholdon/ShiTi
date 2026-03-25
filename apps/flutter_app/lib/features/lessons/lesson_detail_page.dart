@@ -125,6 +125,15 @@ class LessonDetailPage extends StatelessWidget {
             (stageLabel?.isNotEmpty ?? false) ? stageLabel : null,
         initialTextbookLabel:
             (textbookLabel?.isNotEmpty ?? false) ? textbookLabel : null,
+        initialQuery: lesson.title,
+        flashMessage: '已定位到 ${lesson.title} 的题库上下文，可继续按当前课堂筛题。',
+        highlightTitle: '当前课堂题库上下文',
+        highlightDetail:
+            '${lesson.title} 的课堂主题和关联学生条件已带入题库，可继续筛题、入篮或送入文档。',
+        feedbackBadgeLabel: '课堂筛题',
+        sourceModule: 'lessons',
+        sourceRecordId: lesson.id,
+        sourceLabel: lesson.title,
       ),
     );
   }

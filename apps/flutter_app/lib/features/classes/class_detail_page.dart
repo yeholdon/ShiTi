@@ -78,6 +78,14 @@ class ClassDetailPage extends StatelessWidget {
         initialSubjectLabel: subjectLabel.isEmpty ? null : subjectLabel,
         initialStageLabel: stageLabel,
         initialTextbookLabel: classroom.textbookLabel.trim(),
+        flashMessage: '已定位到 ${classroom.name} 的题库上下文，可继续按当前班级筛题。',
+        highlightTitle: '当前班级题库上下文',
+        highlightDetail:
+            '${classroom.name} 的学段、教材和关联学科条件已带入题库，可继续筛题、入篮或送入文档。',
+        feedbackBadgeLabel: '班级筛题',
+        sourceModule: 'classes',
+        sourceRecordId: classroom.id,
+        sourceLabel: classroom.name,
       ),
     );
   }

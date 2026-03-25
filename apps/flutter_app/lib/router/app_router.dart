@@ -351,6 +351,34 @@ class AppRouter {
             routeUri?.queryParameters['initialTextbookLabel']?.trim().isNotEmpty == true
                 ? routeUri!.queryParameters['initialTextbookLabel']!.trim()
                 : null;
+        final flashMessage =
+            routeUri?.queryParameters['flashMessage']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['flashMessage']!.trim()
+                : null;
+        final highlightTitle =
+            routeUri?.queryParameters['highlightTitle']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightTitle']!.trim()
+                : null;
+        final highlightDetail =
+            routeUri?.queryParameters['highlightDetail']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['highlightDetail']!.trim()
+                : null;
+        final feedbackBadgeLabel =
+            routeUri?.queryParameters['feedbackBadgeLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['feedbackBadgeLabel']!.trim()
+                : null;
+        final sourceModule =
+            routeUri?.queryParameters['sourceModule']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceModule']!.trim()
+                : null;
+        final sourceRecordId =
+            routeUri?.queryParameters['sourceRecordId']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceRecordId']!.trim()
+                : null;
+        final sourceLabel =
+            routeUri?.queryParameters['sourceLabel']?.trim().isNotEmpty == true
+                ? routeUri!.queryParameters['sourceLabel']!.trim()
+                : null;
         return _workspaceModuleRoute(
           builder: (_) => LibraryPage(
             args: args ??
@@ -359,6 +387,13 @@ class AppRouter {
                   initialSubjectLabel: initialSubjectLabel,
                   initialStageLabel: initialStageLabel,
                   initialTextbookLabel: initialTextbookLabel,
+                  flashMessage: flashMessage,
+                  highlightTitle: highlightTitle,
+                  highlightDetail: highlightDetail,
+                  feedbackBadgeLabel: feedbackBadgeLabel,
+                  sourceModule: sourceModule,
+                  sourceRecordId: sourceRecordId,
+                  sourceLabel: sourceLabel,
                 ),
           ),
           settings: settings,

@@ -4,10 +4,13 @@ import '../../core/config/app_config.dart';
 import '../../core/models/document_detail_args.dart';
 import '../../core/models/document_item_summary.dart';
 import '../../core/models/document_summary.dart';
+import '../../core/models/classes_page_args.dart';
 import '../../core/models/library_filter_state.dart';
 import '../../core/models/library_page_args.dart';
+import '../../core/models/lessons_page_args.dart';
 import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
+import '../../core/models/students_page_args.dart';
 import '../../core/models/taxonomy_option.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
@@ -78,12 +81,26 @@ class _LibraryPageState extends State<LibraryPage> {
       widget.args?.preferredDocumentSnapshot;
   String? get _insertAfterItemId => widget.args?.insertAfterItemId;
   String? get _insertAfterItemTitle => widget.args?.insertAfterItemTitle;
+  String? get _flashMessage => widget.args?.flashMessage;
+  String? get _highlightTitle => widget.args?.highlightTitle;
+  String? get _highlightDetail => widget.args?.highlightDetail;
+  String? get _feedbackBadgeLabel => widget.args?.feedbackBadgeLabel;
+  String? get _sourceModule => widget.args?.sourceModule;
+  String? get _sourceRecordId => widget.args?.sourceRecordId;
+  String? get _sourceLabel => widget.args?.sourceLabel;
   bool get _hasContextualEntry =>
       widget.args?.preferredDocumentSnapshot != null ||
       ((widget.args?.initialQuery ?? '').trim().isNotEmpty) ||
       ((widget.args?.initialSubjectLabel ?? '').trim().isNotEmpty) ||
       ((widget.args?.initialStageLabel ?? '').trim().isNotEmpty) ||
       ((widget.args?.initialTextbookLabel ?? '').trim().isNotEmpty) ||
+      ((_flashMessage ?? '').trim().isNotEmpty) ||
+      ((_highlightTitle ?? '').trim().isNotEmpty) ||
+      ((_highlightDetail ?? '').trim().isNotEmpty) ||
+      ((_feedbackBadgeLabel ?? '').trim().isNotEmpty) ||
+      ((_sourceModule ?? '').trim().isNotEmpty) ||
+      ((_sourceRecordId ?? '').trim().isNotEmpty) ||
+      ((_sourceLabel ?? '').trim().isNotEmpty) ||
       ((widget.args?.insertAfterItemId ?? '').trim().isNotEmpty) ||
       ((widget.args?.insertAfterItemTitle ?? '').trim().isNotEmpty);
 
@@ -250,8 +267,67 @@ class _LibraryPageState extends State<LibraryPage> {
     await _reload();
   }
 
+  String get _returnActionLabel {
+    switch (_sourceModule) {
+      case 'students':
+        return '返回学生页';
+      case 'classes':
+        return '返回班级页';
+      case 'lessons':
+        return '返回课堂页';
+      default:
+        return '返回工作台';
+    }
+  }
+
   void _openWorkspace() {
-    PrimaryNavigationBar.navigateToSection(context, PrimaryAppSection.home);
+    switch (_sourceModule) {
+      case 'students':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.students,
+          (route) => false,
+          arguments: StudentsPageArgs(
+            focusStudentId: _sourceRecordId,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '学生页'}，可继续按当前学生回看筛题结果。',
+            highlightTitle: '当前学生题库上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前学生'} 的学科、学段和教材条件仍可继续用于挑题与回看。',
+            feedbackBadgeLabel: '题库回看',
+          ),
+        );
+        return;
+      case 'classes':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.classes,
+          (route) => false,
+          arguments: ClassesPageArgs(
+            focusClassId: _sourceRecordId,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '班级页'}，可继续按当前班级回看筛题结果。',
+            highlightTitle: '当前班级题库上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前班级'} 的学段、教材和关联学科条件仍可继续用于挑题与回看。',
+            feedbackBadgeLabel: '题库回看',
+          ),
+        );
+        return;
+      case 'lessons':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.lessons,
+          (route) => false,
+          arguments: LessonsPageArgs(
+            focusLessonId: _sourceRecordId,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '课堂页'}，可继续按当前课堂回看筛题结果。',
+            highlightTitle: '当前课堂题库上下文',
+            highlightDetail:
+                '${_sourceLabel ?? '当前课堂'} 的主题、学段和教材条件仍可继续用于挑题与回看。',
+            feedbackBadgeLabel: '题库回看',
+          ),
+        );
+        return;
+      default:
+        PrimaryNavigationBar.navigateToSection(context, PrimaryAppSection.home);
+        return;
+    }
   }
 
   bool get _hasActiveFilters {
@@ -791,6 +867,8 @@ class _LibraryPageState extends State<LibraryPage> {
                     inBasketCount: _basketQuestionIds.length,
                     inDocumentContext: _preferredTargetDocument != null,
                     onOpenWorkspace: _openWorkspace,
+                    returnLabel: _returnActionLabel,
+                    hasSourceContext: (_sourceModule ?? '').trim().isNotEmpty,
                   ),
                 ),
                 const SizedBox(width: 18),
@@ -814,12 +892,78 @@ class _LibraryPageState extends State<LibraryPage> {
               inBasketCount: _basketQuestionIds.length,
               inDocumentContext: _preferredTargetDocument != null,
               onOpenWorkspace: _openWorkspace,
+              returnLabel: _returnActionLabel,
+              hasSourceContext: (_sourceModule ?? '').trim().isNotEmpty,
             ),
             const SizedBox(height: 16),
             _LibraryStatusCard(
               modeLabel: AppConfig.dataModeLabel,
               sessionLabel: AppServices.instance.session?.username ?? '未登录',
               tenantLabel: AppServices.instance.activeTenant?.code ?? '未选择机构',
+            ),
+          ],
+          if ((_flashMessage ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            WorkspaceMessageBanner.info(
+              title: '当前上下文',
+              message: _flashMessage!,
+            ),
+          ],
+          if (((_highlightTitle ?? '').trim().isNotEmpty) ||
+              ((_highlightDetail ?? '').trim().isNotEmpty) ||
+              ((_feedbackBadgeLabel ?? '').trim().isNotEmpty) ||
+              ((_sourceLabel ?? '').trim().isNotEmpty)) ...[
+            const SizedBox(height: 16),
+            WorkspacePanel(
+              padding: workspacePanelPadding(context),
+              backgroundColor: TelegramPalette.surfaceAccent,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      if ((_feedbackBadgeLabel ?? '').trim().isNotEmpty)
+                        WorkspaceInfoPill(
+                          label: '当前来源',
+                          value: _feedbackBadgeLabel!,
+                          highlight: true,
+                        ),
+                      if ((_sourceLabel ?? '').trim().isNotEmpty)
+                        WorkspaceInfoPill(
+                          label: '当前对象',
+                          value: _sourceLabel!,
+                        ),
+                      WorkspaceInfoPill(
+                        label: '当前模式',
+                        value: _preferredTargetDocument != null ? '为文档找题' : '独立筛题',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    (_highlightTitle ?? '').trim().isNotEmpty
+                        ? _highlightTitle!
+                        : '当前题库上下文',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: TelegramPalette.text,
+                    ),
+                  ),
+                  if ((_highlightDetail ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _highlightDetail!,
+                      style: const TextStyle(
+                        height: 1.5,
+                        color: TelegramPalette.textStrong,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 16),
@@ -1121,7 +1265,7 @@ class _LibraryPageState extends State<LibraryPage> {
         ],
         trailing: IconButton.filledTonal(
           onPressed: _openWorkspace,
-          tooltip: '返回工作台',
+          tooltip: _returnActionLabel,
           icon: const Icon(Icons.home_outlined),
         ),
         body: pageBody,
@@ -1143,6 +1287,8 @@ class _LibraryHeroSection extends StatelessWidget {
     required this.inBasketCount,
     required this.inDocumentContext,
     required this.onOpenWorkspace,
+    required this.returnLabel,
+    required this.hasSourceContext,
   });
 
   final int totalCount;
@@ -1151,13 +1297,17 @@ class _LibraryHeroSection extends StatelessWidget {
   final int inBasketCount;
   final bool inDocumentContext;
   final VoidCallback onOpenWorkspace;
+  final String returnLabel;
+  final bool hasSourceContext;
 
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     final detail = inDocumentContext
         ? '当前在为既有文档补题，这一页负责检索、筛选、批量选择和跨页面投递。'
-        : '当前在独立整理题池，这一页负责检索、筛选、批量选择和送入选题篮或文档。';
+        : hasSourceContext
+            ? '当前按既有对象上下文进入题库，这一页负责延续筛选条件，并把题目送入选题篮或文档。'
+            : '当前在独立整理题池，这一页负责检索、筛选、批量选择和送入选题篮或文档。';
     return WorkspacePanel(
       padding: workspaceHeroPanelPadding(context),
       borderRadius: 28,
@@ -1199,7 +1349,7 @@ class _LibraryHeroSection extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenWorkspace,
                 icon: const Icon(Icons.home_outlined),
-                label: Text(compact ? '工作台' : '返回工作台'),
+                label: Text(compact ? returnLabel.replaceFirst('返回', '') : returnLabel),
               ),
             ],
           ),
