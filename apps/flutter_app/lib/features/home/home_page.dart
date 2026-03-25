@@ -262,6 +262,7 @@ class _HomePageState extends State<HomePage> {
             ]
           : tasks.take(6).toList(),
       focusTitle: focusTitle,
+      focusDocument: topDocument,
       focusBasketLabel: '$basketCount 题',
       focusDocumentLabel: '$documentCount 份',
       focusExportLabel: latestExport?.updatedAtLabel ?? '暂无导出',
@@ -325,6 +326,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
       focusTitle: focusTitle,
+      focusDocument: null,
       focusBasketLabel: '待连接',
       focusDocumentLabel: '待连接',
       focusExportLabel: '待连接',
@@ -534,6 +536,39 @@ class _HomePageState extends State<HomePage> {
     _reloadSnapshot();
   }
 
+  Future<void> _openFocusDocument(DocumentSummary? document) async {
+    if (!await _ensureWorkspaceAccess()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    if (document == null) {
+      PrimaryNavigationBar.navigateToSection(
+        context,
+        PrimaryAppSection.documents,
+        resetScrollOffset: true,
+      );
+      return;
+    }
+    await Navigator.of(context).pushNamed(
+      AppRouter.documents,
+      arguments: DocumentsPageArgs(
+        focusDocumentId: document.id,
+        documentSnapshot: document,
+        flashMessage: '已定位到 ${document.name}，可继续整理当前聚焦资料。',
+        highlightTitle: '当前聚焦资料',
+        highlightDetail:
+            '${document.name} 是当前工作台聚焦的文档，可继续回看题目、版式和导出节奏。',
+        feedbackBadgeLabel: '工作台聚焦',
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    _reloadSnapshot();
+  }
+
   Future<void> _openSectionFromEntry(PrimaryAppSection section) async {
     if (!await _ensureWorkspaceAccess()) {
       return;
@@ -665,6 +700,7 @@ class _HomePageState extends State<HomePage> {
                           PrimaryAppSection.library,
                         ),
                         onOpenFocus: _openFocusTarget,
+                        onOpenDocumentFocus: _openFocusDocument,
                       );
                     },
                   ),
@@ -1250,6 +1286,7 @@ class _HeroSection extends StatelessWidget {
     required this.onRefresh,
     required this.onOpenLibrary,
     required this.onOpenFocus,
+    required this.onOpenDocumentFocus,
   });
 
   final bool wide;
@@ -1257,6 +1294,7 @@ class _HeroSection extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback onOpenLibrary;
   final ValueChanged<_WorkspaceFocusTarget> onOpenFocus;
+  final ValueChanged<DocumentSummary?> onOpenDocumentFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -1302,6 +1340,7 @@ class _HeroSection extends StatelessWidget {
                     snapshot: snapshot,
                     onRefresh: onRefresh,
                     onOpenFocus: onOpenFocus,
+                    onOpenDocumentFocus: onOpenDocumentFocus,
                   ),
                 ),
               ],
@@ -1317,6 +1356,7 @@ class _HeroSection extends StatelessWidget {
                   snapshot: snapshot,
                   onRefresh: onRefresh,
                   onOpenFocus: onOpenFocus,
+                  onOpenDocumentFocus: onOpenDocumentFocus,
                 ),
               ],
             ),
@@ -1662,11 +1702,13 @@ class _HeroPanel extends StatelessWidget {
     required this.snapshot,
     required this.onRefresh,
     required this.onOpenFocus,
+    required this.onOpenDocumentFocus,
   });
 
   final AsyncSnapshot<_WorkspaceSnapshot> snapshot;
   final VoidCallback onRefresh;
   final ValueChanged<_WorkspaceFocusTarget> onOpenFocus;
+  final ValueChanged<DocumentSummary?> onOpenDocumentFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -1765,7 +1807,7 @@ class _HeroPanel extends StatelessWidget {
           _FocusMetric(
             label: '文档',
             value: documentLabel,
-            onTap: () => onOpenFocus(_WorkspaceFocusTarget.documents),
+            onTap: () => onOpenDocumentFocus(data?.focusDocument),
           ),
           _FocusMetric(
             label: '最近导出',
@@ -2416,6 +2458,7 @@ class _WorkspaceSnapshot {
     required this.cards,
     required this.tasks,
     required this.focusTitle,
+    required this.focusDocument,
     required this.focusBasketLabel,
     required this.focusDocumentLabel,
     required this.focusExportLabel,
@@ -2430,6 +2473,7 @@ class _WorkspaceSnapshot {
   final List<_SummaryCardData> cards;
   final List<_TaskData> tasks;
   final String focusTitle;
+  final DocumentSummary? focusDocument;
   final String focusBasketLabel;
   final String focusDocumentLabel;
   final String focusExportLabel;
