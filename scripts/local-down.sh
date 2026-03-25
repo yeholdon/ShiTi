@@ -50,6 +50,8 @@ stop_service() {
   fi
 }
 
-stop_service "flutter_web" "flutter run -d web-server --web-hostname 0.0.0.0 --web-port 4111" "4111"
-stop_service "worker" "ts-node apps/worker/main.ts"
-stop_service "api" "ts-node apps/api/main.ts" "3000"
+rm -f "$RUN_DIR"/api.status "$RUN_DIR"/worker.status "$RUN_DIR"/flutter_web.status 2>/dev/null || true
+
+stop_service "flutter_web" "local-supervise.sh flutter_web|serve-flutter-web-build.sh .* 4111|python3 -m http.server 4111" "4111"
+stop_service "worker" "local-supervise.sh worker|ts-node apps/worker/main.ts"
+stop_service "api" "local-supervise.sh api|ts-node apps/api/main.ts" "3000"

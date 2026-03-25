@@ -79,17 +79,17 @@ start_service() {
 
   local started_pid
   started_pid="$(
-    python3 - "$command" "$log_file" <<'PY'
+    python3 - "$name" "$command" "$log_file" <<'PY'
 import subprocess
 import sys
 
-command = sys.argv[1]
-log_file = sys.argv[2]
+name = sys.argv[1]
+command = sys.argv[2]
+log_file = sys.argv[3]
 
 with open(log_file, "ab", buffering=0) as handle:
     process = subprocess.Popen(
-        command,
-        shell=True,
+        ["/Users/honcy/Project/ShiTi/scripts/local-supervise.sh", name, command],
         stdin=subprocess.DEVNULL,
         stdout=handle,
         stderr=subprocess.STDOUT,
@@ -206,3 +206,8 @@ echo "Logs:"
 echo "  API:         $RUN_DIR/api.log"
 echo "  Worker:      $RUN_DIR/worker.log"
 echo "  Flutter web: $RUN_DIR/flutter_web.log"
+echo
+echo "Supervisor status:"
+echo "  API:         $RUN_DIR/api.status"
+echo "  Worker:      $RUN_DIR/worker.status"
+echo "  Flutter web: $RUN_DIR/flutter_web.status"
