@@ -1058,3 +1058,5 @@ When work status changes, update this file in the same change.
 - [x] Flutter: 首页“最近任务”里的学生/班级/课堂对象也已补“关联题库”入口，可直接把当前任务对象上下文带入题库检索。
 - [x] Flutter: 题库页已补来源上下文提示和返回语义；首页、学生、班级、课堂进入题库后，首屏可看到当前筛题上下文，并可直接返回原模块继续回看。
 - [x] Tooling: `auth_bridge.html` 和 `SessionPersistence` 已对齐 Web 持久化格式，修复 live 会话桥接后题库页初始化崩溃；`capture-live-workspace-audit.sh` 也已补进学生/班级/课堂到题库的三张 live 验收图。
+- [x] Tooling: `capture-live-workspace-audit.sh` 已在 `4111 + 3000` 的本地 live 环境下完整跑通，当前主链固定产物为 11 张整页图；脚本里的 `mktemp` 临时文件模板也已修正，避免在当前环境下直接撞文件名失败。
+- [x] Flutter: 从学生/班级/课堂详情页进入题库后，返回动作现在会优先回到对应详情页，而不是统一退回模块列表；详情链路与工作页链路已分开承接来源语义。

@@ -83,7 +83,7 @@ class ClassDetailPage extends StatelessWidget {
         highlightDetail:
             '${classroom.name} 的学段、教材和关联学科条件已带入题库，可继续筛题、入篮或送入文档。',
         feedbackBadgeLabel: '班级筛题',
-        sourceModule: 'classes',
+        sourceModule: 'class_detail',
         sourceRecordId: classroom.id,
         sourceLabel: classroom.name,
       ),

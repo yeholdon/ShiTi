@@ -7,9 +7,12 @@ import '../../core/models/document_summary.dart';
 import '../../core/models/classes_page_args.dart';
 import '../../core/models/library_filter_state.dart';
 import '../../core/models/library_page_args.dart';
+import '../../core/models/class_detail_args.dart';
+import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
+import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
 import '../../core/models/taxonomy_option.dart';
 import '../../core/network/http_json_client.dart';
@@ -271,10 +274,16 @@ class _LibraryPageState extends State<LibraryPage> {
     switch (_sourceModule) {
       case 'students':
         return '返回学生页';
+      case 'student_detail':
+        return '返回学生详情';
       case 'classes':
         return '返回班级页';
+      case 'class_detail':
+        return '返回班级详情';
       case 'lessons':
         return '返回课堂页';
+      case 'lesson_detail':
+        return '返回课堂详情';
       default:
         return '返回工作台';
     }
@@ -296,6 +305,16 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         );
         return;
+      case 'student_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.studentDetail,
+          (route) => false,
+          arguments: StudentDetailArgs(
+            studentId: _sourceRecordId!,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '学生详情'}，可继续按当前学生回看筛题结果。',
+          ),
+        );
+        return;
       case 'classes':
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRouter.classes,
@@ -310,6 +329,16 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         );
         return;
+      case 'class_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.classDetail,
+          (route) => false,
+          arguments: ClassDetailArgs(
+            classId: _sourceRecordId!,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '班级详情'}，可继续按当前班级回看筛题结果。',
+          ),
+        );
+        return;
       case 'lessons':
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRouter.lessons,
@@ -321,6 +350,16 @@ class _LibraryPageState extends State<LibraryPage> {
             highlightDetail:
                 '${_sourceLabel ?? '当前课堂'} 的主题、学段和教材条件仍可继续用于挑题与回看。',
             feedbackBadgeLabel: '题库回看',
+          ),
+        );
+        return;
+      case 'lesson_detail':
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.lessonDetail,
+          (route) => false,
+          arguments: LessonDetailArgs(
+            lessonId: _sourceRecordId!,
+            flashMessage: '已从题库返回 ${_sourceLabel ?? '课堂详情'}，可继续按当前课堂回看筛题结果。',
           ),
         );
         return;

@@ -131,7 +131,7 @@ class LessonDetailPage extends StatelessWidget {
         highlightDetail:
             '${lesson.title} 的课堂主题和关联学生条件已带入题库，可继续筛题、入篮或送入文档。',
         feedbackBadgeLabel: '课堂筛题',
-        sourceModule: 'lessons',
+        sourceModule: 'lesson_detail',
         sourceRecordId: lesson.id,
         sourceLabel: lesson.title,
       ),

@@ -10,7 +10,7 @@ output_dir="${1:-/tmp/shiti-live-audit}"
 
 mkdir -p "$output_dir"
 
-bridge_payload_file="$(mktemp /tmp/shiti-live-audit-payload.XXXXXX.json)"
+bridge_payload_file="$(mktemp /tmp/shiti-live-audit-payload.XXXXXX).json"
 cleanup() {
   rm -f "$bridge_payload_file"
 }

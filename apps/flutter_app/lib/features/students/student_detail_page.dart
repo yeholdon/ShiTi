@@ -76,7 +76,7 @@ class StudentDetailPage extends StatelessWidget {
         highlightDetail:
             '${student.name} 的学科、学段和教材条件已带入题库，可继续筛题、入篮或送入文档。',
         feedbackBadgeLabel: '学生筛题',
-        sourceModule: 'students',
+        sourceModule: 'student_detail',
         sourceRecordId: student.id,
         sourceLabel: student.name,
       ),
