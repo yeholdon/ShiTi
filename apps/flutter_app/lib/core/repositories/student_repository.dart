@@ -10,10 +10,21 @@ abstract class StudentRepository {
   });
 
   Future<StudentWorkspaceRecord?> getStudent(String studentId);
+
+  Future<StudentWorkspaceRecord> createStudent({
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  });
 }
 
 class FakeStudentRepository implements StudentRepository {
   const FakeStudentRepository(ShiTiApiClient apiClient);
+
+  static final List<StudentWorkspaceRecord> _records =
+      List<StudentWorkspaceRecord>.of(sampleStudentRecords);
 
   @override
   Future<List<StudentWorkspaceRecord>> listStudents({
@@ -24,7 +35,7 @@ class FakeStudentRepository implements StudentRepository {
     final keyword = query?.trim().toLowerCase() ?? '';
     final normalizedClassId = classId?.trim();
     final normalizedLessonId = lessonId?.trim();
-    return sampleStudentRecords.where((student) {
+    return _records.where((student) {
       final matchesKeyword =
           keyword.isEmpty ||
           student.name.toLowerCase().contains(keyword) ||
@@ -43,7 +54,49 @@ class FakeStudentRepository implements StudentRepository {
 
   @override
   Future<StudentWorkspaceRecord?> getStudent(String studentId) async {
-    return findStudentWorkspaceRecord(studentId);
+    try {
+      return _records.firstWhere((student) => student.id == studentId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<StudentWorkspaceRecord> createStudent({
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  }) async {
+    final created = StudentWorkspaceRecord(
+      id: 'student-${_records.length + 1}',
+      name: name,
+      classId: '',
+      className: className ?? '',
+      lessonId: '',
+      documentId: '',
+      documentName: '',
+      gradeLabel: gradeLabel,
+      subjectLabel: subjectLabel,
+      textbookLabel: textbookLabel,
+      trendLabel: '新建档案',
+      habitTag: '待观察',
+      habitInsight: '等待补充学习习惯、课堂反馈与课后跟进情况。',
+      followUpLevel: '常规关注',
+      summary: '新建学生档案，等待补充成绩、错题与课堂反馈。',
+      scoreLabel: '暂无成绩',
+      historyTrendLabel: '待记录',
+      wrongCountLabel: '0 道',
+      wrongCount: 0,
+      scoreRecords: const [],
+      feedbackRecords: const [],
+      wrongQuestionRecords: const [],
+      highlights: const ['已创建学生档案，可继续补充班级、课堂与资料承接。'],
+      nextStep: '补充最近一次测评、课堂反馈和错题跟进。',
+    );
+    _records.insert(0, created);
+    return created;
   }
 }
 
@@ -86,5 +139,27 @@ class RemoteStudentRepository implements StudentRepository {
       return null;
     }
     return StudentWorkspaceRecord.fromJson(response);
+  }
+
+  @override
+  Future<StudentWorkspaceRecord> createStudent({
+    required String name,
+    required String gradeLabel,
+    required String subjectLabel,
+    required String textbookLabel,
+    String? className,
+  }) async {
+    final response = await _client.postObject(
+      '/students',
+      body: {
+        'name': name,
+        'gradeLabel': gradeLabel,
+        'subjectLabel': subjectLabel,
+        'textbookLabel': textbookLabel,
+        if (className != null && className.trim().isNotEmpty)
+          'className': className.trim(),
+      },
+    );
+    return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);
   }
 }

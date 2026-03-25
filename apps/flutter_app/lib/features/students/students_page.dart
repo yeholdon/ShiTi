@@ -9,12 +9,14 @@ import '../../core/models/students_page_args.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../../core/network/http_json_client.dart';
 import '../shared/workspace_flow_panel.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_shell.dart';
 import '../../router/app_router.dart';
+import 'create_student_dialog.dart';
 import 'student_workspace_data.dart';
 
 enum _StudentFilter {
@@ -100,7 +102,7 @@ class _StudentsPageState extends State<StudentsPage> {
         .toList(growable: false);
   }
 
-  Future<void> _loadStudents() async {
+  Future<void> _loadStudents({String? focusStudentId}) async {
     setState(() {
       _isLoading = true;
       _loadError = null;
@@ -115,7 +117,11 @@ class _StudentsPageState extends State<StudentsPage> {
         _records = nextRecords;
         _isLoading = false;
         _loadError = null;
+        final preferredStudentId = focusStudentId ?? _selectedStudentId;
         if (_records.isNotEmpty &&
+            _records.any((student) => student.id == preferredStudentId)) {
+          _selectedStudentId = preferredStudentId;
+        } else if (_records.isNotEmpty &&
             !_records.any((student) => student.id == _selectedStudentId)) {
           _selectedStudentId = _records.first.id;
         }
@@ -211,6 +217,37 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
+  Future<void> _createStudent() async {
+    final created = await showCreateStudentDialog(context);
+    if (!mounted || created == null) {
+      return;
+    }
+
+    try {
+      await _loadStudents(focusStudentId: created.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已创建学生：${created.name}')),
+      );
+    } on HttpJsonException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('学生列表刷新失败：${error.message}')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('学生列表刷新失败：$error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -250,7 +287,7 @@ class _StudentsPageState extends State<StudentsPage> {
           ),
         ],
         trailing: FilledButton.icon(
-          onPressed: () {},
+          onPressed: _createStudent,
           icon: const Icon(Icons.person_add_alt_1_outlined),
           label: const Text('添加学生'),
         ),

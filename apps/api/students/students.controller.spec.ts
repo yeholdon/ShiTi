@@ -5,6 +5,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     findFirst: jest.fn().mockResolvedValue({ role: 'member', status: 'active' }),
   };
   const studentProfile = overrides.studentProfile ?? {
+    create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
   };
@@ -23,9 +24,75 @@ function makePrisma(overrides: Partial<any> = {}) {
 }
 
 describe('StudentsController', () => {
+  it('creates student profile under current tenant', async () => {
+    const create = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'student-4',
+      name: '新同学',
+      classId: null,
+      className: '九年级提高班',
+      lessonId: null,
+      documentId: null,
+      documentName: null,
+      gradeLabel: '初中 · 九年级下',
+      subjectLabel: '数学',
+      textbookLabel: '浙教版',
+      trendLabel: '新建档案',
+      habitTag: '待观察',
+      habitInsight: 'detail',
+      followUpLevel: '常规关注',
+      summary: 'summary',
+      scoreLabel: '暂无成绩',
+      historyTrendLabel: '待记录',
+      wrongCountLabel: '0 道',
+      wrongCount: 0,
+      scoreRecords: [],
+      feedbackRecords: [],
+      wrongQuestionRecords: [],
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      studentProfile: {
+        create,
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    });
+
+    const ctrl = new StudentsController(prisma);
+    const result = await ctrl.create(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      {
+        name: '新同学',
+        className: '九年级提高班',
+        gradeLabel: '初中 · 九年级下',
+        subjectLabel: '数学',
+        textbookLabel: '浙教版',
+      },
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: 't1',
+          name: '新同学',
+          className: '九年级提高班',
+          gradeLabel: '初中 · 九年级下',
+          subjectLabel: '数学',
+          textbookLabel: '浙教版',
+        }),
+      }),
+    );
+    expect(result.student.name).toBe('新同学');
+  });
+
   it('lists students under current tenant', async () => {
     const prisma = makePrisma({
       studentProfile: {
+        create: jest.fn(),
         findMany: jest.fn().mockResolvedValue([
           {
             tenantId: 't1',
@@ -74,6 +141,7 @@ describe('StudentsController', () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = makePrisma({
       studentProfile: {
+        create: jest.fn(),
         findMany,
         findUnique: jest.fn(),
       },
@@ -101,6 +169,7 @@ describe('StudentsController', () => {
   it('returns student detail by composite id', async () => {
     const prisma = makePrisma({
       studentProfile: {
+        create: jest.fn(),
         findUnique: jest.fn().mockResolvedValue({
           tenantId: 't1',
           id: 'student-1',
