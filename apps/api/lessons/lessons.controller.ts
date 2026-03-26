@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -216,6 +217,41 @@ export class LessonsController {
     );
 
     return { lesson: mapLessonRecord(lesson) };
+  }
+
+  @Delete(':id')
+  async remove(@Req() req: Request, @Param('id') id: string) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    const current = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.lessonSession.findUnique({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+      }),
+    );
+
+    if (!current) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    await this.prisma.withTenant(tenantId, (tx) =>
+      tx.lessonSession.delete({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+      }),
+    );
+
+    return { removedId: id };
   }
 
   @Get(':id')

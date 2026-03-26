@@ -9,6 +9,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     findMany: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   };
 
   return {
@@ -245,6 +246,41 @@ describe('LessonsController', () => {
       }),
     );
     expect(result.lesson.title).toBe('二次函数专题讲评课');
+  });
+
+  it('removes lesson profile under current tenant', async () => {
+    const remove = jest.fn().mockResolvedValue({});
+    const prisma = makePrisma({
+      lessonSession: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: 't1',
+          id: 'lesson-1',
+          title: '二次函数专题复盘课',
+        }),
+        update: jest.fn(),
+        delete: remove,
+      },
+    });
+
+    const ctrl = new LessonsController(prisma);
+    const result = await ctrl.remove(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      'lesson-1',
+    );
+
+    expect(remove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId_id: {
+            tenantId: 't1',
+            id: 'lesson-1',
+          },
+        },
+      }),
+    );
+    expect(result.removedId).toBe('lesson-1');
   });
 
   it('returns lesson detail by composite id', async () => {

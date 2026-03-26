@@ -8,6 +8,7 @@ import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/lessons_page_args.dart';
 import '../../core/models/student_detail_args.dart';
+import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
@@ -163,6 +164,112 @@ class LessonDetailPage extends StatelessWidget {
         sourceLabel: sourceLabel,
       ),
     );
+  }
+
+  Future<bool?> _showDeleteConfirmDialog(
+    BuildContext context,
+    LessonWorkspaceRecord lesson,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: WorkspacePanel(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '删除课堂档案',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '确认后会从当前机构里移除 ${lesson.title} 的课堂档案。资料清单、反馈明细和课后任务也会一起失去这条入口。',
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const WorkspaceMessageBanner.warning(
+                  title: '此操作不可恢复',
+                  message: '如果只是暂时不继续维护，建议先保留课堂档案，避免丢失历史反馈和资料记录。',
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: TelegramPalette.errorText,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('确认删除'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteLesson(
+    BuildContext context,
+    LessonWorkspaceRecord lesson,
+  ) async {
+    final confirmed = await _showDeleteConfirmDialog(context, lesson);
+    if (!context.mounted || confirmed != true) {
+      return;
+    }
+
+    try {
+      await AppServices.instance.lessonRepository.deleteLesson(lesson.id);
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.lessons,
+        (route) => false,
+        arguments: const LessonsPageArgs(
+          flashMessage: '已删除课堂档案，可继续回看其他课堂节奏。',
+        ),
+      );
+    } on HttpJsonException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('删除课堂失败：${error.message}（HTTP ${error.statusCode}）')),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('删除课堂失败：$error')),
+      );
+    }
   }
 
   @override
@@ -327,6 +434,15 @@ class LessonDetailPage extends StatelessWidget {
                   onPressed: () => _editLesson(context, lesson),
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('编辑档案'),
+                ),
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: TelegramPalette.errorText,
+                  ),
+                  onPressed: () => _deleteLesson(context, lesson),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('删除档案'),
                 ),
                 FilledButton.icon(
                   onPressed: () {

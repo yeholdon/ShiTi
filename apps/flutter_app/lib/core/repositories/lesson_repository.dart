@@ -25,6 +25,8 @@ abstract class LessonRepository {
     required String scheduleLabel,
     required String classScopeLabel,
   });
+
+  Future<void> deleteLesson(String lessonId);
 }
 
 class FakeLessonRepository implements LessonRepository {
@@ -142,6 +144,11 @@ class FakeLessonRepository implements LessonRepository {
     _records[index] = updated;
     return updated;
   }
+
+  @override
+  Future<void> deleteLesson(String lessonId) async {
+    _records.removeWhere((item) => item.id == lessonId);
+  }
 }
 
 class RemoteLessonRepository implements LessonRepository {
@@ -223,5 +230,10 @@ class RemoteLessonRepository implements LessonRepository {
       },
     );
     return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteLesson(String lessonId) async {
+    await _client.deleteObject('/lessons/$lessonId');
   }
 }
