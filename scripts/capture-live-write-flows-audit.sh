@@ -176,6 +176,7 @@ updated_lesson = request(
         "documentFocus": primary_document["name"],
         "focusStudentId": updated_student["id"],
         "focusStudentName": updated_student["name"],
+        "feedbackStudentIds": [updated_student["id"]],
     },
 )["lesson"]
 
