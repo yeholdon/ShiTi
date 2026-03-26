@@ -272,6 +272,50 @@ class LessonDetailPage extends StatelessWidget {
     }
   }
 
+  Future<void> _setLessonArchived(
+    BuildContext context,
+    LessonWorkspaceRecord lesson, {
+    required bool archived,
+  }) async {
+    try {
+      final updated = await AppServices.instance.lessonRepository
+          .setLessonArchived(lesson.id, archived: archived);
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed(
+        AppRouter.lessonDetail,
+        arguments: LessonDetailArgs(
+          lessonId: updated.id,
+          flashMessage: archived
+              ? '已归档 ${updated.title}，课堂列表默认不再显示。'
+              : '已恢复 ${updated.title}，课堂列表会重新显示。',
+          sourceModule: sourceModule,
+          sourceRecordId: sourceRecordId,
+          sourceLabel: sourceLabel,
+        ),
+      );
+    } on HttpJsonException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${archived ? '归档' : '恢复'}课堂失败：${error.message}（HTTP ${error.statusCode}）',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${archived ? '归档' : '恢复'}课堂失败：$error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTenant = AppServices.instance.activeTenant;
@@ -438,6 +482,19 @@ class LessonDetailPage extends StatelessWidget {
                   label: const Text('编辑档案'),
                 ),
                 FilledButton.tonalIcon(
+                  onPressed: () => _setLessonArchived(
+                    context,
+                    lesson,
+                    archived: !lesson.isArchived,
+                  ),
+                  icon: Icon(
+                    lesson.isArchived
+                        ? Icons.unarchive_outlined
+                        : Icons.archive_outlined,
+                  ),
+                  label: Text(lesson.isArchived ? '恢复档案' : '归档档案'),
+                ),
+                FilledButton.tonalIcon(
                   style: FilledButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: TelegramPalette.errorText,
@@ -533,6 +590,13 @@ class LessonDetailPage extends StatelessWidget {
                           WorkspaceMessageBanner.info(
                             title: '当前上下文',
                             message: flashMessage!,
+                          ),
+                        ],
+                        if (lesson.isArchived) ...[
+                          const SizedBox(height: 16),
+                          const WorkspaceMessageBanner.warning(
+                            title: '档案已归档',
+                            message: '课堂列表默认隐藏已归档档案。你仍可以在当前详情页恢复或继续查看历史资料与反馈。',
                           ),
                         ],
                       ],

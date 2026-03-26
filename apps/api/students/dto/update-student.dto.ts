@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class UpdateStudentDto {
   @IsOptional()
@@ -36,4 +36,8 @@ export class UpdateStudentDto {
   @IsOptional()
   @IsString({ message: "Invalid documentName" })
   documentName?: string;
+
+  @IsOptional()
+  @IsBoolean({ message: "Invalid archived" })
+  archived?: boolean;
 }

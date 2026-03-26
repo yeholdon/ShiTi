@@ -37,6 +37,11 @@ abstract class StudentRepository {
   });
 
   Future<void> deleteStudent(String studentId);
+
+  Future<StudentWorkspaceRecord> setStudentArchived(
+    String studentId, {
+    required bool archived,
+  });
 }
 
 class FakeStudentRepository implements StudentRepository {
@@ -66,7 +71,10 @@ class FakeStudentRepository implements StudentRepository {
       final matchesLesson = normalizedLessonId == null ||
           normalizedLessonId.isEmpty ||
           student.lessonId == normalizedLessonId;
-      return matchesKeyword && matchesClass && matchesLesson;
+      return !student.isArchived &&
+          matchesKeyword &&
+          matchesClass &&
+          matchesLesson;
     }).toList(growable: false);
   }
 
@@ -116,6 +124,7 @@ class FakeStudentRepository implements StudentRepository {
       wrongQuestionRecords: const [],
       highlights: const ['已创建学生档案，可继续补充班级、课堂与资料承接。'],
       nextStep: '补充最近一次测评、课堂反馈和错题跟进。',
+      archivedAt: null,
     );
     _records.insert(0, created);
     return created;
@@ -164,6 +173,7 @@ class FakeStudentRepository implements StudentRepository {
       wrongQuestionRecords: current.wrongQuestionRecords,
       highlights: current.highlights,
       nextStep: current.nextStep,
+      archivedAt: current.archivedAt,
     );
     _records[index] = updated;
     return updated;
@@ -172,6 +182,47 @@ class FakeStudentRepository implements StudentRepository {
   @override
   Future<void> deleteStudent(String studentId) async {
     _records.removeWhere((student) => student.id == studentId);
+  }
+
+  @override
+  Future<StudentWorkspaceRecord> setStudentArchived(
+    String studentId, {
+    required bool archived,
+  }) async {
+    final index = _records.indexWhere((student) => student.id == studentId);
+    if (index < 0) {
+      throw StateError('Student not found');
+    }
+    final current = _records[index];
+    final updated = StudentWorkspaceRecord(
+      id: current.id,
+      name: current.name,
+      classId: current.classId,
+      className: current.className,
+      lessonId: current.lessonId,
+      documentId: current.documentId,
+      documentName: current.documentName,
+      gradeLabel: current.gradeLabel,
+      subjectLabel: current.subjectLabel,
+      textbookLabel: current.textbookLabel,
+      trendLabel: current.trendLabel,
+      habitTag: current.habitTag,
+      habitInsight: current.habitInsight,
+      followUpLevel: current.followUpLevel,
+      summary: current.summary,
+      scoreLabel: current.scoreLabel,
+      historyTrendLabel: current.historyTrendLabel,
+      wrongCountLabel: current.wrongCountLabel,
+      wrongCount: current.wrongCount,
+      scoreRecords: current.scoreRecords,
+      feedbackRecords: current.feedbackRecords,
+      wrongQuestionRecords: current.wrongQuestionRecords,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+      archivedAt: archived ? (current.archivedAt ?? DateTime.now()) : null,
+    );
+    _records[index] = updated;
+    return updated;
   }
 }
 
@@ -283,5 +334,19 @@ class RemoteStudentRepository implements StudentRepository {
   @override
   Future<void> deleteStudent(String studentId) async {
     await _client.deleteObject('/students/$studentId');
+  }
+
+  @override
+  Future<StudentWorkspaceRecord> setStudentArchived(
+    String studentId, {
+    required bool archived,
+  }) async {
+    final response = await _client.patchObject(
+      '/students/$studentId',
+      body: {'archived': archived},
+    );
+    return StudentWorkspaceRecord.fromJson(
+      response['student'] as Map<String, dynamic>,
+    );
   }
 }

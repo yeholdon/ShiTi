@@ -1,4 +1,4 @@
-import { IsArray, IsOptional, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class UpdateLessonDto {
   @IsOptional()
@@ -41,4 +41,8 @@ export class UpdateLessonDto {
   @IsArray({ message: "Invalid feedbackStudentIds" })
   @IsString({ each: true, message: "Invalid feedbackStudentIds" })
   feedbackStudentIds?: string[];
+
+  @IsOptional()
+  @IsBoolean({ message: "Invalid archived" })
+  archived?: boolean;
 }

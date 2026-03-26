@@ -171,8 +171,67 @@ describe("StudentsController", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           tenantId: "t1",
+          archivedAt: null,
           classId: "class-3",
           lessonId: "lesson-3",
+        }),
+      }),
+    );
+  });
+
+  it("archives student profile under current tenant", async () => {
+    const update = jest.fn().mockResolvedValue({
+      tenantId: "t1",
+      id: "student-1",
+      name: "林之涵",
+      archivedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      studentProfile: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: "t1",
+          id: "student-1",
+          name: "林之涵",
+          archivedAt: null,
+          gradeLabel: "初中",
+          subjectLabel: "数学",
+          textbookLabel: "浙教版",
+          trendLabel: "",
+          habitTag: "",
+          habitInsight: "",
+          followUpLevel: "",
+          summary: "",
+          scoreLabel: "",
+          historyTrendLabel: "",
+          wrongCountLabel: "",
+          wrongCount: 0,
+          scoreRecords: [],
+          feedbackRecords: [],
+          wrongQuestionRecords: [],
+          highlights: [],
+          nextStep: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update,
+      },
+    });
+
+    const ctrl = new StudentsController(prisma);
+    await ctrl.update(
+      { tenant: { tenantId: "t1" }, auth: { userId: "u1" } } as any,
+      "student-1",
+      { archived: true },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          archivedAt: expect.any(Date),
         }),
       }),
     );

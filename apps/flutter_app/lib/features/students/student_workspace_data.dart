@@ -87,6 +87,7 @@ class StudentWorkspaceRecord {
     required this.wrongQuestionRecords,
     required this.highlights,
     required this.nextStep,
+    this.archivedAt,
   });
 
   final String id;
@@ -113,6 +114,9 @@ class StudentWorkspaceRecord {
   final List<StudentWrongQuestionRecord> wrongQuestionRecords;
   final List<String> highlights;
   final String nextStep;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
 
   factory StudentWorkspaceRecord.fromJson(Map<String, dynamic> json) {
     return StudentWorkspaceRecord(
@@ -149,6 +153,7 @@ class StudentWorkspaceRecord {
       ),
       highlights: _decodeStringList(json['highlights']),
       nextStep: json['nextStep'] as String? ?? '',
+      archivedAt: _decodeDateTime(json['archivedAt']),
     );
   }
 }
@@ -171,6 +176,13 @@ List<String> _decodeStringList(Object? raw) {
     return const <String>[];
   }
   return raw.whereType<String>().toList(growable: false);
+}
+
+DateTime? _decodeDateTime(Object? raw) {
+  if (raw is! String || raw.isEmpty) {
+    return null;
+  }
+  return DateTime.tryParse(raw);
 }
 
 const List<StudentWorkspaceRecord> sampleStudentRecords = [

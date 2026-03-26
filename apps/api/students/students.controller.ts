@@ -50,6 +50,7 @@ function mapStudentRecord(student: any) {
     wrongQuestionRecords: student.wrongQuestionRecords,
     highlights: student.highlights,
     nextStep: student.nextStep,
+    archivedAt: student.archivedAt,
     createdAt: student.createdAt,
     updatedAt: student.updatedAt,
   };
@@ -114,6 +115,7 @@ export class StudentsController {
           wrongQuestionRecords: [],
           highlights: ["已创建学生档案，可继续补充班级、课堂与资料承接。"],
           nextStep: "补充最近一次测评、课堂反馈和错题跟进。",
+          archivedAt: null,
         },
       }),
     );
@@ -139,6 +141,7 @@ export class StudentsController {
       tx.studentProfile.findMany({
         where: {
           tenantId,
+          archivedAt: null,
           ...(normalizedClassId == null || normalizedClassId === ""
             ? {}
             : { classId: normalizedClassId }),
@@ -262,9 +265,15 @@ export class StudentsController {
                   : null
               : normalizedDocumentId != null && normalizedDocumentId.length > 0
                 ? normalizedDocumentName != null &&
-                  normalizedDocumentName.length > 0
-                  ? normalizedDocumentName
-                  : current.documentName
+                        normalizedDocumentName.length > 0
+                    ? normalizedDocumentName
+                    : current.documentName
+                : null,
+          archivedAt:
+            body.archived == null
+              ? current.archivedAt
+              : body.archived
+                ? current.archivedAt ?? new Date()
                 : null,
         },
       }),

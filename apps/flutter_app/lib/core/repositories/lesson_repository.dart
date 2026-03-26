@@ -33,6 +33,11 @@ abstract class LessonRepository {
   });
 
   Future<void> deleteLesson(String lessonId);
+
+  Future<LessonWorkspaceRecord> setLessonArchived(
+    String lessonId, {
+    required bool archived,
+  });
 }
 
 class FakeLessonRepository implements LessonRepository {
@@ -63,7 +68,8 @@ class FakeLessonRepository implements LessonRepository {
                   item.focusStudentId == normalizedStudentId) &&
               (normalizedClassId == null ||
                   normalizedClassId.isEmpty ||
-                  item.classId == normalizedClassId),
+                  item.classId == normalizedClassId) &&
+              !item.isArchived,
         )
         .toList(growable: false);
   }
@@ -106,6 +112,7 @@ class FakeLessonRepository implements LessonRepository {
       summary: '新建课堂档案，等待补充班级、资料和课后反馈。',
       highlights: const ['已创建课堂档案，可继续补充班级、资料与反馈任务。'],
       nextStep: '绑定班级、安排主资料并补充首轮课后反馈。',
+      archivedAt: null,
     );
     _records.insert(0, created);
     return created;
@@ -156,6 +163,7 @@ class FakeLessonRepository implements LessonRepository {
       summary: current.summary,
       highlights: current.highlights,
       nextStep: current.nextStep,
+      archivedAt: current.archivedAt,
     );
     _records[index] = updated;
     return updated;
@@ -164,6 +172,44 @@ class FakeLessonRepository implements LessonRepository {
   @override
   Future<void> deleteLesson(String lessonId) async {
     _records.removeWhere((item) => item.id == lessonId);
+  }
+
+  @override
+  Future<LessonWorkspaceRecord> setLessonArchived(
+    String lessonId, {
+    required bool archived,
+  }) async {
+    final index = _records.indexWhere((item) => item.id == lessonId);
+    if (index < 0) {
+      throw StateError('Lesson not found');
+    }
+    final current = _records[index];
+    final updated = LessonWorkspaceRecord(
+      id: current.id,
+      title: current.title,
+      classId: current.classId,
+      className: current.className,
+      focusStudentId: current.focusStudentId,
+      focusStudentName: current.focusStudentName,
+      teacherLabel: current.teacherLabel,
+      scheduleLabel: current.scheduleLabel,
+      scheduleTag: current.scheduleTag,
+      classScopeLabel: current.classScopeLabel,
+      documentFocus: current.documentFocus,
+      documentId: current.documentId,
+      feedbackStatus: current.feedbackStatus,
+      followUpLabel: current.followUpLabel,
+      feedbackInsight: current.feedbackInsight,
+      feedbackRecords: current.feedbackRecords,
+      assetRecords: current.assetRecords,
+      taskRecords: current.taskRecords,
+      summary: current.summary,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+      archivedAt: archived ? (current.archivedAt ?? DateTime.now()) : null,
+    );
+    _records[index] = updated;
+    return updated;
   }
 }
 
@@ -268,5 +314,19 @@ class RemoteLessonRepository implements LessonRepository {
   @override
   Future<void> deleteLesson(String lessonId) async {
     await _client.deleteObject('/lessons/$lessonId');
+  }
+
+  @override
+  Future<LessonWorkspaceRecord> setLessonArchived(
+    String lessonId, {
+    required bool archived,
+  }) async {
+    final response = await _client.patchObject(
+      '/lessons/$lessonId',
+      body: {'archived': archived},
+    );
+    return LessonWorkspaceRecord.fromJson(
+      response['lesson'] as Map<String, dynamic>,
+    );
   }
 }

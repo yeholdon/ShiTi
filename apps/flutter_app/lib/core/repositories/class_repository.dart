@@ -36,6 +36,11 @@ abstract class ClassRepository {
   });
 
   Future<void> deleteClass(String classId);
+
+  Future<ClassWorkspaceRecord> setClassArchived(
+    String classId, {
+    required bool archived,
+  });
 }
 
 class FakeClassRepository implements ClassRepository {
@@ -66,7 +71,8 @@ class FakeClassRepository implements ClassRepository {
                   item.focusStudentId == normalizedStudentId) &&
               (normalizedLessonId == null ||
                   normalizedLessonId.isEmpty ||
-                  item.lessonId == normalizedLessonId),
+                  item.lessonId == normalizedLessonId) &&
+              !item.isArchived,
         )
         .toList(growable: false);
   }
@@ -112,6 +118,7 @@ class FakeClassRepository implements ClassRepository {
       summary: '新建班级档案，等待补充成员、课堂安排与资料联动。',
       highlights: const ['已创建班级档案，可继续补充学生、课堂和资料。'],
       nextStep: '补充班级成员、安排第一堂课并关联资料。',
+      archivedAt: null,
     );
     _records.insert(0, created);
     return created;
@@ -166,6 +173,7 @@ class FakeClassRepository implements ClassRepository {
       summary: current.summary,
       highlights: current.highlights,
       nextStep: current.nextStep,
+      archivedAt: current.archivedAt,
     );
     _records[index] = updated;
     return updated;
@@ -174,6 +182,46 @@ class FakeClassRepository implements ClassRepository {
   @override
   Future<void> deleteClass(String classId) async {
     _records.removeWhere((item) => item.id == classId);
+  }
+
+  @override
+  Future<ClassWorkspaceRecord> setClassArchived(
+    String classId, {
+    required bool archived,
+  }) async {
+    final index = _records.indexWhere((item) => item.id == classId);
+    if (index < 0) {
+      throw StateError('Class not found');
+    }
+    final current = _records[index];
+    final updated = ClassWorkspaceRecord(
+      id: current.id,
+      name: current.name,
+      lessonId: current.lessonId,
+      documentId: current.documentId,
+      focusStudentId: current.focusStudentId,
+      focusStudentName: current.focusStudentName,
+      stageLabel: current.stageLabel,
+      teacherLabel: current.teacherLabel,
+      textbookLabel: current.textbookLabel,
+      focusLabel: current.focusLabel,
+      activityLabel: current.activityLabel,
+      classSizeLabel: current.classSizeLabel,
+      lessonFocusLabel: current.lessonFocusLabel,
+      structureInsight: current.structureInsight,
+      studentCount: current.studentCount,
+      weeklyLessonCount: current.weeklyLessonCount,
+      latestDocLabel: current.latestDocLabel,
+      assetLinks: current.assetLinks,
+      memberTiers: current.memberTiers,
+      lessonTimeline: current.lessonTimeline,
+      summary: current.summary,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+      archivedAt: archived ? (current.archivedAt ?? DateTime.now()) : null,
+    );
+    _records[index] = updated;
+    return updated;
   }
 }
 
@@ -283,5 +331,19 @@ class RemoteClassRepository implements ClassRepository {
   @override
   Future<void> deleteClass(String classId) async {
     await _client.deleteObject('/classes/$classId');
+  }
+
+  @override
+  Future<ClassWorkspaceRecord> setClassArchived(
+    String classId, {
+    required bool archived,
+  }) async {
+    final response = await _client.patchObject(
+      '/classes/$classId',
+      body: {'archived': archived},
+    );
+    return ClassWorkspaceRecord.fromJson(
+      response['class'] as Map<String, dynamic>,
+    );
   }
 }

@@ -47,6 +47,7 @@ function mapLessonRecord(lesson: any) {
     summary: lesson.summary,
     highlights: lesson.highlights,
     nextStep: lesson.nextStep,
+    archivedAt: lesson.archivedAt,
     createdAt: lesson.createdAt,
     updatedAt: lesson.updatedAt,
   };
@@ -105,6 +106,7 @@ export class LessonsController {
           summary: "新建课堂档案，等待补充班级、资料和课后反馈。",
           highlights: ["已创建课堂档案，可继续补充班级、资料与反馈任务。"],
           nextStep: "绑定班级、安排主资料并补充首轮课后反馈。",
+          archivedAt: null,
         },
       }),
     );
@@ -130,6 +132,7 @@ export class LessonsController {
       tx.lessonSession.findMany({
         where: {
           tenantId,
+          archivedAt: null,
           ...(normalizedStudentId != null && normalizedStudentId.length > 0
             ? { focusStudentId: normalizedStudentId }
             : {}),
@@ -324,6 +327,12 @@ export class LessonsController {
             normalizedFeedbackStudentIds == null
               ? current.feedbackStatus
               : formatLessonFeedbackStatus(normalizedFeedbackStudentIds.length),
+          archivedAt:
+            body.archived == null
+              ? current.archivedAt
+              : body.archived
+                ? current.archivedAt ?? new Date()
+                : null,
         },
       });
     });

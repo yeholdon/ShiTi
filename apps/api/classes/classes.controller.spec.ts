@@ -166,6 +166,7 @@ describe("ClassesController", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           tenantId: "t1",
+          archivedAt: null,
           focusStudentId: "student-1",
           lessonId: "lesson-2",
           OR: expect.any(Array),
@@ -310,6 +311,67 @@ describe("ClassesController", () => {
       }),
     );
     expect(result.class.name).toBe("九年级培优班");
+  });
+
+  it("archives class profile under current tenant", async () => {
+    const update = jest.fn().mockResolvedValue({
+      tenantId: "t1",
+      id: "class-1",
+      name: "九年级尖子班",
+      archivedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      teachingClass: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: "t1",
+          id: "class-1",
+          name: "九年级尖子班",
+          archivedAt: null,
+          stageLabel: "初中",
+          teacherLabel: "主讲：陈老师",
+          textbookLabel: "浙教版",
+          focusLabel: "试卷跟进",
+          activityLabel: "",
+          classSizeLabel: "",
+          lessonFocusLabel: "",
+          structureInsight: "",
+          studentCount: 0,
+          weeklyLessonCount: 0,
+          latestDocLabel: "",
+          assetLinks: [],
+          memberTiers: [],
+          lessonTimeline: [],
+          summary: "",
+          highlights: [],
+          nextStep: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update,
+      },
+      studentProfile: {
+        updateMany: jest.fn(),
+      },
+    });
+
+    const ctrl = new ClassesController(prisma);
+    await ctrl.update(
+      { tenant: { tenantId: "t1" }, auth: { userId: "u1" } } as any,
+      "class-1",
+      { archived: true },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          archivedAt: expect.any(Date),
+        }),
+      }),
+    );
   });
 
   it("removes class profile under current tenant", async () => {

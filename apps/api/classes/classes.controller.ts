@@ -49,6 +49,7 @@ function mapClassRecord(classroom: any) {
     summary: classroom.summary,
     highlights: classroom.highlights,
     nextStep: classroom.nextStep,
+    archivedAt: classroom.archivedAt,
     createdAt: classroom.createdAt,
     updatedAt: classroom.updatedAt,
   };
@@ -104,6 +105,7 @@ export class ClassesController {
           summary: "新建班级档案，等待补充成员、课堂安排与资料联动。",
           highlights: ["已创建班级档案，可继续补充学生、课堂和资料。"],
           nextStep: "补充班级成员、安排第一堂课并关联资料。",
+          archivedAt: null,
         },
       }),
     );
@@ -129,6 +131,7 @@ export class ClassesController {
       tx.teachingClass.findMany({
         where: {
           tenantId,
+          archivedAt: null,
           ...(normalizedStudentId != null && normalizedStudentId.length > 0
             ? { focusStudentId: normalizedStudentId }
             : {}),
@@ -345,6 +348,12 @@ export class ClassesController {
             normalizedMemberStudentIds == null
               ? current.classSizeLabel
               : formatClassSizeLabel(normalizedMemberStudentIds.length),
+          archivedAt:
+            body.archived == null
+              ? current.archivedAt
+              : body.archived
+                ? current.archivedAt ?? new Date()
+                : null,
         },
       });
     });

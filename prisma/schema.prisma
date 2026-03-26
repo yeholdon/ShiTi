@@ -230,6 +230,7 @@ model StudentProfile {
   wrongQuestionRecords Json
   highlights          Json
   nextStep            String
+  archivedAt          DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -265,6 +266,7 @@ model TeachingClass {
   summary           String
   highlights        Json
   nextStep          String
+  archivedAt        DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -298,6 +300,7 @@ model LessonSession {
   summary          String
   highlights       Json
   nextStep         String
+  archivedAt       DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

@@ -160,6 +160,7 @@ describe("LessonsController", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           tenantId: "t1",
+          archivedAt: null,
           focusStudentId: "student-1",
           classId: "class-2",
           OR: expect.any(Array),
@@ -294,6 +295,64 @@ describe("LessonsController", () => {
       }),
     );
     expect(result.lesson.title).toBe("二次函数专题讲评课");
+  });
+
+  it("archives lesson profile under current tenant", async () => {
+    const update = jest.fn().mockResolvedValue({
+      tenantId: "t1",
+      id: "lesson-1",
+      title: "二次函数专题复盘课",
+      archivedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      lessonSession: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: "t1",
+          id: "lesson-1",
+          title: "二次函数专题复盘课",
+          archivedAt: null,
+          teacherLabel: "主讲：陈老师",
+          scheduleLabel: "周三 19:00",
+          scheduleTag: "本周进行",
+          classScopeLabel: "九年级尖子班",
+          documentFocus: "二次函数周测卷",
+          feedbackStatus: "待回收",
+          followUpLabel: "补讲义",
+          feedbackInsight: "",
+          feedbackRecords: [],
+          assetRecords: [],
+          taskRecords: [],
+          summary: "",
+          highlights: [],
+          nextStep: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update,
+      },
+      studentProfile: {
+        updateMany: jest.fn(),
+      },
+    });
+
+    const ctrl = new LessonsController(prisma);
+    await ctrl.update(
+      { tenant: { tenantId: "t1" }, auth: { userId: "u1" } } as any,
+      "lesson-1",
+      { archived: true },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          archivedAt: expect.any(Date),
+        }),
+      }),
+    );
   });
 
   it("removes lesson profile under current tenant", async () => {

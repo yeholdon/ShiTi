@@ -98,6 +98,7 @@ class ClassWorkspaceRecord {
     required this.summary,
     required this.highlights,
     required this.nextStep,
+    this.archivedAt,
   });
 
   final String id;
@@ -123,6 +124,9 @@ class ClassWorkspaceRecord {
   final String summary;
   final List<String> highlights;
   final String nextStep;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
 
   factory ClassWorkspaceRecord.fromJson(Map<String, dynamic> json) {
     return ClassWorkspaceRecord(
@@ -158,6 +162,7 @@ class ClassWorkspaceRecord {
       summary: json['summary'] as String? ?? '',
       highlights: _decodeClassStringList(json['highlights']),
       nextStep: json['nextStep'] as String? ?? '',
+      archivedAt: _decodeClassDateTime(json['archivedAt']),
     );
   }
 }
@@ -180,6 +185,13 @@ List<String> _decodeClassStringList(Object? raw) {
     return const <String>[];
   }
   return raw.whereType<String>().toList(growable: false);
+}
+
+DateTime? _decodeClassDateTime(Object? raw) {
+  if (raw is! String || raw.isEmpty) {
+    return null;
+  }
+  return DateTime.tryParse(raw);
 }
 
 const List<ClassWorkspaceRecord> sampleClassRecords = [

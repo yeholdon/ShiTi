@@ -105,6 +105,7 @@ class LessonWorkspaceRecord {
     required this.summary,
     required this.highlights,
     required this.nextStep,
+    this.archivedAt,
   });
 
   final String id;
@@ -128,6 +129,9 @@ class LessonWorkspaceRecord {
   final String summary;
   final List<String> highlights;
   final String nextStep;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
 
   factory LessonWorkspaceRecord.fromJson(Map<String, dynamic> json) {
     return LessonWorkspaceRecord(
@@ -161,8 +165,16 @@ class LessonWorkspaceRecord {
       summary: json['summary']?.toString() ?? '',
       highlights: _decodeLessonStringList(json['highlights']),
       nextStep: json['nextStep']?.toString() ?? '',
+      archivedAt: _decodeLessonDateTime(json['archivedAt']),
     );
   }
+}
+
+DateTime? _decodeLessonDateTime(Object? raw) {
+  if (raw is! String || raw.isEmpty) {
+    return null;
+  }
+  return DateTime.tryParse(raw);
 }
 
 const List<LessonWorkspaceRecord> sampleLessonRecords = [
