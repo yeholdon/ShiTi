@@ -3,12 +3,13 @@
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <url> <output-path>" >&2
+  echo "usage: $0 <url> <output-path> [storage-state-path]" >&2
   exit 1
 fi
 
 url="$1"
 output_path="$2"
+storage_state_path="${3:-}"
 edge_executable="${EDGE_EXECUTABLE:-/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge}"
 post_load_delay_ms="${CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS:-2500}"
 max_blank_retries="${CAPTURE_FULLPAGE_BLANK_RETRIES:-4}"
@@ -48,8 +49,12 @@ proxyless_env=(
 capture_is_blank() {
   local image_path="$1"
   python3 - "$image_path" <<'PY'
-from PIL import Image
 import sys
+
+try:
+    from PIL import Image
+except ModuleNotFoundError:
+    sys.exit(2)
 
 image_path = sys.argv[1]
 image = Image.open(image_path).convert("RGB")
@@ -114,9 +119,13 @@ for ((attempt = 1; attempt <= max_blank_retries; attempt += 1)); do
     "$normalized_url" \
     "$output_path" \
     "$expected_hash" \
-    "$post_load_delay_ms"
+    "$post_load_delay_ms" \
+    "$storage_state_path"
 
-  if ! capture_is_blank "$output_path"; then
+  blank_check_status=0
+  capture_is_blank "$output_path" || blank_check_status=$?
+
+  if (( blank_check_status == 0 || blank_check_status == 2 )); then
     echo "$output_path"
     exit 0
   fi

@@ -2,6 +2,7 @@
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const WebSocketImpl = globalThis.WebSocket ?? require('ws');
 
 async function main() {
   const [
@@ -10,10 +11,11 @@ async function main() {
     outputPath,
     expectedHash = '',
     postLoadDelayMs = '2500',
+    storageStatePath = '',
   ] = process.argv.slice(2);
   if (!debugBaseUrl || !pageUrl || !outputPath) {
     throw new Error(
-      'usage: capture-edge-fullpage.js <debug-base-url> <page-url> <output-path> [expected-hash] [post-load-delay-ms]',
+      'usage: capture-edge-fullpage.js <debug-base-url> <page-url> <output-path> [expected-hash] [post-load-delay-ms] [storage-state-path]',
     );
   }
 
@@ -24,6 +26,14 @@ async function main() {
     await client.send('Page.enable');
     await client.send('Runtime.enable');
     await client.send('Page.bringToFront');
+
+    if (storageStatePath) {
+      const storageUrl = buildStorageUrl(pageUrl);
+      await navigateToPage(client, storageUrl);
+      await waitForDocumentAvailable(client);
+      await applyStorageState(client, storageStatePath);
+    }
+
     await navigateToPage(client, pageUrl);
 
     await waitForPageReady(client, expectedHash, Number(postLoadDelayMs));
@@ -52,6 +62,37 @@ async function main() {
 
 async function navigateToPage(client, pageUrl) {
   await client.send('Page.navigate', { url: pageUrl });
+}
+
+function buildStorageUrl(pageUrl) {
+  const url = new URL(pageUrl);
+  url.hash = '';
+  return url.toString();
+}
+
+async function waitForDocumentAvailable(client) {
+  const maxAttempts = 40;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const { result } = await client.send('Runtime.evaluate', {
+      expression: 'document.readyState',
+      returnByValue: true,
+    });
+    if (result.value && result.value !== 'loading') {
+      return;
+    }
+    await delay(250);
+  }
+}
+
+async function applyStorageState(client, storageStatePath) {
+  const raw = await fs.readFile(storageStatePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  const items = Object.entries(parsed);
+  for (const [key, value] of items) {
+    await client.send('Runtime.evaluate', {
+      expression: `localStorage.setItem(${JSON.stringify(key)}, ${JSON.stringify(String(value))})`,
+    });
+  }
 }
 
 async function findTarget(debugBaseUrl, pageUrl, expectedHash) {
@@ -201,7 +242,7 @@ function delay(ms) {
 
 function connectToTarget(wsUrl) {
   return new Promise((resolve, reject) => {
-    const socket = new WebSocket(wsUrl);
+    const socket = new WebSocketImpl(wsUrl);
     const pending = new Map();
     let nextId = 0;
 
