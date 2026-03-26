@@ -28,6 +28,7 @@ import '../shared/primary_page_view_state_memory.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import 'question_editor_dialog.dart';
 import 'question_summary_preview.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -79,6 +80,7 @@ class _LibraryPageState extends State<LibraryPage> {
   String _chapterFilter = 'all';
   String _sortBy = 'results';
   bool _didApplyContextualFilters = false;
+  bool _creatingQuestion = false;
 
   DocumentSummary? get _preferredTargetDocument =>
       widget.args?.preferredDocumentSnapshot;
@@ -268,6 +270,48 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Future<void> _reloadWithGuard() async {
     await _reload();
+  }
+
+  Future<void> _openQuestionDetail(String questionId) async {
+    final result = await Navigator.of(context).pushNamed(
+      AppRouter.questionDetail,
+      arguments: _buildQuestionDetailArgs(questionId),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (result == true) {
+      await _reload();
+    }
+  }
+
+  Future<void> _createQuestion() async {
+    if (_creatingQuestion) {
+      return;
+    }
+    setState(() {
+      _creatingQuestion = true;
+    });
+    try {
+      final created = await showCreateQuestionDialog(context);
+      if (!mounted || created == null) {
+        return;
+      }
+      await _reload();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已创建题目：${created.title}')),
+      );
+      await _openQuestionDetail(created.id);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _creatingQuestion = false;
+        });
+      }
+    }
   }
 
   QuestionDetailArgs _buildQuestionDetailArgs(String questionId) {
@@ -1005,7 +1049,8 @@ class _LibraryPageState extends State<LibraryPage> {
                         ),
                       WorkspaceInfoPill(
                         label: '当前模式',
-                        value: _preferredTargetDocument != null ? '为文档找题' : '独立筛题',
+                        value:
+                            _preferredTargetDocument != null ? '为文档找题' : '独立筛题',
                       ),
                     ],
                   ),
@@ -1266,7 +1311,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         preferredTargetDocument: _preferredTargetDocument,
                         insertAfterItemId: _insertAfterItemId,
                         insertAfterItemTitle: _insertAfterItemTitle,
-                        buildQuestionDetailArgs: _buildQuestionDetailArgs,
+                        onOpenQuestionDetail: _openQuestionDetail,
                         onBasketChanged: (isInBasket) {
                           _setBasketMembership(question.id, isInBasket);
                         },
@@ -1287,6 +1332,18 @@ class _LibraryPageState extends State<LibraryPage> {
           automaticallyImplyLeading: true,
           title: const Text('题库检索'),
           actions: [
+            TextButton.icon(
+              onPressed: _creatingQuestion ? null : _createQuestion,
+              icon: _creatingQuestion
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add_circle_outline),
+              label: Text(_creatingQuestion ? '创建中…' : '新建题目'),
+            ),
+            const SizedBox(width: 8),
             TextButton.icon(
               onPressed: () {
                 Navigator.of(context).pushNamed(AppRouter.login);
@@ -1332,10 +1389,27 @@ class _LibraryPageState extends State<LibraryPage> {
             highlight: activeTenant == null,
           ),
         ],
-        trailing: IconButton.filledTonal(
-          onPressed: _openWorkspace,
-          tooltip: _returnActionLabel,
-          icon: const Icon(Icons.home_outlined),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton.tonalIcon(
+              onPressed: _creatingQuestion ? null : _createQuestion,
+              icon: _creatingQuestion
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add_circle_outline),
+              label: Text(_creatingQuestion ? '创建中…' : '新建题目'),
+            ),
+            const SizedBox(width: 12),
+            IconButton.filledTonal(
+              onPressed: _openWorkspace,
+              tooltip: _returnActionLabel,
+              icon: const Icon(Icons.home_outlined),
+            ),
+          ],
         ),
         body: pageBody,
       ),
@@ -1418,7 +1492,8 @@ class _LibraryHeroSection extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenWorkspace,
                 icon: const Icon(Icons.home_outlined),
-                label: Text(compact ? returnLabel.replaceFirst('返回', '') : returnLabel),
+                label: Text(
+                    compact ? returnLabel.replaceFirst('返回', '') : returnLabel),
               ),
             ],
           ),
@@ -2396,7 +2471,7 @@ class _QuestionPreviewCard extends StatefulWidget {
     required this.question,
     required this.isInBasket,
     required this.isSelected,
-    required this.buildQuestionDetailArgs,
+    required this.onOpenQuestionDetail,
     this.preferredTargetDocument,
     this.insertAfterItemId,
     this.insertAfterItemTitle,
@@ -2407,7 +2482,7 @@ class _QuestionPreviewCard extends StatefulWidget {
   final QuestionSummary question;
   final bool isInBasket;
   final bool isSelected;
-  final QuestionDetailArgs Function(String questionId) buildQuestionDetailArgs;
+  final Future<void> Function(String questionId) onOpenQuestionDetail;
   final DocumentSummary? preferredTargetDocument;
   final String? insertAfterItemId;
   final String? insertAfterItemTitle;
@@ -2619,10 +2694,7 @@ class _QuestionPreviewCardState extends State<_QuestionPreviewCard> {
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
         onTap: () {
-          Navigator.of(context).pushNamed(
-            AppRouter.questionDetail,
-            arguments: widget.buildQuestionDetailArgs(widget.question.id),
-          );
+          widget.onOpenQuestionDetail(widget.question.id);
         },
         child: Padding(
           padding: EdgeInsets.all(compact ? 14 : 18),
@@ -2717,11 +2789,7 @@ class _QuestionPreviewCardState extends State<_QuestionPreviewCard> {
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        AppRouter.questionDetail,
-                        arguments:
-                            widget.buildQuestionDetailArgs(widget.question.id),
-                      );
+                      widget.onOpenQuestionDetail(widget.question.id);
                     },
                     icon: const Icon(Icons.open_in_new),
                     label: Text(compact ? '详情' : '查看详情'),

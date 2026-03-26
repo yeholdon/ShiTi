@@ -6,11 +6,13 @@ import '../../core/models/library_page_args.dart';
 import '../../core/models/question_detail.dart';
 import '../../core/models/question_detail_args.dart';
 import '../../core/models/question_summary.dart';
+import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
 import '../documents/create_document_dialog.dart';
 import '../documents/select_document_dialog.dart';
+import 'question_editor_dialog.dart';
 import '../shared/content_section.dart';
 import '../shared/question_workspace_context_card.dart';
 import '../shared/primary_navigation_bar.dart';
@@ -51,6 +53,8 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
   bool _addingToDocument = false;
   bool _creatingAndAdding = false;
   bool _updatingBasket = false;
+  bool _editingQuestion = false;
+  bool _deletingQuestion = false;
 
   Future<_QuestionDetailViewData> _loadPageData() async {
     final repository = AppServices.instance.questionRepository;
@@ -223,6 +227,150 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
     }
   }
 
+  Future<void> _editQuestion(QuestionDetail question) async {
+    if (_editingQuestion) {
+      return;
+    }
+    setState(() {
+      _editingQuestion = true;
+    });
+    try {
+      final updated = await showEditQuestionDialog(context, question: question);
+      if (!mounted || updated == null) {
+        return;
+      }
+      setState(() {
+        _pageFuture = _loadPageData();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已更新题目：${updated.title}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _editingQuestion = false;
+        });
+      }
+    }
+  }
+
+  Future<bool?> _showDeleteConfirmDialog(QuestionDetail question) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: WorkspacePanel(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '删除题目',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '确认后会从当前题库中移除 ${question.title}。如果这道题已加入文档或选题篮，后续回看入口也会失效。',
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                WorkspaceMessageBanner.warning(
+                  title: '此操作不可恢复',
+                  message: '如果只是暂时不想展示，建议先保留题目，避免丢失已整理的题干和题解。',
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: TelegramPalette.errorText,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('确认删除'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteQuestion(QuestionDetail question) async {
+    if (_deletingQuestion) {
+      return;
+    }
+    final confirmed = await _showDeleteConfirmDialog(question);
+    if (!mounted || confirmed != true) {
+      return;
+    }
+    setState(() {
+      _deletingQuestion = true;
+    });
+    try {
+      await AppServices.instance.questionRepository.deleteQuestion(question.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已删除题目：${question.title}')),
+      );
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.library,
+        (route) => false,
+        arguments: widget.libraryContextArgs,
+      );
+    } on HttpJsonException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('删除题目失败：${error.message}（HTTP ${error.statusCode}）')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('删除题目失败：$error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingQuestion = false;
+        });
+      }
+    }
+  }
+
   void _returnToLibrary() {
     if (widget.libraryContextArgs == null) {
       Navigator.of(context).maybePop();
@@ -351,10 +499,33 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                             ],
                           );
                           final actionButtons = <Widget>[
+                            FilledButton.tonalIcon(
+                              onPressed: _editingQuestion ||
+                                      _deletingQuestion ||
+                                      _addingToDocument ||
+                                      _creatingAndAdding ||
+                                      _updatingBasket
+                                  ? null
+                                  : () => _editQuestion(question),
+                              icon: _editingQuestion
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.edit_outlined),
+                              label: Text(
+                                _editingQuestion ? '保存中…' : '编辑题目',
+                              ),
+                            ),
                             FilledButton.icon(
                               onPressed: _addingToDocument ||
                                       _creatingAndAdding ||
-                                      _updatingBasket
+                                      _updatingBasket ||
+                                      _editingQuestion ||
+                                      _deletingQuestion
                                   ? null
                                   : () => _addToDocument(question),
                               icon: _addingToDocument
@@ -377,7 +548,9 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                             FilledButton.tonalIcon(
                               onPressed: _addingToDocument ||
                                       _creatingAndAdding ||
-                                      _updatingBasket
+                                      _updatingBasket ||
+                                      _editingQuestion ||
+                                      _deletingQuestion
                                   ? null
                                   : () => _createDocumentAndAdd(question),
                               icon: _creatingAndAdding
@@ -390,15 +563,15 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                                     )
                                   : const Icon(Icons.note_add_outlined),
                               label: Text(
-                                _creatingAndAdding
-                                    ? '创建并加入中…'
-                                    : '新建文档并加入',
+                                _creatingAndAdding ? '创建并加入中…' : '新建文档并加入',
                               ),
                             ),
                             OutlinedButton.icon(
                               onPressed: _updatingBasket ||
                                       _addingToDocument ||
-                                      _creatingAndAdding
+                                      _creatingAndAdding ||
+                                      _editingQuestion ||
+                                      _deletingQuestion
                                   ? null
                                   : () => _toggleBasket(
                                         question,
@@ -415,8 +588,7 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                                   : Icon(
                                       isInBasket
                                           ? Icons.bookmark_remove_outlined
-                                          : Icons
-                                              .collections_bookmark_outlined,
+                                          : Icons.collections_bookmark_outlined,
                                     ),
                               label: Text(
                                 _updatingBasket
@@ -433,6 +605,27 @@ class _QuestionDetailPageState extends State<QuestionDetailPage> {
                               },
                               icon: const Icon(Icons.description_outlined),
                               label: const Text('打开文档'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _deletingQuestion ||
+                                      _editingQuestion ||
+                                      _addingToDocument ||
+                                      _creatingAndAdding ||
+                                      _updatingBasket
+                                  ? null
+                                  : () => _deleteQuestion(question),
+                              icon: _deletingQuestion
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.delete_outline),
+                              label: Text(
+                                _deletingQuestion ? '删除中…' : '删除题目',
+                              ),
                             ),
                           ];
                           final actionRail = Column(
@@ -545,12 +738,14 @@ extension on QuestionDetail {
     return QuestionSummary(
       id: id,
       title: title,
+      type: type,
       subject: subject,
       stage: stage,
       grade: grade,
       textbook: textbook,
       chapter: chapter,
       difficulty: difficulty,
+      defaultScore: defaultScore,
       tags: tags,
       stemPreview: stemText,
       previewBlocks: stemBlocks,

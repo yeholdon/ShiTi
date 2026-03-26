@@ -21,11 +21,13 @@ class HttpJsonClient {
   HttpJsonClient({
     required this.baseUrl,
     this.defaultHeadersBuilder,
+    this.onUnauthorized,
     http.Client? client,
   }) : _client = client ?? http.Client();
 
   final String baseUrl;
   final Map<String, String> Function()? defaultHeadersBuilder;
+  final void Function()? onUnauthorized;
   final http.Client _client;
 
   Uri _resolve(String path, [Map<String, String>? query]) {
@@ -45,7 +47,11 @@ class HttpJsonClient {
       _resolve(path, query),
       headers: _mergeHeaders(headers),
     );
-    return _decodeObject(response, objectKey: objectKey);
+    return _decodeObject(
+      response,
+      objectKey: objectKey,
+      requestHeaders: _mergeHeaders(headers),
+    );
   }
 
   Future<List<dynamic>> getList(
@@ -58,7 +64,8 @@ class HttpJsonClient {
       _resolve(path, query),
       headers: _mergeHeaders(headers),
     );
-    final decoded = _decodeJson(response);
+    final decoded =
+        _decodeJson(response, requestHeaders: _mergeHeaders(headers));
     if (decoded is List<dynamic>) {
       return decoded;
     }
@@ -90,7 +97,13 @@ class HttpJsonClient {
       },
       body: jsonEncode(body ?? const <String, dynamic>{}),
     );
-    return _decodeObject(response);
+    return _decodeObject(
+      response,
+      requestHeaders: <String, String>{
+        'Content-Type': 'application/json',
+        ..._mergeHeaders(headers),
+      },
+    );
   }
 
   Future<Map<String, dynamic>> patchObject(
@@ -106,7 +119,35 @@ class HttpJsonClient {
       },
       body: jsonEncode(body ?? const <String, dynamic>{}),
     );
-    return _decodeObject(response);
+    return _decodeObject(
+      response,
+      requestHeaders: <String, String>{
+        'Content-Type': 'application/json',
+        ..._mergeHeaders(headers),
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> putObject(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
+    final response = await _client.put(
+      _resolve(path),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        ..._mergeHeaders(headers),
+      },
+      body: jsonEncode(body ?? const <String, dynamic>{}),
+    );
+    return _decodeObject(
+      response,
+      requestHeaders: <String, String>{
+        'Content-Type': 'application/json',
+        ..._mergeHeaders(headers),
+      },
+    );
   }
 
   Future<Map<String, dynamic>> deleteObject(
@@ -118,7 +159,10 @@ class HttpJsonClient {
       _resolve(path, query),
       headers: _mergeHeaders(headers),
     );
-    return _decodeObject(response);
+    return _decodeObject(
+      response,
+      requestHeaders: _mergeHeaders(headers),
+    );
   }
 
   Map<String, String> _mergeHeaders(Map<String, String>? headers) {
@@ -128,8 +172,11 @@ class HttpJsonClient {
     };
   }
 
-  dynamic _decodeJson(http.Response response) {
-    _ensureSuccess(response);
+  dynamic _decodeJson(
+    http.Response response, {
+    Map<String, String>? requestHeaders,
+  }) {
+    _ensureSuccess(response, requestHeaders: requestHeaders);
     if (response.body.isEmpty) {
       return const <String, dynamic>{};
     }
@@ -139,8 +186,9 @@ class HttpJsonClient {
   Map<String, dynamic> _decodeObject(
     http.Response response, {
     String? objectKey,
+    Map<String, String>? requestHeaders,
   }) {
-    final decoded = _decodeJson(response);
+    final decoded = _decodeJson(response, requestHeaders: requestHeaders);
     if (decoded is Map<String, dynamic>) {
       if (objectKey != null) {
         final keyed = decoded[objectKey];
@@ -153,9 +201,20 @@ class HttpJsonClient {
     return const <String, dynamic>{};
   }
 
-  void _ensureSuccess(http.Response response) {
+  void _ensureSuccess(
+    http.Response response, {
+    Map<String, String>? requestHeaders,
+  }) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
+    }
+
+    final sentAuthorization = (requestHeaders ?? const <String, String>{})
+        .keys
+        .any((key) => key.toLowerCase() == 'authorization');
+
+    if (response.statusCode == 401 && sentAuthorization) {
+      onUnauthorized?.call();
     }
 
     String message = '请求失败';

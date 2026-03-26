@@ -120,6 +120,68 @@ created_student = request(
     },
 )["student"]
 
+created_question = request(
+    "POST",
+    "/questions",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={},
+)["question"]
+
+request(
+    "PATCH",
+    f"/questions/{created_question['id']}",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={
+        "type": "solution",
+        "difficulty": 2,
+        "defaultScore": "12.00",
+    },
+)
+
+request(
+    "PUT",
+    f"/questions/{created_question['id']}/content",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={
+        "stemBlocks": [
+            {
+                "type": "text",
+                "text": f"审计题目-{stamp}：已知二次函数图像经过两点，结合课堂反馈分析最值与交点关系。",
+            }
+        ]
+    },
+)
+
+request(
+    "PUT",
+    f"/questions/{created_question['id']}/explanation",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={
+        "overviewBlocks": [
+            {
+                "type": "text",
+                "text": "先回看函数图像变化，再把交点条件转成顶点与最值分析。",
+            }
+        ],
+        "stepsBlocks": [
+            {
+                "type": "text",
+                "text": "先由题意确定函数表达式，再利用对称轴和顶点坐标判断最值与交点关系。",
+            }
+        ],
+        "commentaryBlocks": [
+            {
+                "type": "text",
+                "text": "适合放进函数复盘课的讲评资料，用于承接课堂反馈和错题回看。",
+            }
+        ],
+    },
+)
+
 updated_student = request(
     "PATCH",
     f"/students/{created_student['id']}",
@@ -308,6 +370,20 @@ payload["pre_delete_routes"] = {
             "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案，反馈学生为 {updated_student['name']}，关联班级 {updated_class['name']}，资料为 {primary_document['name']}。",
         },
     ),
+    "question-detail-created-live": build_hash_route(
+        "/questions/detail",
+        {
+            "questionId": created_question["id"],
+            "flashMessage": "已创建题目，可继续补充筛题上下文、加入选题篮或送入文档。",
+        },
+    ),
+    "question-detail-updated-live": build_hash_route(
+        "/questions/detail",
+        {
+            "questionId": created_question["id"],
+            "flashMessage": "已更新题目基础信息与题解主干，可继续加入文档或回到题库筛题。",
+        },
+    ),
 }
 
 payload["archives"] = {
@@ -368,6 +444,11 @@ payload["deletions"] = {
         "label": updated_lesson["title"],
         "path": f"/lessons/{updated_lesson['id']}",
     },
+    "question": {
+        "id": created_question["id"],
+        "label": f"审计题目-{stamp}",
+        "path": f"/questions/{created_question['id']}",
+    },
 }
 
 payload["post_delete_routes"] = {
@@ -396,6 +477,15 @@ payload["post_delete_routes"] = {
             "highlightTitle": "最近删除课堂",
             "highlightDetail": f"{updated_lesson['title']} 已从真实数据中移除，可继续回看其他课堂节奏。",
             "feedbackBadgeLabel": "已删除课堂",
+        },
+    ),
+    "questions-deleted-live": build_hash_route(
+        "/library",
+        {
+            "flashMessage": f"已删除审计题目-{stamp}。",
+            "highlightTitle": "最近删除题目",
+            "highlightDetail": "审计题目已从真实题库中移除，可继续回看其他题目并筛题入篮。",
+            "feedbackBadgeLabel": "已删除题目",
         },
     ),
 }

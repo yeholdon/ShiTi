@@ -693,12 +693,14 @@ class ShiTiApiClient {
       QuestionSummary(
         id: 'q-1',
         title: '相似三角形综合题',
+        type: 'solution',
         subject: '数学',
         stage: '初中',
         grade: '九年级上',
         textbook: '浙教版',
         chapter: '圆与相似',
         difficulty: 4,
+        defaultScore: '10.00',
         tags: ['相似', '几何综合'],
         stemPreview: r'已知 \triangle ABC \sim \triangle DEF，求证对应边比相等并求角度范围。',
         previewBlocks: [
@@ -710,12 +712,14 @@ class ShiTiApiClient {
       QuestionSummary(
         id: 'q-2',
         title: '函数图像与最值',
+        type: 'solution',
         subject: '数学',
         stage: '初中',
         grade: '九年级下',
         textbook: '人教版',
         chapter: '二次函数',
         difficulty: 3,
+        defaultScore: '10.00',
         tags: ['函数', '最值'],
         stemPreview: r'设抛物线 y=ax^2+bx+c 与 x 轴交于两点，讨论顶点坐标与最值。',
         previewBlocks: [
@@ -727,12 +731,14 @@ class ShiTiApiClient {
       QuestionSummary(
         id: 'q-3',
         title: '浮力实验与数据分析',
+        type: 'solution',
         subject: '物理',
         stage: '初中',
         grade: '八年级下',
         textbook: '通用版',
         chapter: '压强与浮力',
         difficulty: 2,
+        defaultScore: '8.00',
         tags: ['实验题', '浮力'],
         stemPreview: r'根据实验记录表分析排开液体体积与浮力大小的关系。',
         previewBlocks: [
@@ -797,12 +803,14 @@ class ShiTiApiClient {
       'q-1': QuestionDetail(
         id: 'q-1',
         title: '相似三角形综合题',
+        type: 'solution',
         subject: '数学',
         stage: '初中',
         grade: '九年级上',
         textbook: '浙教版',
         chapter: '圆与相似',
         difficulty: 4,
+        defaultScore: '10.00',
         tags: ['相似', '几何综合'],
         stemBlocks: [
           {
@@ -3378,12 +3386,14 @@ class ShiTiApiClient {
       'q-2': QuestionDetail(
         id: 'q-2',
         title: '函数图像与最值',
+        type: 'solution',
         subject: '数学',
         stage: '初中',
         grade: '九年级下',
         textbook: '人教版',
         chapter: '二次函数',
         difficulty: 3,
+        defaultScore: '10.00',
         tags: ['函数', '最值'],
         stemBlocks: [
           {'type': 'text', 'text': r'设抛物线 y=ax^2+bx+c 与 x 轴交于两点。'},
@@ -3432,12 +3442,14 @@ class ShiTiApiClient {
       'q-3': QuestionDetail(
         id: 'q-3',
         title: '浮力实验与数据分析',
+        type: 'solution',
         subject: '物理',
         stage: '初中',
         grade: '八年级下',
         textbook: '通用版',
         chapter: '压强与浮力',
         difficulty: 2,
+        defaultScore: '8.00',
         tags: ['实验题', '浮力'],
         stemBlocks: [
           {'type': 'text', 'text': '根据实验记录表分析排开液体体积与浮力大小的关系。'},
