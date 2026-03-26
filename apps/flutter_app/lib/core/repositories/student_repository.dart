@@ -25,7 +25,11 @@ abstract class StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   });
 
   Future<void> deleteStudent(String studentId);
@@ -47,8 +51,7 @@ class FakeStudentRepository implements StudentRepository {
     final normalizedClassId = classId?.trim();
     final normalizedLessonId = lessonId?.trim();
     return _records.where((student) {
-      final matchesKeyword =
-          keyword.isEmpty ||
+      final matchesKeyword = keyword.isEmpty ||
           student.name.toLowerCase().contains(keyword) ||
           student.className.toLowerCase().contains(keyword) ||
           student.textbookLabel.toLowerCase().contains(keyword) ||
@@ -117,7 +120,11 @@ class FakeStudentRepository implements StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   }) async {
     final index = _records.indexWhere((student) => student.id == studentId);
     if (index < 0) {
@@ -127,11 +134,11 @@ class FakeStudentRepository implements StudentRepository {
     final updated = StudentWorkspaceRecord(
       id: current.id,
       name: name,
-      classId: current.classId,
-      className: className ?? '',
-      lessonId: current.lessonId,
-      documentId: current.documentId,
-      documentName: current.documentName,
+      classId: classId ?? current.classId,
+      className: className ?? current.className,
+      lessonId: lessonId ?? current.lessonId,
+      documentId: documentId ?? current.documentId,
+      documentName: documentName ?? current.documentName,
       gradeLabel: gradeLabel,
       subjectLabel: subjectLabel,
       textbookLabel: textbookLabel,
@@ -188,13 +195,15 @@ class RemoteStudentRepository implements StudentRepository {
     );
     return response
         .whereType<Map>()
-        .map((item) => StudentWorkspaceRecord.fromJson(Map<String, dynamic>.from(item)))
+        .map((item) =>
+            StudentWorkspaceRecord.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 
   @override
   Future<StudentWorkspaceRecord?> getStudent(String studentId) async {
-    final response = await _client.getObject('/students/$studentId', objectKey: 'student');
+    final response =
+        await _client.getObject('/students/$studentId', objectKey: 'student');
     if (response.isEmpty) {
       return null;
     }
@@ -220,7 +229,8 @@ class RemoteStudentRepository implements StudentRepository {
           'className': className.trim(),
       },
     );
-    return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);
+    return StudentWorkspaceRecord.fromJson(
+        response['student'] as Map<String, dynamic>);
   }
 
   @override
@@ -230,7 +240,11 @@ class RemoteStudentRepository implements StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   }) async {
     final response = await _client.patchObject(
       '/students/$studentId',
@@ -239,10 +253,15 @@ class RemoteStudentRepository implements StudentRepository {
         'gradeLabel': gradeLabel,
         'subjectLabel': subjectLabel,
         'textbookLabel': textbookLabel,
+        'classId': classId,
         'className': className,
+        'lessonId': lessonId,
+        'documentId': documentId,
+        'documentName': documentName,
       },
     );
-    return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);
+    return StudentWorkspaceRecord.fromJson(
+        response['student'] as Map<String, dynamic>);
   }
 
   @override
