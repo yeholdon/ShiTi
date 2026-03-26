@@ -113,6 +113,7 @@ created_student = request(
         "gradeLabel": "初中 · 九年级下",
         "subjectLabel": "数学",
         "textbookLabel": "浙教版",
+        "classId": updated_class["id"],
         "className": updated_class["name"],
     },
 )["student"]
