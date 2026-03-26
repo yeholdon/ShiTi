@@ -123,6 +123,22 @@ updated_student = request(
     },
 )["student"]
 
+updated_class = request(
+    "PATCH",
+    f"/classes/{created_class['id']}",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={
+        "name": updated_class["name"],
+        "stageLabel": updated_class["stageLabel"],
+        "teacherLabel": updated_class["teacherLabel"],
+        "textbookLabel": updated_class["textbookLabel"],
+        "focusLabel": updated_class["focusLabel"],
+        "focusStudentId": updated_student["id"],
+        "focusStudentName": updated_student["name"],
+    },
+)["class"]
+
 created_lesson = request(
     "POST",
     "/lessons",
@@ -146,6 +162,8 @@ updated_lesson = request(
         "teacherLabel": "主讲：更新老师",
         "scheduleLabel": "周六 14:00",
         "classScopeLabel": updated_class["name"],
+        "focusStudentId": updated_student["id"],
+        "focusStudentName": updated_student["name"],
     },
 )["lesson"]
 
@@ -207,7 +225,7 @@ payload["pre_delete_routes"] = {
         "/classes/detail",
         {
             "classId": updated_class["id"],
-            "flashMessage": f"已更新 {updated_class['name']} 的班级档案。",
+            "flashMessage": f"已更新 {updated_class['name']} 的班级档案，并设置重点学生为 {updated_student['name']}。",
         },
     ),
     "lessons-created-live": build_hash_route(
@@ -224,7 +242,7 @@ payload["pre_delete_routes"] = {
         "/lessons/detail",
         {
             "lessonId": updated_lesson["id"],
-            "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案。",
+            "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案，并设置反馈学生为 {updated_student['name']}。",
         },
     ),
 }
