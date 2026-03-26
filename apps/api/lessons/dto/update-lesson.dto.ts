@@ -1,39 +1,44 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from "class-validator";
 
 export class UpdateLessonDto {
   @IsOptional()
-  @IsString({ message: 'Invalid title' })
+  @IsString({ message: "Invalid title" })
   title?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid teacherLabel' })
+  @IsString({ message: "Invalid teacherLabel" })
   teacherLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid scheduleLabel' })
+  @IsString({ message: "Invalid scheduleLabel" })
   scheduleLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid classScopeLabel' })
+  @IsString({ message: "Invalid classScopeLabel" })
   classScopeLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid focusStudentId' })
+  @IsString({ message: "Invalid focusStudentId" })
   focusStudentId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid focusStudentName' })
+  @IsString({ message: "Invalid focusStudentName" })
   focusStudentName?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid classId' })
+  @IsString({ message: "Invalid classId" })
   classId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid documentId' })
+  @IsString({ message: "Invalid documentId" })
   documentId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid documentFocus' })
+  @IsString({ message: "Invalid documentFocus" })
   documentFocus?: string;
+
+  @IsOptional()
+  @IsArray({ message: "Invalid feedbackStudentIds" })
+  @IsString({ each: true, message: "Invalid feedbackStudentIds" })
+  feedbackStudentIds?: string[];
 }

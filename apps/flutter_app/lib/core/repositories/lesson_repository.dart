@@ -29,6 +29,7 @@ abstract class LessonRepository {
     String? classId,
     String? documentId,
     String? documentFocus,
+    List<String>? feedbackStudentIds,
   });
 
   Future<void> deleteLesson(String lessonId);
@@ -122,6 +123,7 @@ class FakeLessonRepository implements LessonRepository {
     String? classId,
     String? documentId,
     String? documentFocus,
+    List<String>? feedbackStudentIds,
   }) async {
     final index = _records.indexWhere((item) => item.id == lessonId);
     if (index < 0) {
@@ -141,7 +143,11 @@ class FakeLessonRepository implements LessonRepository {
       classScopeLabel: classScopeLabel,
       documentFocus: documentFocus ?? current.documentFocus,
       documentId: documentId ?? current.documentId,
-      feedbackStatus: current.feedbackStatus,
+      feedbackStatus: feedbackStudentIds == null
+          ? current.feedbackStatus
+          : feedbackStudentIds.isEmpty
+              ? '待回收'
+              : '${feedbackStudentIds.length} 人已承接',
       followUpLabel: current.followUpLabel,
       feedbackInsight: current.feedbackInsight,
       feedbackRecords: current.feedbackRecords,
@@ -189,13 +195,15 @@ class RemoteLessonRepository implements LessonRepository {
     );
     return response
         .whereType<Map>()
-        .map((item) => LessonWorkspaceRecord.fromJson(Map<String, dynamic>.from(item)))
+        .map((item) =>
+            LessonWorkspaceRecord.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 
   @override
   Future<LessonWorkspaceRecord?> getLesson(String lessonId) async {
-    final response = await _client.getObject('/lessons/$lessonId', objectKey: 'lesson');
+    final response =
+        await _client.getObject('/lessons/$lessonId', objectKey: 'lesson');
     if (response.isEmpty) {
       return null;
     }
@@ -219,7 +227,8 @@ class RemoteLessonRepository implements LessonRepository {
           'classScopeLabel': classScopeLabel.trim(),
       },
     );
-    return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
+    return LessonWorkspaceRecord.fromJson(
+        response['lesson'] as Map<String, dynamic>);
   }
 
   @override
@@ -234,6 +243,7 @@ class RemoteLessonRepository implements LessonRepository {
     String? classId,
     String? documentId,
     String? documentFocus,
+    List<String>? feedbackStudentIds,
   }) async {
     final response = await _client.patchObject(
       '/lessons/$lessonId',
@@ -247,9 +257,12 @@ class RemoteLessonRepository implements LessonRepository {
         'classId': classId ?? '',
         'documentId': documentId ?? '',
         'documentFocus': documentFocus ?? '',
+        if (feedbackStudentIds != null)
+          'feedbackStudentIds': feedbackStudentIds,
       },
     );
-    return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
+    return LessonWorkspaceRecord.fromJson(
+        response['lesson'] as Map<String, dynamic>);
   }
 
   @override
