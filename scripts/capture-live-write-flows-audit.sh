@@ -144,6 +144,7 @@ updated_class = request(
         "focusLabel": updated_class["focusLabel"],
         "focusStudentId": updated_student["id"],
         "focusStudentName": updated_student["name"],
+        "memberStudentIds": [updated_student["id"]],
     },
 )["class"]
 
@@ -191,6 +192,7 @@ updated_class = request(
         "focusLabel": updated_class["focusLabel"],
         "focusStudentId": updated_student["id"],
         "focusStudentName": updated_student["name"],
+        "memberStudentIds": [updated_student["id"]],
         "lessonId": updated_lesson["id"],
         "lessonFocusLabel": updated_lesson["title"],
         "documentId": secondary_document["id"],
