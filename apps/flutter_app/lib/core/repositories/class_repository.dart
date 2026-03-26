@@ -17,6 +17,13 @@ abstract class ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     String? focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
+    List<String>? memberStudentIds,
   });
 
   Future<ClassWorkspaceRecord> updateClass({
@@ -93,25 +100,35 @@ class FakeClassRepository implements ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     String? focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
+    List<String>? memberStudentIds,
   }) async {
+    final normalizedMemberStudentIds = memberStudentIds ?? const <String>[];
     final created = ClassWorkspaceRecord(
       id: 'class-${_records.length + 1}',
       name: name,
-      lessonId: '',
-      documentId: '',
-      focusStudentId: '',
-      focusStudentName: '',
+      lessonId: lessonId ?? '',
+      documentId: documentId ?? '',
+      focusStudentId: focusStudentId ?? '',
+      focusStudentName: focusStudentName ?? '',
       stageLabel: stageLabel,
       teacherLabel: teacherLabel,
       textbookLabel: textbookLabel,
       focusLabel: focusLabel ?? '讲义整理',
       activityLabel: '新建档案',
-      classSizeLabel: '0 人 · 待补充',
-      lessonFocusLabel: '待安排课堂',
+      classSizeLabel: normalizedMemberStudentIds.isEmpty
+          ? '0 人 · 待补充'
+          : '${normalizedMemberStudentIds.length} 人 · 实时关联',
+      lessonFocusLabel: lessonFocusLabel ?? '待安排课堂',
       structureInsight: '新建班级档案，等待补充学生、课堂时间线与资料联动。',
-      studentCount: 0,
+      studentCount: normalizedMemberStudentIds.length,
       weeklyLessonCount: 0,
-      latestDocLabel: '暂无资料',
+      latestDocLabel: latestDocLabel ?? '暂无资料',
       assetLinks: const [],
       memberTiers: const [],
       lessonTimeline: const [],
@@ -275,6 +292,13 @@ class RemoteClassRepository implements ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     String? focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
+    List<String>? memberStudentIds,
   }) async {
     final response = await _client.postObject(
       '/classes',
@@ -285,6 +309,19 @@ class RemoteClassRepository implements ClassRepository {
         'textbookLabel': textbookLabel,
         if (focusLabel != null && focusLabel.trim().isNotEmpty)
           'focusLabel': focusLabel.trim(),
+        if (focusStudentId != null && focusStudentId.trim().isNotEmpty)
+          'focusStudentId': focusStudentId.trim(),
+        if (focusStudentName != null && focusStudentName.trim().isNotEmpty)
+          'focusStudentName': focusStudentName.trim(),
+        if (lessonId != null && lessonId.trim().isNotEmpty)
+          'lessonId': lessonId.trim(),
+        if (lessonFocusLabel != null && lessonFocusLabel.trim().isNotEmpty)
+          'lessonFocusLabel': lessonFocusLabel.trim(),
+        if (documentId != null && documentId.trim().isNotEmpty)
+          'documentId': documentId.trim(),
+        if (latestDocLabel != null && latestDocLabel.trim().isNotEmpty)
+          'latestDocLabel': latestDocLabel.trim(),
+        if (memberStudentIds != null) 'memberStudentIds': memberStudentIds,
       },
     );
     return ClassWorkspaceRecord.fromJson(

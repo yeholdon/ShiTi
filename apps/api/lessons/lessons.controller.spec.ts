@@ -34,21 +34,22 @@ function makePrisma(overrides: Partial<any> = {}) {
 
 describe("LessonsController", () => {
   it("creates lesson profile under current tenant", async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const create = jest.fn().mockResolvedValue({
       tenantId: "t1",
       id: "lesson-4",
       title: "新课堂",
-      classId: null,
+      classId: "class-2",
       className: "九年级尖子班",
-      focusStudentId: null,
-      focusStudentName: null,
+      focusStudentId: "student-2",
+      focusStudentName: "徐若楠",
       teacherLabel: "主讲：李老师",
       scheduleLabel: "周五 19:00",
       scheduleTag: "待安排",
       classScopeLabel: "九年级尖子班",
-      documentFocus: "未绑定资料",
-      documentId: null,
-      feedbackStatus: "待回收",
+      documentFocus: "二次函数周测卷",
+      documentId: "doc-2",
+      feedbackStatus: "1 人已承接",
       followUpLabel: "待安排",
       feedbackInsight: "insight",
       feedbackRecords: [],
@@ -61,6 +62,9 @@ describe("LessonsController", () => {
       updatedAt: new Date(),
     });
     const prisma = makePrisma({
+      studentProfile: {
+        updateMany,
+      },
       lessonSession: {
         create,
         findMany: jest.fn(),
@@ -76,17 +80,40 @@ describe("LessonsController", () => {
         teacherLabel: "主讲：李老师",
         scheduleLabel: "周五 19:00",
         classScopeLabel: "九年级尖子班",
+        classId: "class-2",
+        focusStudentId: "student-2",
+        focusStudentName: "徐若楠",
+        documentId: "doc-2",
+        documentFocus: "二次函数周测卷",
+        feedbackStudentIds: ["student-2"],
       },
     );
 
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: "t1",
+          id: { in: ["student-2"] },
+        }),
+        data: {
+          lessonId: expect.any(String),
+        },
+      }),
+    );
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           tenantId: "t1",
           title: "新课堂",
+          classId: "class-2",
+          focusStudentId: "student-2",
+          focusStudentName: "徐若楠",
           teacherLabel: "主讲：李老师",
           scheduleLabel: "周五 19:00",
           classScopeLabel: "九年级尖子班",
+          documentFocus: "二次函数周测卷",
+          documentId: "doc-2",
+          feedbackStatus: "1 人已承接",
         }),
       }),
     );

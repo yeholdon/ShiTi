@@ -71,22 +71,62 @@ export class LessonsController {
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
     const normalizedClassScopeLabel = body.classScopeLabel?.trim();
+    const normalizedFocusStudentId = body.focusStudentId?.trim();
+    const normalizedFocusStudentName = body.focusStudentName?.trim();
+    const normalizedClassId = body.classId?.trim();
+    const normalizedDocumentId = body.documentId?.trim();
+    const normalizedDocumentFocus = body.documentFocus?.trim();
+    const normalizedFeedbackStudentIds = [
+      ...new Set(
+        (body.feedbackStudentIds ?? [])
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0),
+      ),
+    ];
+    const lessonId = randomUUID();
 
-    const lesson = await this.prisma.withTenant(tenantId, (tx) =>
-      tx.lessonSession.create({
+    const lesson = await this.prisma.withTenant(tenantId, async (tx) => {
+      if (normalizedFeedbackStudentIds.length > 0) {
+        await tx.studentProfile.updateMany({
+          where: {
+            tenantId,
+            id: {
+              in: normalizedFeedbackStudentIds,
+            },
+          },
+          data: {
+            lessonId,
+          },
+        });
+      }
+
+      return tx.lessonSession.create({
         data: {
           tenantId,
-          id: randomUUID(),
+          id: lessonId,
           title: body.title.trim(),
-          classId: null,
+          classId:
+            normalizedClassId != null && normalizedClassId.length > 0
+              ? normalizedClassId
+              : null,
           className:
             normalizedClassScopeLabel != null &&
             normalizedClassScopeLabel.length > 0 &&
             normalizedClassScopeLabel != "未绑定班级"
               ? normalizedClassScopeLabel
               : null,
-          focusStudentId: null,
-          focusStudentName: null,
+          focusStudentId:
+            normalizedFocusStudentId != null &&
+            normalizedFocusStudentId.length > 0
+              ? normalizedFocusStudentId
+              : null,
+          focusStudentName:
+            normalizedFocusStudentId != null &&
+            normalizedFocusStudentId.length > 0 &&
+            normalizedFocusStudentName != null &&
+            normalizedFocusStudentName.length > 0
+              ? normalizedFocusStudentName
+              : null,
           teacherLabel: body.teacherLabel.trim(),
           scheduleLabel: body.scheduleLabel.trim(),
           scheduleTag: "待安排",
@@ -95,9 +135,21 @@ export class LessonsController {
             normalizedClassScopeLabel.length > 0
               ? normalizedClassScopeLabel
               : "未绑定班级",
-          documentFocus: "未绑定资料",
-          documentId: null,
-          feedbackStatus: "待回收",
+          documentFocus:
+            normalizedDocumentId != null &&
+            normalizedDocumentId.length > 0 &&
+            normalizedDocumentFocus != null &&
+            normalizedDocumentFocus.length > 0
+              ? normalizedDocumentFocus
+              : "未绑定资料",
+          documentId:
+            normalizedDocumentId != null && normalizedDocumentId.length > 0
+              ? normalizedDocumentId
+              : null,
+          feedbackStatus:
+            normalizedFeedbackStudentIds.length === 0
+              ? "待回收"
+              : `${normalizedFeedbackStudentIds.length} 人已承接`,
           followUpLabel: "待安排",
           feedbackInsight: "新建课堂档案，等待补充资料、反馈明细与课后任务。",
           feedbackRecords: [],
@@ -108,8 +160,8 @@ export class LessonsController {
           nextStep: "绑定班级、安排主资料并补充首轮课后反馈。",
           archivedAt: null,
         },
-      }),
-    );
+      });
+    });
 
     return { lesson: mapLessonRecord(lesson) };
   }

@@ -16,6 +16,12 @@ abstract class LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     String? classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? classId,
+    String? documentId,
+    String? documentFocus,
+    List<String>? feedbackStudentIds,
   });
 
   Future<LessonWorkspaceRecord> updateLesson({
@@ -89,21 +95,30 @@ class FakeLessonRepository implements LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     String? classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? classId,
+    String? documentId,
+    String? documentFocus,
+    List<String>? feedbackStudentIds,
   }) async {
+    final normalizedFeedbackStudentIds = feedbackStudentIds ?? const <String>[];
     final created = LessonWorkspaceRecord(
       id: 'lesson-${_records.length + 1}',
       title: title,
-      classId: '',
+      classId: classId ?? '',
       className: classScopeLabel == '未绑定班级' ? '' : (classScopeLabel ?? ''),
-      focusStudentId: '',
-      focusStudentName: '',
+      focusStudentId: focusStudentId ?? '',
+      focusStudentName: focusStudentName ?? '',
       teacherLabel: teacherLabel,
       scheduleLabel: scheduleLabel,
       scheduleTag: '待安排',
       classScopeLabel: classScopeLabel ?? '未绑定班级',
-      documentFocus: '未绑定资料',
-      documentId: '',
-      feedbackStatus: '待回收',
+      documentFocus: documentFocus ?? '未绑定资料',
+      documentId: documentId ?? '',
+      feedbackStatus: normalizedFeedbackStudentIds.isEmpty
+          ? '待回收'
+          : '${normalizedFeedbackStudentIds.length} 人已承接',
       followUpLabel: '待安排',
       feedbackInsight: '新建课堂档案，等待补充资料、反馈明细与课后任务。',
       feedbackRecords: const [],
@@ -262,6 +277,12 @@ class RemoteLessonRepository implements LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     String? classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
+    String? classId,
+    String? documentId,
+    String? documentFocus,
+    List<String>? feedbackStudentIds,
   }) async {
     final response = await _client.postObject(
       '/lessons',
@@ -271,6 +292,18 @@ class RemoteLessonRepository implements LessonRepository {
         'scheduleLabel': scheduleLabel,
         if (classScopeLabel != null && classScopeLabel.trim().isNotEmpty)
           'classScopeLabel': classScopeLabel.trim(),
+        if (focusStudentId != null && focusStudentId.trim().isNotEmpty)
+          'focusStudentId': focusStudentId.trim(),
+        if (focusStudentName != null && focusStudentName.trim().isNotEmpty)
+          'focusStudentName': focusStudentName.trim(),
+        if (classId != null && classId.trim().isNotEmpty)
+          'classId': classId.trim(),
+        if (documentId != null && documentId.trim().isNotEmpty)
+          'documentId': documentId.trim(),
+        if (documentFocus != null && documentFocus.trim().isNotEmpty)
+          'documentFocus': documentFocus.trim(),
+        if (feedbackStudentIds != null)
+          'feedbackStudentIds': feedbackStudentIds,
       },
     );
     return LessonWorkspaceRecord.fromJson(

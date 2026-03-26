@@ -73,17 +73,63 @@ export class ClassesController {
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
     const normalizedFocusLabel = body.focusLabel?.trim();
+    const normalizedFocusStudentId = body.focusStudentId?.trim();
+    const normalizedFocusStudentName = body.focusStudentName?.trim();
+    const normalizedLessonId = body.lessonId?.trim();
+    const normalizedLessonFocusLabel = body.lessonFocusLabel?.trim();
+    const normalizedDocumentId = body.documentId?.trim();
+    const normalizedLatestDocLabel = body.latestDocLabel?.trim();
+    const normalizedMemberStudentIds = [
+      ...new Set(
+        (body.memberStudentIds ?? [])
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0),
+      ),
+    ];
+    const classId = randomUUID();
+    const className = body.name.trim();
 
-    const classroom = await this.prisma.withTenant(tenantId, (tx) =>
-      tx.teachingClass.create({
+    const classroom = await this.prisma.withTenant(tenantId, async (tx) => {
+      if (normalizedMemberStudentIds.length > 0) {
+        await tx.studentProfile.updateMany({
+          where: {
+            tenantId,
+            id: {
+              in: normalizedMemberStudentIds,
+            },
+          },
+          data: {
+            classId,
+            className,
+          },
+        });
+      }
+
+      return tx.teachingClass.create({
         data: {
           tenantId,
-          id: randomUUID(),
-          name: body.name.trim(),
-          lessonId: null,
-          documentId: null,
-          focusStudentId: null,
-          focusStudentName: null,
+          id: classId,
+          name: className,
+          lessonId:
+            normalizedLessonId != null && normalizedLessonId.length > 0
+              ? normalizedLessonId
+              : null,
+          documentId:
+            normalizedDocumentId != null && normalizedDocumentId.length > 0
+              ? normalizedDocumentId
+              : null,
+          focusStudentId:
+            normalizedFocusStudentId != null &&
+            normalizedFocusStudentId.length > 0
+              ? normalizedFocusStudentId
+              : null,
+          focusStudentName:
+            normalizedFocusStudentId != null &&
+            normalizedFocusStudentId.length > 0 &&
+            normalizedFocusStudentName != null &&
+            normalizedFocusStudentName.length > 0
+              ? normalizedFocusStudentName
+              : null,
           stageLabel: body.stageLabel.trim(),
           teacherLabel: body.teacherLabel.trim(),
           textbookLabel: body.textbookLabel.trim(),
@@ -92,13 +138,28 @@ export class ClassesController {
               ? normalizedFocusLabel
               : "讲义整理",
           activityLabel: "新建档案",
-          classSizeLabel: "0 人 · 待补充",
-          lessonFocusLabel: "待安排课堂",
+          classSizeLabel:
+            normalizedMemberStudentIds.length === 0
+              ? "0 人 · 待补充"
+              : `${normalizedMemberStudentIds.length} 人 · 实时关联`,
+          lessonFocusLabel:
+            normalizedLessonId != null &&
+            normalizedLessonId.length > 0 &&
+            normalizedLessonFocusLabel != null &&
+            normalizedLessonFocusLabel.length > 0
+              ? normalizedLessonFocusLabel
+              : "待安排课堂",
           structureInsight:
             "新建班级档案，等待补充学生、课堂时间线与资料联动。",
-          studentCount: 0,
+          studentCount: normalizedMemberStudentIds.length,
           weeklyLessonCount: 0,
-          latestDocLabel: "暂无资料",
+          latestDocLabel:
+            normalizedDocumentId != null &&
+            normalizedDocumentId.length > 0 &&
+            normalizedLatestDocLabel != null &&
+            normalizedLatestDocLabel.length > 0
+              ? normalizedLatestDocLabel
+              : "暂无资料",
           assetLinks: [],
           memberTiers: [],
           lessonTimeline: [],
@@ -107,8 +168,8 @@ export class ClassesController {
           nextStep: "补充班级成员、安排第一堂课并关联资料。",
           archivedAt: null,
         },
-      }),
-    );
+      });
+    });
 
     return { class: mapClassRecord(classroom) };
   }

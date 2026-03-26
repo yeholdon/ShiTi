@@ -86,6 +86,8 @@ created_class = request(
         "teacherLabel": "主讲：审计老师",
         "textbookLabel": "浙教版",
         "focusLabel": "讲义整理",
+        "documentId": secondary_document["id"],
+        "latestDocLabel": secondary_document["name"],
     },
 )["class"]
 
@@ -159,6 +161,12 @@ created_lesson = request(
         "teacherLabel": "主讲：审计老师",
         "scheduleLabel": "周五 19:00",
         "classScopeLabel": updated_class["name"],
+        "classId": updated_class["id"],
+        "documentId": primary_document["id"],
+        "documentFocus": primary_document["name"],
+        "focusStudentId": updated_student["id"],
+        "focusStudentName": updated_student["name"],
+        "feedbackStudentIds": [updated_student["id"]],
     },
 )["lesson"]
 

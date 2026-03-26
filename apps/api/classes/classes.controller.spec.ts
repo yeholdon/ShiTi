@@ -34,25 +34,26 @@ function makePrisma(overrides: Partial<any> = {}) {
 
 describe("ClassesController", () => {
   it("creates class profile under current tenant", async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const create = jest.fn().mockResolvedValue({
       tenantId: "t1",
       id: "class-4",
       name: "九年级新班",
-      lessonId: null,
-      documentId: null,
-      focusStudentId: null,
-      focusStudentName: null,
+      lessonId: "lesson-2",
+      documentId: "doc-2",
+      focusStudentId: "student-2",
+      focusStudentName: "徐若楠",
       stageLabel: "初中 · 九年级",
       teacherLabel: "主讲：王老师",
       textbookLabel: "浙教版",
       focusLabel: "讲义整理",
       activityLabel: "新建档案",
-      classSizeLabel: "0 人 · 待补充",
-      lessonFocusLabel: "待安排课堂",
+      classSizeLabel: "1 人 · 实时关联",
+      lessonFocusLabel: "相似三角形讲评课",
       structureInsight: "insight",
-      studentCount: 0,
+      studentCount: 1,
       weeklyLessonCount: 0,
-      latestDocLabel: "暂无资料",
+      latestDocLabel: "二次函数周测卷",
       assetLinks: [],
       memberTiers: [],
       lessonTimeline: [],
@@ -63,6 +64,9 @@ describe("ClassesController", () => {
       updatedAt: new Date(),
     });
     const prisma = makePrisma({
+      studentProfile: {
+        updateMany,
+      },
       teachingClass: {
         create,
         findMany: jest.fn(),
@@ -79,18 +83,45 @@ describe("ClassesController", () => {
         teacherLabel: "主讲：王老师",
         textbookLabel: "浙教版",
         focusLabel: "讲义整理",
+        focusStudentId: "student-2",
+        focusStudentName: "徐若楠",
+        lessonId: "lesson-2",
+        lessonFocusLabel: "相似三角形讲评课",
+        documentId: "doc-2",
+        latestDocLabel: "二次函数周测卷",
+        memberStudentIds: ["student-2"],
       },
     );
 
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: "t1",
+          id: { in: ["student-2"] },
+        }),
+        data: expect.objectContaining({
+          classId: expect.any(String),
+          className: "九年级新班",
+        }),
+      }),
+    );
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           tenantId: "t1",
           name: "九年级新班",
+          lessonId: "lesson-2",
+          documentId: "doc-2",
+          focusStudentId: "student-2",
+          focusStudentName: "徐若楠",
           stageLabel: "初中 · 九年级",
           teacherLabel: "主讲：王老师",
           textbookLabel: "浙教版",
           focusLabel: "讲义整理",
+          classSizeLabel: "1 人 · 实时关联",
+          lessonFocusLabel: "相似三角形讲评课",
+          studentCount: 1,
+          latestDocLabel: "二次函数周测卷",
         }),
       }),
     );
