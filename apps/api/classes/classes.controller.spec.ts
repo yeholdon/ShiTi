@@ -244,6 +244,8 @@ describe('ClassesController', () => {
         focusLabel: '课堂复盘',
         focusStudentId: 'student-2',
         focusStudentName: '徐若楠',
+        lessonId: 'lesson-2',
+        lessonFocusLabel: '相似三角形讲义推进课',
       },
     );
 
@@ -257,6 +259,8 @@ describe('ClassesController', () => {
           focusLabel: '课堂复盘',
           focusStudentId: 'student-2',
           focusStudentName: '徐若楠',
+          lessonId: 'lesson-2',
+          lessonFocusLabel: '相似三角形讲义推进课',
         }),
       }),
     );

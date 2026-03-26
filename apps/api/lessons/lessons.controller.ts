@@ -181,6 +181,7 @@ export class LessonsController {
     const normalizedClassScopeLabel = body.classScopeLabel?.trim();
     const normalizedFocusStudentId = body.focusStudentId?.trim();
     const normalizedFocusStudentName = body.focusStudentName?.trim();
+    const normalizedClassId = body.classId?.trim();
 
     const lesson = await this.prisma.withTenant(tenantId, (tx) =>
       tx.lessonSession.update({
@@ -208,11 +209,24 @@ export class LessonsController {
                   ? normalizedClassScopeLabel
                   : current.classScopeLabel,
           className: body.classScopeLabel == null
-              ? current.className
+              ? (body.classId == null
+                  ? current.className
+                  : (normalizedClassId != null &&
+                          normalizedClassId.length > 0 &&
+                          normalizedClassScopeLabel != null &&
+                          normalizedClassScopeLabel.length > 0 &&
+                          normalizedClassScopeLabel != '未绑定班级'
+                      ? normalizedClassScopeLabel
+                      : null))
               : (normalizedClassScopeLabel != null &&
                       normalizedClassScopeLabel.length > 0 &&
                       normalizedClassScopeLabel != '未绑定班级'
                   ? normalizedClassScopeLabel
+                  : null),
+          classId: body.classId == null
+              ? current.classId
+              : (normalizedClassId != null && normalizedClassId.length > 0
+                  ? normalizedClassId
                   : null),
           focusStudentId: body.focusStudentId == null
               ? current.focusStudentId

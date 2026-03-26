@@ -233,6 +233,7 @@ describe('LessonsController', () => {
         classScopeLabel: '九年级提高班',
         focusStudentId: 'student-2',
         focusStudentName: '徐若楠',
+        classId: 'class-2',
       },
     );
 
@@ -246,6 +247,7 @@ describe('LessonsController', () => {
           className: '九年级提高班',
           focusStudentId: 'student-2',
           focusStudentName: '徐若楠',
+          classId: 'class-2',
         }),
       }),
     );

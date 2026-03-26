@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../classes/class_workspace_data.dart';
 import '../shared/workspace_shell.dart';
 import 'lesson_workspace_data.dart';
 import '../students/student_workspace_data.dart';
@@ -34,9 +35,11 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
       TextEditingController(text: widget.lesson.teacherLabel);
   late final TextEditingController _scheduleController =
       TextEditingController(text: widget.lesson.scheduleLabel);
-  late String _classScopeLabel = widget.lesson.classScopeLabel;
+  late String _classId = widget.lesson.classId;
   late String _focusStudentId = widget.lesson.focusStudentId;
+  List<ClassWorkspaceRecord> _classes = const [];
   List<StudentWorkspaceRecord> _students = const [];
+  bool _loadingClasses = true;
   bool _loadingStudents = true;
   bool _submitting = false;
   String? _errorMessage;
@@ -44,6 +47,7 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
   @override
   void initState() {
     super.initState();
+    _loadClasses();
     _loadStudents();
   }
 
@@ -53,6 +57,27 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
     _teacherController.dispose();
     _scheduleController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadClasses() async {
+    try {
+      final classes = await AppServices.instance.classRepository.listClasses();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _classes = classes;
+        _loadingClasses = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _classes = const [];
+        _loadingClasses = false;
+      });
+    }
   }
 
   Future<void> _loadStudents() async {
@@ -91,15 +116,21 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
             (student) => student?.id == _focusStudentId,
             orElse: () => null,
           );
+      final selectedClass = _classes.cast<ClassWorkspaceRecord?>().firstWhere(
+            (classroom) => classroom?.id == _classId,
+            orElse: () => null,
+          );
       final updated = await AppServices.instance.lessonRepository.updateLesson(
         lessonId: widget.lesson.id,
         title: _titleController.text.trim(),
         teacherLabel: _teacherController.text.trim(),
         scheduleLabel: _scheduleController.text.trim(),
-        classScopeLabel: _classScopeLabel,
+        classScopeLabel:
+            _classId.isEmpty ? '未绑定班级' : (selectedClass?.name ?? widget.lesson.classScopeLabel),
         focusStudentId: _focusStudentId.isEmpty ? '' : _focusStudentId,
         focusStudentName:
             _focusStudentId.isEmpty ? '' : (selectedFocusStudent?.name ?? ''),
+        classId: _classId.isEmpty ? '' : _classId,
       );
       if (!mounted) {
         return;
@@ -128,6 +159,9 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
   Widget build(BuildContext context) {
     final focusStudentValue = _students.any((student) => student.id == _focusStudentId)
         ? _focusStudentId
+        : '';
+    final classValue = _classes.any((classroom) => classroom.id == _classId)
+        ? _classId
         : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -199,22 +233,25 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: _classScopeLabel,
+                  initialValue: classValue,
                   decoration: const InputDecoration(
-                    labelText: '班级范围',
+                    labelText: '关联班级',
                     border: OutlineInputBorder(),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: '未绑定班级', child: Text('未绑定班级')),
-                    DropdownMenuItem(value: '九年级尖子班', child: Text('九年级尖子班')),
-                    DropdownMenuItem(value: '九年级提高班', child: Text('九年级提高班')),
-                    DropdownMenuItem(value: '高一函数培优班', child: Text('高一函数培优班')),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._classes.map(
+                      (classroom) => DropdownMenuItem(
+                        value: classroom.id,
+                        child: Text(classroom.name),
+                      ),
+                    ),
                   ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _classScopeLabel = value);
-                    }
-                  },
+                  onChanged: _loadingClasses
+                      ? null
+                      : (value) {
+                          setState(() => _classId = value ?? '');
+                        },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(

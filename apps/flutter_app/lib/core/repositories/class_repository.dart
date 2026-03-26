@@ -28,6 +28,8 @@ abstract class ClassRepository {
     required String focusLabel,
     String? focusStudentId,
     String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
   });
 
   Future<void> deleteClass(String classId);
@@ -122,6 +124,8 @@ class FakeClassRepository implements ClassRepository {
     required String focusLabel,
     String? focusStudentId,
     String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
   }) async {
     final index = _records.indexWhere((item) => item.id == classId);
     if (index < 0) {
@@ -131,7 +135,7 @@ class FakeClassRepository implements ClassRepository {
     final updated = ClassWorkspaceRecord(
       id: current.id,
       name: name,
-      lessonId: current.lessonId,
+      lessonId: lessonId ?? current.lessonId,
       documentId: current.documentId,
       focusStudentId: focusStudentId ?? current.focusStudentId,
       focusStudentName: focusStudentName ?? current.focusStudentName,
@@ -141,7 +145,7 @@ class FakeClassRepository implements ClassRepository {
       focusLabel: focusLabel,
       activityLabel: current.activityLabel,
       classSizeLabel: current.classSizeLabel,
-      lessonFocusLabel: current.lessonFocusLabel,
+      lessonFocusLabel: lessonFocusLabel ?? current.lessonFocusLabel,
       structureInsight: current.structureInsight,
       studentCount: current.studentCount,
       weeklyLessonCount: current.weeklyLessonCount,
@@ -236,6 +240,8 @@ class RemoteClassRepository implements ClassRepository {
     required String focusLabel,
     String? focusStudentId,
     String? focusStudentName,
+    String? lessonId,
+    String? lessonFocusLabel,
   }) async {
     final response = await _client.patchObject(
       '/classes/$classId',
@@ -247,6 +253,8 @@ class RemoteClassRepository implements ClassRepository {
         'focusLabel': focusLabel,
         'focusStudentId': focusStudentId ?? '',
         'focusStudentName': focusStudentName ?? '',
+        'lessonId': lessonId ?? '',
+        'lessonFocusLabel': lessonFocusLabel ?? '',
       },
     );
     return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);

@@ -183,6 +183,8 @@ export class ClassesController {
     const normalizedFocusLabel = body.focusLabel?.trim();
     const normalizedFocusStudentId = body.focusStudentId?.trim();
     const normalizedFocusStudentName = body.focusStudentName?.trim();
+    const normalizedLessonId = body.lessonId?.trim();
+    const normalizedLessonFocusLabel = body.lessonFocusLabel?.trim();
 
     const classroom = await this.prisma.withTenant(tenantId, (tx) =>
       tx.teachingClass.update({
@@ -226,6 +228,24 @@ export class ClassesController {
                       normalizedFocusStudentName.length > 0
                   ? normalizedFocusStudentName
                   : null),
+          lessonId: body.lessonId == null
+              ? current.lessonId
+              : (normalizedLessonId != null && normalizedLessonId.length > 0
+                  ? normalizedLessonId
+                  : null),
+          lessonFocusLabel: body.lessonId == null
+              ? (body.lessonFocusLabel == null
+                  ? current.lessonFocusLabel
+                  : (normalizedLessonFocusLabel != null &&
+                          normalizedLessonFocusLabel.length > 0
+                      ? normalizedLessonFocusLabel
+                      : current.lessonFocusLabel))
+              : (normalizedLessonId != null && normalizedLessonId.length > 0
+                  ? (normalizedLessonFocusLabel != null &&
+                          normalizedLessonFocusLabel.length > 0
+                      ? normalizedLessonFocusLabel
+                      : current.lessonFocusLabel)
+                  : '待安排课堂'),
         },
       }),
     );

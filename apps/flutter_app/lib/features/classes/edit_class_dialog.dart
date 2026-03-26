@@ -5,6 +5,7 @@ import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../shared/workspace_shell.dart';
 import 'class_workspace_data.dart';
+import '../lessons/lesson_workspace_data.dart';
 import '../students/student_workspace_data.dart';
 
 Future<ClassWorkspaceRecord?> showEditClassDialog(
@@ -36,8 +37,11 @@ class _EditClassDialogState extends State<_EditClassDialog> {
   late String _textbookLabel = widget.classroom.textbookLabel;
   late String _focusLabel = widget.classroom.focusLabel;
   late String _focusStudentId = widget.classroom.focusStudentId;
+  late String _lessonId = widget.classroom.lessonId;
   List<StudentWorkspaceRecord> _students = const [];
+  List<LessonWorkspaceRecord> _lessons = const [];
   bool _loadingStudents = true;
+  bool _loadingLessons = true;
   bool _submitting = false;
   String? _errorMessage;
 
@@ -45,6 +49,7 @@ class _EditClassDialogState extends State<_EditClassDialog> {
   void initState() {
     super.initState();
     _loadStudents();
+    _loadLessons();
   }
 
   @override
@@ -75,6 +80,27 @@ class _EditClassDialogState extends State<_EditClassDialog> {
     }
   }
 
+  Future<void> _loadLessons() async {
+    try {
+      final lessons = await AppServices.instance.lessonRepository.listLessons();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _lessons = lessons;
+        _loadingLessons = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _lessons = const [];
+        _loadingLessons = false;
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -90,6 +116,10 @@ class _EditClassDialogState extends State<_EditClassDialog> {
             (student) => student?.id == _focusStudentId,
             orElse: () => null,
           );
+      final selectedLesson = _lessons.cast<LessonWorkspaceRecord?>().firstWhere(
+            (lesson) => lesson?.id == _lessonId,
+            orElse: () => null,
+          );
       final updated = await AppServices.instance.classRepository.updateClass(
         classId: widget.classroom.id,
         name: _nameController.text.trim(),
@@ -100,6 +130,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
         focusStudentId: _focusStudentId.isEmpty ? '' : _focusStudentId,
         focusStudentName:
             _focusStudentId.isEmpty ? '' : (selectedFocusStudent?.name ?? ''),
+        lessonId: _lessonId.isEmpty ? '' : _lessonId,
+        lessonFocusLabel:
+            _lessonId.isEmpty ? '待安排课堂' : (selectedLesson?.title ?? widget.classroom.lessonFocusLabel),
       );
       if (!mounted) {
         return;
@@ -128,6 +161,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
   Widget build(BuildContext context) {
     final focusStudentValue = _students.any((student) => student.id == _focusStudentId)
         ? _focusStudentId
+        : '';
+    final lessonValue = _lessons.any((lesson) => lesson.id == _lessonId)
+        ? _lessonId
         : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -262,6 +298,28 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                       ? null
                       : (value) {
                           setState(() => _focusStudentId = value ?? '');
+                        },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: lessonValue,
+                  decoration: const InputDecoration(
+                    labelText: '关联课堂',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._lessons.map(
+                      (lesson) => DropdownMenuItem(
+                        value: lesson.id,
+                        child: Text(lesson.title),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingLessons
+                      ? null
+                      : (value) {
+                          setState(() => _lessonId = value ?? '');
                         },
                 ),
                 const SizedBox(height: 20),

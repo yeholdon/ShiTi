@@ -24,4 +24,8 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsString({ message: 'Invalid focusStudentName' })
   focusStudentName?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid classId' })
+  classId?: string;
 }
