@@ -24,6 +24,8 @@ abstract class LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     required String classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   });
 
   Future<void> deleteLesson(String lessonId);
@@ -112,6 +114,8 @@ class FakeLessonRepository implements LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     required String classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   }) async {
     final index = _records.indexWhere((item) => item.id == lessonId);
     if (index < 0) {
@@ -123,8 +127,8 @@ class FakeLessonRepository implements LessonRepository {
       title: title,
       classId: current.classId,
       className: classScopeLabel == '未绑定班级' ? '' : classScopeLabel,
-      focusStudentId: current.focusStudentId,
-      focusStudentName: current.focusStudentName,
+      focusStudentId: focusStudentId ?? current.focusStudentId,
+      focusStudentName: focusStudentName ?? current.focusStudentName,
       teacherLabel: teacherLabel,
       scheduleLabel: scheduleLabel,
       scheduleTag: current.scheduleTag,
@@ -219,6 +223,8 @@ class RemoteLessonRepository implements LessonRepository {
     required String teacherLabel,
     required String scheduleLabel,
     required String classScopeLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   }) async {
     final response = await _client.patchObject(
       '/lessons/$lessonId',
@@ -227,6 +233,8 @@ class RemoteLessonRepository implements LessonRepository {
         'teacherLabel': teacherLabel,
         'scheduleLabel': scheduleLabel,
         'classScopeLabel': classScopeLabel,
+        'focusStudentId': focusStudentId ?? '',
+        'focusStudentName': focusStudentName ?? '',
       },
     );
     return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);

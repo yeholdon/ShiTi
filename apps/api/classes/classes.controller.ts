@@ -181,6 +181,8 @@ export class ClassesController {
     const normalizedTeacherLabel = body.teacherLabel?.trim();
     const normalizedTextbookLabel = body.textbookLabel?.trim();
     const normalizedFocusLabel = body.focusLabel?.trim();
+    const normalizedFocusStudentId = body.focusStudentId?.trim();
+    const normalizedFocusStudentName = body.focusStudentName?.trim();
 
     const classroom = await this.prisma.withTenant(tenantId, (tx) =>
       tx.teachingClass.update({
@@ -210,6 +212,20 @@ export class ClassesController {
               normalizedFocusLabel != null && normalizedFocusLabel.length > 0
                   ? normalizedFocusLabel
                   : current.focusLabel,
+          focusStudentId: body.focusStudentId == null
+              ? current.focusStudentId
+              : (normalizedFocusStudentId != null &&
+                      normalizedFocusStudentId.length > 0
+                  ? normalizedFocusStudentId
+                  : null),
+          focusStudentName: body.focusStudentId == null
+              ? current.focusStudentName
+              : (normalizedFocusStudentId != null &&
+                      normalizedFocusStudentId.length > 0 &&
+                      normalizedFocusStudentName != null &&
+                      normalizedFocusStudentName.length > 0
+                  ? normalizedFocusStudentName
+                  : null),
         },
       }),
     );

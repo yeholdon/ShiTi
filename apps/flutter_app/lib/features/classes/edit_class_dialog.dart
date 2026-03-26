@@ -5,6 +5,7 @@ import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../shared/workspace_shell.dart';
 import 'class_workspace_data.dart';
+import '../students/student_workspace_data.dart';
 
 Future<ClassWorkspaceRecord?> showEditClassDialog(
   BuildContext context, {
@@ -34,14 +35,44 @@ class _EditClassDialogState extends State<_EditClassDialog> {
   late String _stageLabel = widget.classroom.stageLabel;
   late String _textbookLabel = widget.classroom.textbookLabel;
   late String _focusLabel = widget.classroom.focusLabel;
+  late String _focusStudentId = widget.classroom.focusStudentId;
+  List<StudentWorkspaceRecord> _students = const [];
+  bool _loadingStudents = true;
   bool _submitting = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStudents();
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _teacherController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadStudents() async {
+    try {
+      final students = await AppServices.instance.studentRepository.listStudents();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _students = students;
+        _loadingStudents = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _students = const [];
+        _loadingStudents = false;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -55,6 +86,10 @@ class _EditClassDialogState extends State<_EditClassDialog> {
     });
 
     try {
+      final selectedFocusStudent = _students.cast<StudentWorkspaceRecord?>().firstWhere(
+            (student) => student?.id == _focusStudentId,
+            orElse: () => null,
+          );
       final updated = await AppServices.instance.classRepository.updateClass(
         classId: widget.classroom.id,
         name: _nameController.text.trim(),
@@ -62,6 +97,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
         teacherLabel: _teacherController.text.trim(),
         textbookLabel: _textbookLabel,
         focusLabel: _focusLabel,
+        focusStudentId: _focusStudentId.isEmpty ? '' : _focusStudentId,
+        focusStudentName:
+            _focusStudentId.isEmpty ? '' : (selectedFocusStudent?.name ?? ''),
       );
       if (!mounted) {
         return;
@@ -88,6 +126,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final focusStudentValue = _students.any((student) => student.id == _focusStudentId)
+        ? _focusStudentId
+        : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       backgroundColor: Colors.transparent,
@@ -200,6 +241,28 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                       setState(() => _focusLabel = value);
                     }
                   },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: focusStudentValue,
+                  decoration: const InputDecoration(
+                    labelText: '重点学生',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不设置')),
+                    ..._students.map(
+                      (student) => DropdownMenuItem(
+                        value: student.id,
+                        child: Text(student.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingStudents
+                      ? null
+                      : (value) {
+                          setState(() => _focusStudentId = value ?? '');
+                        },
                 ),
                 const SizedBox(height: 20),
                 Align(

@@ -179,6 +179,8 @@ export class LessonsController {
     const normalizedTeacherLabel = body.teacherLabel?.trim();
     const normalizedScheduleLabel = body.scheduleLabel?.trim();
     const normalizedClassScopeLabel = body.classScopeLabel?.trim();
+    const normalizedFocusStudentId = body.focusStudentId?.trim();
+    const normalizedFocusStudentName = body.focusStudentName?.trim();
 
     const lesson = await this.prisma.withTenant(tenantId, (tx) =>
       tx.lessonSession.update({
@@ -211,6 +213,20 @@ export class LessonsController {
                       normalizedClassScopeLabel.length > 0 &&
                       normalizedClassScopeLabel != '未绑定班级'
                   ? normalizedClassScopeLabel
+                  : null),
+          focusStudentId: body.focusStudentId == null
+              ? current.focusStudentId
+              : (normalizedFocusStudentId != null &&
+                      normalizedFocusStudentId.length > 0
+                  ? normalizedFocusStudentId
+                  : null),
+          focusStudentName: body.focusStudentId == null
+              ? current.focusStudentName
+              : (normalizedFocusStudentId != null &&
+                      normalizedFocusStudentId.length > 0 &&
+                      normalizedFocusStudentName != null &&
+                      normalizedFocusStudentName.length > 0
+                  ? normalizedFocusStudentName
                   : null),
         },
       }),

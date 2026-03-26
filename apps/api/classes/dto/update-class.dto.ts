@@ -20,4 +20,12 @@ export class UpdateClassDto {
   @IsOptional()
   @IsString({ message: 'Invalid focusLabel' })
   focusLabel?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid focusStudentId' })
+  focusStudentId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid focusStudentName' })
+  focusStudentName?: string;
 }

@@ -26,6 +26,8 @@ abstract class ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     required String focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   });
 
   Future<void> deleteClass(String classId);
@@ -118,6 +120,8 @@ class FakeClassRepository implements ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     required String focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   }) async {
     final index = _records.indexWhere((item) => item.id == classId);
     if (index < 0) {
@@ -129,8 +133,8 @@ class FakeClassRepository implements ClassRepository {
       name: name,
       lessonId: current.lessonId,
       documentId: current.documentId,
-      focusStudentId: current.focusStudentId,
-      focusStudentName: current.focusStudentName,
+      focusStudentId: focusStudentId ?? current.focusStudentId,
+      focusStudentName: focusStudentName ?? current.focusStudentName,
       stageLabel: stageLabel,
       teacherLabel: teacherLabel,
       textbookLabel: textbookLabel,
@@ -230,6 +234,8 @@ class RemoteClassRepository implements ClassRepository {
     required String teacherLabel,
     required String textbookLabel,
     required String focusLabel,
+    String? focusStudentId,
+    String? focusStudentName,
   }) async {
     final response = await _client.patchObject(
       '/classes/$classId',
@@ -239,6 +245,8 @@ class RemoteClassRepository implements ClassRepository {
         'teacherLabel': teacherLabel,
         'textbookLabel': textbookLabel,
         'focusLabel': focusLabel,
+        'focusStudentId': focusStudentId ?? '',
+        'focusStudentName': focusStudentName ?? '',
       },
     );
     return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);

@@ -231,6 +231,8 @@ describe('LessonsController', () => {
         teacherLabel: '主讲：赵老师',
         scheduleLabel: '周六 14:00',
         classScopeLabel: '九年级提高班',
+        focusStudentId: 'student-2',
+        focusStudentName: '徐若楠',
       },
     );
 
@@ -242,6 +244,8 @@ describe('LessonsController', () => {
           scheduleLabel: '周六 14:00',
           classScopeLabel: '九年级提高班',
           className: '九年级提高班',
+          focusStudentId: 'student-2',
+          focusStudentName: '徐若楠',
         }),
       }),
     );

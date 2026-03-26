@@ -242,6 +242,8 @@ describe('ClassesController', () => {
         teacherLabel: '主讲：赵老师',
         textbookLabel: '人教版',
         focusLabel: '课堂复盘',
+        focusStudentId: 'student-2',
+        focusStudentName: '徐若楠',
       },
     );
 
@@ -253,6 +255,8 @@ describe('ClassesController', () => {
           teacherLabel: '主讲：赵老师',
           textbookLabel: '人教版',
           focusLabel: '课堂复盘',
+          focusStudentId: 'student-2',
+          focusStudentName: '徐若楠',
         }),
       }),
     );
