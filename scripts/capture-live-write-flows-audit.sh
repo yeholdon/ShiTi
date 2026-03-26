@@ -198,6 +198,24 @@ updated_class = request(
     },
 )["class"]
 
+updated_student = request(
+    "PATCH",
+    f"/students/{created_student['id']}",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+    body={
+        "name": updated_student["name"],
+        "gradeLabel": updated_student["gradeLabel"],
+        "subjectLabel": updated_student["subjectLabel"],
+        "textbookLabel": updated_student["textbookLabel"],
+        "classId": updated_class["id"],
+        "className": updated_class["name"],
+        "lessonId": updated_lesson["id"],
+        "documentId": secondary_document["id"],
+        "documentName": secondary_document["name"],
+    },
+)["student"]
+
 payload = {
     "storage": {
         "flutter.auth_session": json.dumps(
@@ -239,7 +257,7 @@ payload["pre_delete_routes"] = {
         "/students/detail",
         {
             "studentId": updated_student["id"],
-            "flashMessage": f"已更新 {updated_student['name']} 的学生档案。",
+            "flashMessage": f"已更新 {updated_student['name']} 的学生档案，当前班级为 {updated_class['name']}，课堂为 {updated_lesson['title']}，资料为 {secondary_document['name']}。",
         },
     ),
     "classes-created-live": build_hash_route(
