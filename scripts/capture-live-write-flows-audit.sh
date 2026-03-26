@@ -243,7 +243,9 @@ payload = {
         "flutter.active_tenant": json.dumps(organization, ensure_ascii=False),
     },
     "pre_delete_routes": {},
+    "post_archive_routes": {},
     "post_delete_routes": {},
+    "archives": {},
     "deletions": {},
     "auth": {
         "accessToken": login["accessToken"],
@@ -304,6 +306,48 @@ payload["pre_delete_routes"] = {
         {
             "lessonId": updated_lesson["id"],
             "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案，反馈学生为 {updated_student['name']}，关联班级 {updated_class['name']}，资料为 {primary_document['name']}。",
+        },
+    ),
+}
+
+payload["archives"] = {
+    "student": {
+        "id": updated_student["id"],
+        "label": updated_student["name"],
+        "path": f"/students/{updated_student['id']}",
+    },
+    "class": {
+        "id": updated_class["id"],
+        "label": updated_class["name"],
+        "path": f"/classes/{updated_class['id']}",
+    },
+    "lesson": {
+        "id": updated_lesson["id"],
+        "label": updated_lesson["title"],
+        "path": f"/lessons/{updated_lesson['id']}",
+    },
+}
+
+payload["post_archive_routes"] = {
+    "student-detail-archived-live": build_hash_route(
+        "/students/detail",
+        {
+            "studentId": updated_student["id"],
+            "flashMessage": f"已归档 {updated_student['name']}，学生列表默认不再显示。",
+        },
+    ),
+    "class-detail-archived-live": build_hash_route(
+        "/classes/detail",
+        {
+            "classId": updated_class["id"],
+            "flashMessage": f"已归档 {updated_class['name']}，班级列表默认不再显示。",
+        },
+    ),
+    "lesson-detail-archived-live": build_hash_route(
+        "/lessons/detail",
+        {
+            "lessonId": updated_lesson["id"],
+            "flashMessage": f"已归档 {updated_lesson['title']}，课堂列表默认不再显示。",
         },
     ),
 }
@@ -399,6 +443,36 @@ PY
 }
 
 capture_routes pre_delete_routes
+
+"${proxyless_env[@]}" python3 - "$payload_file" "$api_base_url" <<'PY'
+import json
+import sys
+import urllib.request
+
+payload_path, api_base_url = sys.argv[1:]
+
+with open(payload_path, "r", encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+access_token = payload["auth"]["accessToken"]
+tenant_code = payload["auth"]["tenantCode"]
+
+for archive in payload["archives"].values():
+    req = urllib.request.Request(
+        f"{api_base_url}{archive['path']}",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "x-tenant-code": tenant_code,
+            "Content-Type": "application/json",
+        },
+        data=json.dumps({"archived": True}).encode(),
+        method="PATCH",
+    )
+    with urllib.request.urlopen(req) as response:
+        json.load(response)
+PY
+
+capture_routes post_archive_routes
 
 "${proxyless_env[@]}" python3 - "$payload_file" "$api_base_url" <<'PY'
 import json
