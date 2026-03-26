@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,6 +20,7 @@ import {
   requireUserId,
 } from '../../../src/tenant/tenant-guards';
 import { CreateLessonDto } from './dto/create-lesson.dto';
+import { UpdateLessonDto } from './dto/update-lesson.dto';
 
 function mapLessonRecord(lesson: any) {
   return {
@@ -145,6 +147,75 @@ export class LessonsController {
     );
 
     return { lessons: lessons.map(mapLessonRecord) };
+  }
+
+  @Patch(':id')
+  async update(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: UpdateLessonDto,
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    const current = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.lessonSession.findUnique({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+      }),
+    );
+
+    if (!current) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    const normalizedTitle = body.title?.trim();
+    const normalizedTeacherLabel = body.teacherLabel?.trim();
+    const normalizedScheduleLabel = body.scheduleLabel?.trim();
+    const normalizedClassScopeLabel = body.classScopeLabel?.trim();
+
+    const lesson = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.lessonSession.update({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+        data: {
+          title: normalizedTitle != null && normalizedTitle.length > 0
+              ? normalizedTitle
+              : current.title,
+          teacherLabel: normalizedTeacherLabel != null &&
+                  normalizedTeacherLabel.length > 0
+              ? normalizedTeacherLabel
+              : current.teacherLabel,
+          scheduleLabel: normalizedScheduleLabel != null &&
+                  normalizedScheduleLabel.length > 0
+              ? normalizedScheduleLabel
+              : current.scheduleLabel,
+          classScopeLabel:
+              normalizedClassScopeLabel != null &&
+                      normalizedClassScopeLabel.length > 0
+                  ? normalizedClassScopeLabel
+                  : current.classScopeLabel,
+          className: body.classScopeLabel == null
+              ? current.className
+              : (normalizedClassScopeLabel != null &&
+                      normalizedClassScopeLabel.length > 0 &&
+                      normalizedClassScopeLabel != '未绑定班级'
+                  ? normalizedClassScopeLabel
+                  : null),
+        },
+      }),
+    );
+
+    return { lesson: mapLessonRecord(lesson) };
   }
 
   @Get(':id')

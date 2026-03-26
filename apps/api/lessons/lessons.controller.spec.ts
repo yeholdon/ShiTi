@@ -8,6 +8,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
   };
 
   return {
@@ -157,6 +158,93 @@ describe('LessonsController', () => {
         }),
       }),
     );
+  });
+
+  it('updates lesson profile under current tenant', async () => {
+    const update = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'lesson-1',
+      title: '二次函数专题讲评课',
+      classId: 'class-1',
+      className: '九年级提高班',
+      focusStudentId: 'student-1',
+      focusStudentName: '林之涵',
+      teacherLabel: '主讲：赵老师',
+      scheduleLabel: '周六 14:00',
+      scheduleTag: '本周进行',
+      classScopeLabel: '九年级提高班',
+      documentFocus: '二次函数周测卷',
+      documentId: 'doc-2',
+      feedbackStatus: '待回收',
+      followUpLabel: '补讲义',
+      feedbackInsight: 'insight',
+      feedbackRecords: [],
+      assetRecords: [],
+      taskRecords: [],
+      summary: 'summary',
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      lessonSession: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: 't1',
+          id: 'lesson-1',
+          title: '二次函数专题复盘课',
+          classId: 'class-1',
+          className: '九年级尖子班',
+          focusStudentId: 'student-1',
+          focusStudentName: '林之涵',
+          teacherLabel: '主讲：陈老师',
+          scheduleLabel: '周三 19:00',
+          scheduleTag: '本周进行',
+          classScopeLabel: '九年级尖子班',
+          documentFocus: '二次函数周测卷',
+          documentId: 'doc-2',
+          feedbackStatus: '待回收',
+          followUpLabel: '补讲义',
+          feedbackInsight: 'insight',
+          feedbackRecords: [],
+          assetRecords: [],
+          taskRecords: [],
+          summary: 'summary',
+          highlights: [],
+          nextStep: 'next',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update,
+      },
+    });
+
+    const ctrl = new LessonsController(prisma);
+    const result = await ctrl.update(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      'lesson-1',
+      {
+        title: '二次函数专题讲评课',
+        teacherLabel: '主讲：赵老师',
+        scheduleLabel: '周六 14:00',
+        classScopeLabel: '九年级提高班',
+      },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          title: '二次函数专题讲评课',
+          teacherLabel: '主讲：赵老师',
+          scheduleLabel: '周六 14:00',
+          classScopeLabel: '九年级提高班',
+          className: '九年级提高班',
+        }),
+      }),
+    );
+    expect(result.lesson.title).toBe('二次函数专题讲评课');
   });
 
   it('returns lesson detail by composite id', async () => {

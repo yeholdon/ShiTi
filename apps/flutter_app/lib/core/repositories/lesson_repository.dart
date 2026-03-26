@@ -17,6 +17,14 @@ abstract class LessonRepository {
     required String scheduleLabel,
     String? classScopeLabel,
   });
+
+  Future<LessonWorkspaceRecord> updateLesson({
+    required String lessonId,
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    required String classScopeLabel,
+  });
 }
 
 class FakeLessonRepository implements LessonRepository {
@@ -94,6 +102,46 @@ class FakeLessonRepository implements LessonRepository {
     _records.insert(0, created);
     return created;
   }
+
+  @override
+  Future<LessonWorkspaceRecord> updateLesson({
+    required String lessonId,
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    required String classScopeLabel,
+  }) async {
+    final index = _records.indexWhere((item) => item.id == lessonId);
+    if (index < 0) {
+      throw StateError('Lesson not found');
+    }
+    final current = _records[index];
+    final updated = LessonWorkspaceRecord(
+      id: current.id,
+      title: title,
+      classId: current.classId,
+      className: classScopeLabel == '未绑定班级' ? '' : classScopeLabel,
+      focusStudentId: current.focusStudentId,
+      focusStudentName: current.focusStudentName,
+      teacherLabel: teacherLabel,
+      scheduleLabel: scheduleLabel,
+      scheduleTag: current.scheduleTag,
+      classScopeLabel: classScopeLabel,
+      documentFocus: current.documentFocus,
+      documentId: current.documentId,
+      feedbackStatus: current.feedbackStatus,
+      followUpLabel: current.followUpLabel,
+      feedbackInsight: current.feedbackInsight,
+      feedbackRecords: current.feedbackRecords,
+      assetRecords: current.assetRecords,
+      taskRecords: current.taskRecords,
+      summary: current.summary,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+    );
+    _records[index] = updated;
+    return updated;
+  }
 }
 
 class RemoteLessonRepository implements LessonRepository {
@@ -152,6 +200,26 @@ class RemoteLessonRepository implements LessonRepository {
         'scheduleLabel': scheduleLabel,
         if (classScopeLabel != null && classScopeLabel.trim().isNotEmpty)
           'classScopeLabel': classScopeLabel.trim(),
+      },
+    );
+    return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<LessonWorkspaceRecord> updateLesson({
+    required String lessonId,
+    required String title,
+    required String teacherLabel,
+    required String scheduleLabel,
+    required String classScopeLabel,
+  }) async {
+    final response = await _client.patchObject(
+      '/lessons/$lessonId',
+      body: {
+        'title': title,
+        'teacherLabel': teacherLabel,
+        'scheduleLabel': scheduleLabel,
+        'classScopeLabel': classScopeLabel,
       },
     );
     return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);
