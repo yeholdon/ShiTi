@@ -27,6 +27,8 @@ abstract class ClassRepository {
     required String textbookLabel,
     required String focusLabel,
   });
+
+  Future<void> deleteClass(String classId);
 }
 
 class FakeClassRepository implements ClassRepository {
@@ -150,6 +152,11 @@ class FakeClassRepository implements ClassRepository {
     _records[index] = updated;
     return updated;
   }
+
+  @override
+  Future<void> deleteClass(String classId) async {
+    _records.removeWhere((item) => item.id == classId);
+  }
 }
 
 class RemoteClassRepository implements ClassRepository {
@@ -235,5 +242,10 @@ class RemoteClassRepository implements ClassRepository {
       },
     );
     return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteClass(String classId) async {
+    await _client.deleteObject('/classes/$classId');
   }
 }
