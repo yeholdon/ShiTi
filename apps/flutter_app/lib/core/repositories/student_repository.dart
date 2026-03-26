@@ -27,6 +27,8 @@ abstract class StudentRepository {
     required String textbookLabel,
     String? className,
   });
+
+  Future<void> deleteStudent(String studentId);
 }
 
 class FakeStudentRepository implements StudentRepository {
@@ -151,6 +153,11 @@ class FakeStudentRepository implements StudentRepository {
     _records[index] = updated;
     return updated;
   }
+
+  @override
+  Future<void> deleteStudent(String studentId) async {
+    _records.removeWhere((student) => student.id == studentId);
+  }
 }
 
 class RemoteStudentRepository implements StudentRepository {
@@ -236,5 +243,10 @@ class RemoteStudentRepository implements StudentRepository {
       },
     );
     return StudentWorkspaceRecord.fromJson(response['student'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteStudent(String studentId) async {
+    await _client.deleteObject('/students/$studentId');
   }
 }

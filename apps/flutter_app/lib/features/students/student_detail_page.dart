@@ -8,6 +8,7 @@ import '../../core/models/library_page_args.dart';
 import '../../core/models/lesson_detail_args.dart';
 import '../../core/models/student_detail_args.dart';
 import '../../core/models/students_page_args.dart';
+import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../../router/app_router.dart';
@@ -111,6 +112,112 @@ class StudentDetailPage extends StatelessWidget {
         sourceLabel: sourceLabel,
       ),
     );
+  }
+
+  Future<bool?> _showDeleteConfirmDialog(
+    BuildContext context,
+    StudentWorkspaceRecord student,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: WorkspacePanel(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '删除学生档案',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '确认后会从当前机构里移除 ${student.name} 的学生档案。成绩记录、错题跟进和课堂反馈也会一起失去这条入口。',
+                  style: const TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                WorkspaceMessageBanner.warning(
+                  title: '此操作不可恢复',
+                  message: '如果只是暂时不继续跟进，建议先保留档案，避免丢失历史记录。',
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: TelegramPalette.errorText,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('确认删除'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteStudent(
+    BuildContext context,
+    StudentWorkspaceRecord student,
+  ) async {
+    final confirmed = await _showDeleteConfirmDialog(context, student);
+    if (!context.mounted || confirmed != true) {
+      return;
+    }
+
+    try {
+      await AppServices.instance.studentRepository.deleteStudent(student.id);
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.students,
+        (route) => false,
+        arguments: const StudentsPageArgs(
+          flashMessage: '已删除学生档案，可继续回看其他学生画像。',
+        ),
+      );
+    } on HttpJsonException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('删除学生失败：${error.message}（HTTP ${error.statusCode}）')),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('删除学生失败：$error')),
+      );
+    }
   }
 
   @override
@@ -265,6 +372,15 @@ class StudentDetailPage extends StatelessWidget {
                   onPressed: () => _editStudent(context, student),
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('编辑档案'),
+                ),
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: TelegramPalette.errorText,
+                  ),
+                  onPressed: () => _deleteStudent(context, student),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('删除档案'),
                 ),
                 FilledButton.icon(
                   onPressed: () {

@@ -8,6 +8,8 @@ function makePrisma(overrides: Partial<any> = {}) {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   };
 
   return {
@@ -307,5 +309,42 @@ describe('StudentsController', () => {
       }),
     );
     expect(result.student.name).toBe('林之涵（更新）');
+  });
+
+  it('removes student profile under current tenant', async () => {
+    const findUnique = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'student-1',
+      name: '林之涵',
+    });
+    const remove = jest.fn().mockResolvedValue({});
+
+    const prisma = makePrisma({
+      studentProfile: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique,
+        update: jest.fn(),
+        delete: remove,
+      },
+    });
+
+    const ctrl = new StudentsController(prisma);
+    const result = await ctrl.remove(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      'student-1',
+    );
+
+    expect(remove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId_id: {
+            tenantId: 't1',
+            id: 'student-1',
+          },
+        },
+      }),
+    );
+    expect(result.removedId).toBe('student-1');
   });
 });
