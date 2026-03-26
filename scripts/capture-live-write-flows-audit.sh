@@ -66,6 +66,14 @@ login = request(
 tenants = request("GET", "/tenants", token=login["accessToken"])["tenants"]
 organization = next(tenant for tenant in tenants if tenant["kind"] == "organization")
 tenant_code = organization["code"]
+documents = request(
+    "GET",
+    "/documents",
+    token=login["accessToken"],
+    tenant_code=tenant_code,
+)["documents"]
+primary_document = documents[0]
+secondary_document = documents[1] if len(documents) > 1 else documents[0]
 
 created_class = request(
     "POST",
@@ -163,6 +171,8 @@ updated_lesson = request(
         "scheduleLabel": "周六 14:00",
         "classScopeLabel": updated_class["name"],
         "classId": updated_class["id"],
+        "documentId": primary_document["id"],
+        "documentFocus": primary_document["name"],
         "focusStudentId": updated_student["id"],
         "focusStudentName": updated_student["name"],
     },
@@ -183,6 +193,8 @@ updated_class = request(
         "focusStudentName": updated_student["name"],
         "lessonId": updated_lesson["id"],
         "lessonFocusLabel": updated_lesson["title"],
+        "documentId": secondary_document["id"],
+        "latestDocLabel": secondary_document["name"],
     },
 )["class"]
 
@@ -244,7 +256,7 @@ payload["pre_delete_routes"] = {
         "/classes/detail",
         {
             "classId": updated_class["id"],
-            "flashMessage": f"已更新 {updated_class['name']} 的班级档案，重点学生为 {updated_student['name']}，并关联课堂 {updated_lesson['title']}。",
+            "flashMessage": f"已更新 {updated_class['name']} 的班级档案，重点学生为 {updated_student['name']}，关联课堂 {updated_lesson['title']}，资料为 {secondary_document['name']}。",
         },
     ),
     "lessons-created-live": build_hash_route(
@@ -261,7 +273,7 @@ payload["pre_delete_routes"] = {
         "/lessons/detail",
         {
             "lessonId": updated_lesson["id"],
-            "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案，反馈学生为 {updated_student['name']}，并关联班级 {updated_class['name']}。",
+            "flashMessage": f"已更新 {updated_lesson['title']} 的课堂档案，反馈学生为 {updated_student['name']}，关联班级 {updated_class['name']}，资料为 {primary_document['name']}。",
         },
     ),
 }
