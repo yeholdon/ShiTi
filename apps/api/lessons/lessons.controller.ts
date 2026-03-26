@@ -182,6 +182,8 @@ export class LessonsController {
     const normalizedFocusStudentId = body.focusStudentId?.trim();
     const normalizedFocusStudentName = body.focusStudentName?.trim();
     const normalizedClassId = body.classId?.trim();
+    const normalizedDocumentId = body.documentId?.trim();
+    const normalizedDocumentFocus = body.documentFocus?.trim();
 
     const lesson = await this.prisma.withTenant(tenantId, (tx) =>
       tx.lessonSession.update({
@@ -228,6 +230,24 @@ export class LessonsController {
               : (normalizedClassId != null && normalizedClassId.length > 0
                   ? normalizedClassId
                   : null),
+          documentId: body.documentId == null
+              ? current.documentId
+              : (normalizedDocumentId != null && normalizedDocumentId.length > 0
+                  ? normalizedDocumentId
+                  : null),
+          documentFocus: body.documentId == null
+              ? (body.documentFocus == null
+                  ? current.documentFocus
+                  : (normalizedDocumentFocus != null &&
+                          normalizedDocumentFocus.length > 0
+                      ? normalizedDocumentFocus
+                      : current.documentFocus))
+              : (normalizedDocumentId != null && normalizedDocumentId.length > 0
+                  ? (normalizedDocumentFocus != null &&
+                          normalizedDocumentFocus.length > 0
+                      ? normalizedDocumentFocus
+                      : current.documentFocus)
+                  : '未绑定资料'),
           focusStudentId: body.focusStudentId == null
               ? current.focusStudentId
               : (normalizedFocusStudentId != null &&

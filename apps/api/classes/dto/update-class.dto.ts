@@ -36,4 +36,12 @@ export class UpdateClassDto {
   @IsOptional()
   @IsString({ message: 'Invalid lessonFocusLabel' })
   lessonFocusLabel?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid documentId' })
+  documentId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid latestDocLabel' })
+  latestDocLabel?: string;
 }

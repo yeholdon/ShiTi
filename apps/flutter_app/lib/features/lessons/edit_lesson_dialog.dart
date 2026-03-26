@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/network/http_json_client.dart';
+import '../../core/models/document_summary.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
 import '../classes/class_workspace_data.dart';
@@ -37,10 +38,13 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
       TextEditingController(text: widget.lesson.scheduleLabel);
   late String _classId = widget.lesson.classId;
   late String _focusStudentId = widget.lesson.focusStudentId;
+  late String _documentId = widget.lesson.documentId;
   List<ClassWorkspaceRecord> _classes = const [];
   List<StudentWorkspaceRecord> _students = const [];
+  List<DocumentSummary> _documents = const [];
   bool _loadingClasses = true;
   bool _loadingStudents = true;
+  bool _loadingDocuments = true;
   bool _submitting = false;
   String? _errorMessage;
 
@@ -49,6 +53,7 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
     super.initState();
     _loadClasses();
     _loadStudents();
+    _loadDocuments();
   }
 
   @override
@@ -101,6 +106,27 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
     }
   }
 
+  Future<void> _loadDocuments() async {
+    try {
+      final documents = await AppServices.instance.documentRepository.listDocuments();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _documents = documents;
+        _loadingDocuments = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _documents = const [];
+        _loadingDocuments = false;
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -120,6 +146,10 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
             (classroom) => classroom?.id == _classId,
             orElse: () => null,
           );
+      final selectedDocument = _documents.cast<DocumentSummary?>().firstWhere(
+            (document) => document?.id == _documentId,
+            orElse: () => null,
+          );
       final updated = await AppServices.instance.lessonRepository.updateLesson(
         lessonId: widget.lesson.id,
         title: _titleController.text.trim(),
@@ -131,6 +161,9 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
         focusStudentName:
             _focusStudentId.isEmpty ? '' : (selectedFocusStudent?.name ?? ''),
         classId: _classId.isEmpty ? '' : _classId,
+        documentId: _documentId.isEmpty ? '' : _documentId,
+        documentFocus:
+            _documentId.isEmpty ? '未绑定资料' : (selectedDocument?.name ?? widget.lesson.documentFocus),
       );
       if (!mounted) {
         return;
@@ -162,6 +195,9 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
         : '';
     final classValue = _classes.any((classroom) => classroom.id == _classId)
         ? _classId
+        : '';
+    final documentValue = _documents.any((document) => document.id == _documentId)
+        ? _documentId
         : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -273,6 +309,28 @@ class _EditLessonDialogState extends State<_EditLessonDialog> {
                       ? null
                       : (value) {
                           setState(() => _focusStudentId = value ?? '');
+                        },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: documentValue,
+                  decoration: const InputDecoration(
+                    labelText: '关联资料',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._documents.map(
+                      (document) => DropdownMenuItem(
+                        value: document.id,
+                        child: Text(document.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingDocuments
+                      ? null
+                      : (value) {
+                          setState(() => _documentId = value ?? '');
                         },
                 ),
                 const SizedBox(height: 20),

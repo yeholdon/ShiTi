@@ -27,6 +27,8 @@ abstract class LessonRepository {
     String? focusStudentId,
     String? focusStudentName,
     String? classId,
+    String? documentId,
+    String? documentFocus,
   });
 
   Future<void> deleteLesson(String lessonId);
@@ -118,6 +120,8 @@ class FakeLessonRepository implements LessonRepository {
     String? focusStudentId,
     String? focusStudentName,
     String? classId,
+    String? documentId,
+    String? documentFocus,
   }) async {
     final index = _records.indexWhere((item) => item.id == lessonId);
     if (index < 0) {
@@ -135,8 +139,8 @@ class FakeLessonRepository implements LessonRepository {
       scheduleLabel: scheduleLabel,
       scheduleTag: current.scheduleTag,
       classScopeLabel: classScopeLabel,
-      documentFocus: current.documentFocus,
-      documentId: current.documentId,
+      documentFocus: documentFocus ?? current.documentFocus,
+      documentId: documentId ?? current.documentId,
       feedbackStatus: current.feedbackStatus,
       followUpLabel: current.followUpLabel,
       feedbackInsight: current.feedbackInsight,
@@ -228,6 +232,8 @@ class RemoteLessonRepository implements LessonRepository {
     String? focusStudentId,
     String? focusStudentName,
     String? classId,
+    String? documentId,
+    String? documentFocus,
   }) async {
     final response = await _client.patchObject(
       '/lessons/$lessonId',
@@ -239,6 +245,8 @@ class RemoteLessonRepository implements LessonRepository {
         'focusStudentId': focusStudentId ?? '',
         'focusStudentName': focusStudentName ?? '',
         'classId': classId ?? '',
+        'documentId': documentId ?? '',
+        'documentFocus': documentFocus ?? '',
       },
     );
     return LessonWorkspaceRecord.fromJson(response['lesson'] as Map<String, dynamic>);

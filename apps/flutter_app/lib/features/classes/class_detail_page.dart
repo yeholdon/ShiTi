@@ -261,7 +261,9 @@ class ClassDetailPage extends StatelessWidget {
       final results = await Future.wait([
         AppServices.instance.studentRepository.listStudents(classId: classId),
         AppServices.instance.lessonRepository.listLessons(classId: classId),
-        AppServices.instance.documentRepository.getDocument(classroom.documentId),
+        classroom.documentId.trim().isEmpty
+            ? Future<DocumentSummary?>.value(null)
+            : AppServices.instance.documentRepository.getDocument(classroom.documentId),
       ]);
       final relatedStudents = results[0] as List<StudentWorkspaceRecord>;
       final relatedLessons = results[1] as List<LessonWorkspaceRecord>;

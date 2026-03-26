@@ -30,6 +30,8 @@ abstract class ClassRepository {
     String? focusStudentName,
     String? lessonId,
     String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
   });
 
   Future<void> deleteClass(String classId);
@@ -126,6 +128,8 @@ class FakeClassRepository implements ClassRepository {
     String? focusStudentName,
     String? lessonId,
     String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
   }) async {
     final index = _records.indexWhere((item) => item.id == classId);
     if (index < 0) {
@@ -136,7 +140,7 @@ class FakeClassRepository implements ClassRepository {
       id: current.id,
       name: name,
       lessonId: lessonId ?? current.lessonId,
-      documentId: current.documentId,
+      documentId: documentId ?? current.documentId,
       focusStudentId: focusStudentId ?? current.focusStudentId,
       focusStudentName: focusStudentName ?? current.focusStudentName,
       stageLabel: stageLabel,
@@ -149,7 +153,7 @@ class FakeClassRepository implements ClassRepository {
       structureInsight: current.structureInsight,
       studentCount: current.studentCount,
       weeklyLessonCount: current.weeklyLessonCount,
-      latestDocLabel: current.latestDocLabel,
+      latestDocLabel: latestDocLabel ?? current.latestDocLabel,
       assetLinks: current.assetLinks,
       memberTiers: current.memberTiers,
       lessonTimeline: current.lessonTimeline,
@@ -242,6 +246,8 @@ class RemoteClassRepository implements ClassRepository {
     String? focusStudentName,
     String? lessonId,
     String? lessonFocusLabel,
+    String? documentId,
+    String? latestDocLabel,
   }) async {
     final response = await _client.patchObject(
       '/classes/$classId',
@@ -255,6 +261,8 @@ class RemoteClassRepository implements ClassRepository {
         'focusStudentName': focusStudentName ?? '',
         'lessonId': lessonId ?? '',
         'lessonFocusLabel': lessonFocusLabel ?? '',
+        'documentId': documentId ?? '',
+        'latestDocLabel': latestDocLabel ?? '',
       },
     );
     return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);

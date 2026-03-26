@@ -185,6 +185,8 @@ export class ClassesController {
     const normalizedFocusStudentName = body.focusStudentName?.trim();
     const normalizedLessonId = body.lessonId?.trim();
     const normalizedLessonFocusLabel = body.lessonFocusLabel?.trim();
+    const normalizedDocumentId = body.documentId?.trim();
+    const normalizedLatestDocLabel = body.latestDocLabel?.trim();
 
     const classroom = await this.prisma.withTenant(tenantId, (tx) =>
       tx.teachingClass.update({
@@ -246,6 +248,24 @@ export class ClassesController {
                       ? normalizedLessonFocusLabel
                       : current.lessonFocusLabel)
                   : '待安排课堂'),
+          documentId: body.documentId == null
+              ? current.documentId
+              : (normalizedDocumentId != null && normalizedDocumentId.length > 0
+                  ? normalizedDocumentId
+                  : null),
+          latestDocLabel: body.documentId == null
+              ? (body.latestDocLabel == null
+                  ? current.latestDocLabel
+                  : (normalizedLatestDocLabel != null &&
+                          normalizedLatestDocLabel.length > 0
+                      ? normalizedLatestDocLabel
+                      : current.latestDocLabel))
+              : (normalizedDocumentId != null && normalizedDocumentId.length > 0
+                  ? (normalizedLatestDocLabel != null &&
+                          normalizedLatestDocLabel.length > 0
+                      ? normalizedLatestDocLabel
+                      : current.latestDocLabel)
+                  : '暂无资料'),
         },
       }),
     );

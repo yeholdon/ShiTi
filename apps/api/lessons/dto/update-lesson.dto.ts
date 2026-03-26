@@ -28,4 +28,12 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsString({ message: 'Invalid classId' })
   classId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid documentId' })
+  documentId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Invalid documentFocus' })
+  documentFocus?: string;
 }

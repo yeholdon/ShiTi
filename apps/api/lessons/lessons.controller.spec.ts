@@ -234,6 +234,8 @@ describe('LessonsController', () => {
         focusStudentId: 'student-2',
         focusStudentName: '徐若楠',
         classId: 'class-2',
+        documentId: 'doc-1',
+        documentFocus: '相似三角形讲义',
       },
     );
 
@@ -248,6 +250,8 @@ describe('LessonsController', () => {
           focusStudentId: 'student-2',
           focusStudentName: '徐若楠',
           classId: 'class-2',
+          documentId: 'doc-1',
+          documentFocus: '相似三角形讲义',
         }),
       }),
     );
