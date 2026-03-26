@@ -66,6 +66,10 @@ export class StudentsController {
     const userId = requireUserId(req);
     await requireActiveTenantMember(this.prisma, tenantId, userId);
     const normalizedClassName = body.className?.trim();
+    const normalizedClassId = body.classId?.trim();
+    const normalizedLessonId = body.lessonId?.trim();
+    const normalizedDocumentId = body.documentId?.trim();
+    const normalizedDocumentName = body.documentName?.trim();
 
     const student = await this.prisma.withTenant(tenantId, (tx) =>
       tx.studentProfile.create({
@@ -73,14 +77,26 @@ export class StudentsController {
           tenantId,
           id: randomUUID(),
           name: body.name.trim(),
+          classId:
+            normalizedClassId != null && normalizedClassId.length > 0
+              ? normalizedClassId
+              : null,
           className:
             normalizedClassName != null && normalizedClassName.length > 0
               ? normalizedClassName
               : null,
-          classId: null,
-          lessonId: null,
-          documentId: null,
-          documentName: null,
+          lessonId:
+            normalizedLessonId != null && normalizedLessonId.length > 0
+              ? normalizedLessonId
+              : null,
+          documentId:
+            normalizedDocumentId != null && normalizedDocumentId.length > 0
+              ? normalizedDocumentId
+              : null,
+          documentName:
+            normalizedDocumentName != null && normalizedDocumentName.length > 0
+              ? normalizedDocumentName
+              : null,
           gradeLabel: body.gradeLabel.trim(),
           subjectLabel: body.subjectLabel.trim(),
           textbookLabel: body.textbookLabel.trim(),

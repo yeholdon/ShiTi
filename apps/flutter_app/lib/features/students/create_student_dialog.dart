@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/document_summary.dart';
 import '../../core/network/http_json_client.dart';
 import '../../core/services/app_services.dart';
 import '../../core/theme/telegram_palette.dart';
+import '../classes/class_workspace_data.dart';
+import '../lessons/lesson_workspace_data.dart';
 import '../shared/workspace_shell.dart';
 import 'student_workspace_data.dart';
 
@@ -22,19 +25,98 @@ class _CreateStudentDialog extends StatefulWidget {
 
 class _CreateStudentDialogState extends State<_CreateStudentDialog> {
   late final TextEditingController _nameController = TextEditingController();
-  late final TextEditingController _classNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String _gradeLabel = '初中 · 九年级下';
   String _subjectLabel = '数学';
   String _textbookLabel = '浙教版';
+  String _classId = '';
+  String _lessonId = '';
+  String _documentId = '';
+  List<ClassWorkspaceRecord> _classes = const [];
+  List<LessonWorkspaceRecord> _lessons = const [];
+  List<DocumentSummary> _documents = const [];
+  bool _loadingClasses = true;
+  bool _loadingLessons = true;
+  bool _loadingDocuments = true;
   bool _submitting = false;
   String? _errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    _loadClasses();
+    _loadLessons();
+    _loadDocuments();
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
-    _classNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadClasses() async {
+    try {
+      final classes = await AppServices.instance.classRepository.listClasses();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _classes = classes;
+        _loadingClasses = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _classes = const [];
+        _loadingClasses = false;
+      });
+    }
+  }
+
+  Future<void> _loadLessons() async {
+    try {
+      final lessons = await AppServices.instance.lessonRepository.listLessons();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _lessons = lessons;
+        _loadingLessons = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _lessons = const [];
+        _loadingLessons = false;
+      });
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    try {
+      final documents =
+          await AppServices.instance.documentRepository.listDocuments();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _documents = documents;
+        _loadingDocuments = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _documents = const [];
+        _loadingDocuments = false;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -48,14 +130,26 @@ class _CreateStudentDialogState extends State<_CreateStudentDialog> {
     });
 
     try {
-      final created = await AppServices.instance.studentRepository.createStudent(
+      final selectedClass = _classes.cast<ClassWorkspaceRecord?>().firstWhere(
+            (classroom) => classroom?.id == _classId,
+            orElse: () => null,
+          );
+      final selectedDocument = _documents.cast<DocumentSummary?>().firstWhere(
+            (document) => document?.id == _documentId,
+            orElse: () => null,
+          );
+      final created =
+          await AppServices.instance.studentRepository.createStudent(
         name: _nameController.text.trim(),
         gradeLabel: _gradeLabel,
         subjectLabel: _subjectLabel,
         textbookLabel: _textbookLabel,
-        className: _classNameController.text.trim().isEmpty
-            ? null
-            : _classNameController.text.trim(),
+        classId: _classId,
+        className: _classId.isEmpty ? null : (selectedClass?.name ?? ''),
+        lessonId: _lessonId,
+        documentId: _documentId,
+        documentName:
+            _documentId.isEmpty ? null : (selectedDocument?.name ?? ''),
       );
       if (!mounted) {
         return;
@@ -82,6 +176,14 @@ class _CreateStudentDialogState extends State<_CreateStudentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final classValue =
+        _classes.any((classroom) => classroom.id == _classId) ? _classId : '';
+    final lessonValue =
+        _lessons.any((lesson) => lesson.id == _lessonId) ? _lessonId : '';
+    final documentValue =
+        _documents.any((document) => document.id == _documentId)
+            ? _documentId
+            : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       backgroundColor: Colors.transparent,
@@ -127,16 +229,75 @@ class _CreateStudentDialogState extends State<_CreateStudentDialog> {
                     labelText: '学生姓名',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? '请先输入学生姓名' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? '请先输入学生姓名'
+                      : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _classNameController,
+                DropdownButtonFormField<String>(
+                  initialValue: classValue,
                   decoration: const InputDecoration(
                     labelText: '所属班级（可选）',
                     border: OutlineInputBorder(),
                   ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._classes.map(
+                      (classroom) => DropdownMenuItem(
+                        value: classroom.id,
+                        child: Text(classroom.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingClasses
+                      ? null
+                      : (value) {
+                          setState(() => _classId = value ?? '');
+                        },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: lessonValue,
+                  decoration: const InputDecoration(
+                    labelText: '关联课堂（可选）',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._lessons.map(
+                      (lesson) => DropdownMenuItem(
+                        value: lesson.id,
+                        child: Text(lesson.title),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingLessons
+                      ? null
+                      : (value) {
+                          setState(() => _lessonId = value ?? '');
+                        },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: documentValue,
+                  decoration: const InputDecoration(
+                    labelText: '关联资料（可选）',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('暂不关联')),
+                    ..._documents.map(
+                      (document) => DropdownMenuItem(
+                        value: document.id,
+                        child: Text(document.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: _loadingDocuments
+                      ? null
+                      : (value) {
+                          setState(() => _documentId = value ?? '');
+                        },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -146,9 +307,12 @@ class _CreateStudentDialogState extends State<_CreateStudentDialog> {
                     border: OutlineInputBorder(),
                   ),
                   items: const [
-                    DropdownMenuItem(value: '小学 · 五年级下', child: Text('小学 · 五年级下')),
-                    DropdownMenuItem(value: '初中 · 八年级下', child: Text('初中 · 八年级下')),
-                    DropdownMenuItem(value: '初中 · 九年级下', child: Text('初中 · 九年级下')),
+                    DropdownMenuItem(
+                        value: '小学 · 五年级下', child: Text('小学 · 五年级下')),
+                    DropdownMenuItem(
+                        value: '初中 · 八年级下', child: Text('初中 · 八年级下')),
+                    DropdownMenuItem(
+                        value: '初中 · 九年级下', child: Text('初中 · 九年级下')),
                     DropdownMenuItem(value: '高中 · 高一', child: Text('高中 · 高一')),
                   ],
                   onChanged: (value) {

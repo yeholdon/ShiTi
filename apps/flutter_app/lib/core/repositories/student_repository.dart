@@ -16,7 +16,11 @@ abstract class StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   });
 
   Future<StudentWorkspaceRecord> updateStudent({
@@ -81,16 +85,20 @@ class FakeStudentRepository implements StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   }) async {
     final created = StudentWorkspaceRecord(
       id: 'student-${_records.length + 1}',
       name: name,
-      classId: '',
+      classId: classId ?? '',
       className: className ?? '',
-      lessonId: '',
-      documentId: '',
-      documentName: '',
+      lessonId: lessonId ?? '',
+      documentId: documentId ?? '',
+      documentName: documentName ?? '',
       gradeLabel: gradeLabel,
       subjectLabel: subjectLabel,
       textbookLabel: textbookLabel,
@@ -216,7 +224,11 @@ class RemoteStudentRepository implements StudentRepository {
     required String gradeLabel,
     required String subjectLabel,
     required String textbookLabel,
+    String? classId,
     String? className,
+    String? lessonId,
+    String? documentId,
+    String? documentName,
   }) async {
     final response = await _client.postObject(
       '/students',
@@ -225,8 +237,12 @@ class RemoteStudentRepository implements StudentRepository {
         'gradeLabel': gradeLabel,
         'subjectLabel': subjectLabel,
         'textbookLabel': textbookLabel,
+        'classId': classId,
         if (className != null && className.trim().isNotEmpty)
           'className': className.trim(),
+        'lessonId': lessonId,
+        'documentId': documentId,
+        'documentName': documentName,
       },
     );
     return StudentWorkspaceRecord.fromJson(
