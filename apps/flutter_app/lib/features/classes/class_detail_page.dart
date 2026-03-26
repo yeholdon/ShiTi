@@ -14,6 +14,7 @@ import '../../router/app_router.dart';
 import '../shared/workspace_module_paths.dart';
 import '../shared/workspace_module_shell.dart';
 import '../shared/workspace_shell.dart';
+import 'edit_class_dialog.dart';
 import '../lessons/lesson_workspace_data.dart';
 import '../students/student_workspace_data.dart';
 import 'class_workspace_data.dart';
@@ -91,6 +92,27 @@ class ClassDetailPage extends StatelessWidget {
         sourceModule: 'class_detail',
         sourceRecordId: classroom.id,
         sourceLabel: classroom.name,
+      ),
+    );
+  }
+
+  Future<void> _editClass(
+    BuildContext context,
+    ClassWorkspaceRecord classroom,
+  ) async {
+    final updated = await showEditClassDialog(context, classroom: classroom);
+    if (!context.mounted || updated == null) {
+      return;
+    }
+
+    Navigator.of(context).pushReplacementNamed(
+      AppRouter.classDetail,
+      arguments: ClassDetailArgs(
+        classId: updated.id,
+        flashMessage: '已更新 ${updated.name} 的班级档案。',
+        sourceModule: sourceModule,
+        sourceRecordId: sourceRecordId,
+        sourceLabel: sourceLabel,
       ),
     );
   }
@@ -249,41 +271,52 @@ class ClassDetailPage extends StatelessWidget {
                 highlight: activeTenant == null,
               ),
             ],
-            trailing: FilledButton.icon(
-              onPressed: () {
-                if (sourceModule == 'students' && sourceRecordId != null) {
-                  Navigator.of(context).pushNamed(
-                    AppRouter.studentDetail,
-                    arguments: StudentDetailArgs(
-                      studentId: sourceRecordId!,
-                      flashMessage:
-                          '已从 ${classroom.name} 返回 ${sourceLabel ?? '学生详情'}。',
-                    ),
-                  );
-                  return;
-                }
-                if (sourceModule == 'lessons' && sourceRecordId != null) {
-                  Navigator.of(context).pushNamed(
-                    AppRouter.lessonDetail,
-                    arguments: LessonDetailArgs(
-                                        lessonId: sourceRecordId!,
-                      flashMessage:
-                          '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
-                    ),
-                  );
-                  return;
-                }
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRouter.classes,
-                  (route) => false,
-                  arguments: ClassesPageArgs(
-                    focusClassId: classroom.id,
-                    flashMessage: '已返回 ${classroom.name} 所在班级页，可继续回看班级结构。',
-                  ),
-                );
-              },
-              icon: const Icon(Icons.arrow_back_outlined),
-              label: Text(backLabel),
+            trailing: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () => _editClass(context, classroom),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('编辑档案'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    if (sourceModule == 'students' && sourceRecordId != null) {
+                      Navigator.of(context).pushNamed(
+                        AppRouter.studentDetail,
+                        arguments: StudentDetailArgs(
+                          studentId: sourceRecordId!,
+                          flashMessage:
+                              '已从 ${classroom.name} 返回 ${sourceLabel ?? '学生详情'}。',
+                        ),
+                      );
+                      return;
+                    }
+                    if (sourceModule == 'lessons' && sourceRecordId != null) {
+                      Navigator.of(context).pushNamed(
+                        AppRouter.lessonDetail,
+                        arguments: LessonDetailArgs(
+                          lessonId: sourceRecordId!,
+                          flashMessage:
+                              '已从 ${classroom.name} 返回 ${sourceLabel ?? '课堂详情'}。',
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRouter.classes,
+                      (route) => false,
+                      arguments: ClassesPageArgs(
+                        focusClassId: classroom.id,
+                        flashMessage: '已返回 ${classroom.name} 所在班级页，可继续回看班级结构。',
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_back_outlined),
+                  label: Text(backLabel),
+                ),
+              ],
             ),
             body: workspaceConstrainedContent(
               context,

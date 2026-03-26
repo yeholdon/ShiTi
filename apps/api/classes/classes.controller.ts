@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,6 +20,7 @@ import {
   requireUserId,
 } from '../../../src/tenant/tenant-guards';
 import { CreateClassDto } from './dto/create-class.dto';
+import { UpdateClassDto } from './dto/update-class.dto';
 
 function mapClassRecord(classroom: any) {
   return {
@@ -146,6 +148,72 @@ export class ClassesController {
     );
 
     return { classes: classes.map(mapClassRecord) };
+  }
+
+  @Patch(':id')
+  async update(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: UpdateClassDto,
+  ) {
+    const tenantId = requireTenantId(req);
+    const userId = requireUserId(req);
+    await requireActiveTenantMember(this.prisma, tenantId, userId);
+
+    const current = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.teachingClass.findUnique({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+      }),
+    );
+
+    if (!current) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const normalizedName = body.name?.trim();
+    const normalizedStageLabel = body.stageLabel?.trim();
+    const normalizedTeacherLabel = body.teacherLabel?.trim();
+    const normalizedTextbookLabel = body.textbookLabel?.trim();
+    const normalizedFocusLabel = body.focusLabel?.trim();
+
+    const classroom = await this.prisma.withTenant(tenantId, (tx) =>
+      tx.teachingClass.update({
+        where: {
+          tenantId_id: {
+            tenantId,
+            id,
+          },
+        },
+        data: {
+          name: normalizedName != null && normalizedName.length > 0
+              ? normalizedName
+              : current.name,
+          stageLabel:
+              normalizedStageLabel != null && normalizedStageLabel.length > 0
+                  ? normalizedStageLabel
+                  : current.stageLabel,
+          teacherLabel: normalizedTeacherLabel != null &&
+                  normalizedTeacherLabel.length > 0
+              ? normalizedTeacherLabel
+              : current.teacherLabel,
+          textbookLabel: normalizedTextbookLabel != null &&
+                  normalizedTextbookLabel.length > 0
+              ? normalizedTextbookLabel
+              : current.textbookLabel,
+          focusLabel:
+              normalizedFocusLabel != null && normalizedFocusLabel.length > 0
+                  ? normalizedFocusLabel
+                  : current.focusLabel,
+        },
+      }),
+    );
+
+    return { class: mapClassRecord(classroom) };
   }
 
   @Get(':id')

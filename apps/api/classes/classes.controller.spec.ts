@@ -8,6 +8,7 @@ function makePrisma(overrides: Partial<any> = {}) {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
   };
 
   return {
@@ -163,6 +164,98 @@ describe('ClassesController', () => {
         }),
       }),
     );
+  });
+
+  it('updates class profile under current tenant', async () => {
+    const update = jest.fn().mockResolvedValue({
+      tenantId: 't1',
+      id: 'class-1',
+      name: '九年级培优班',
+      lessonId: 'lesson-1',
+      documentId: 'doc-2',
+      focusStudentId: 'student-1',
+      focusStudentName: '林之涵',
+      stageLabel: '初中 · 九年级',
+      teacherLabel: '主讲：赵老师',
+      textbookLabel: '人教版',
+      focusLabel: '课堂复盘',
+      activityLabel: '本周活跃',
+      classSizeLabel: '26 人',
+      lessonFocusLabel: '复盘课',
+      structureInsight: 'insight',
+      studentCount: 26,
+      weeklyLessonCount: 3,
+      latestDocLabel: '二次函数周测卷',
+      assetLinks: [],
+      memberTiers: [],
+      lessonTimeline: [],
+      summary: 'summary',
+      highlights: [],
+      nextStep: 'next',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const prisma = makePrisma({
+      teachingClass: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          tenantId: 't1',
+          id: 'class-1',
+          name: '九年级尖子班',
+          lessonId: 'lesson-1',
+          documentId: 'doc-2',
+          focusStudentId: 'student-1',
+          focusStudentName: '林之涵',
+          stageLabel: '初中',
+          teacherLabel: '主讲：陈老师',
+          textbookLabel: '浙教版',
+          focusLabel: '试卷跟进',
+          activityLabel: '本周活跃',
+          classSizeLabel: '26 人',
+          lessonFocusLabel: '复盘课',
+          structureInsight: 'insight',
+          studentCount: 26,
+          weeklyLessonCount: 3,
+          latestDocLabel: '二次函数周测卷',
+          assetLinks: [],
+          memberTiers: [],
+          lessonTimeline: [],
+          summary: 'summary',
+          highlights: [],
+          nextStep: 'next',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update,
+      },
+    });
+
+    const ctrl = new ClassesController(prisma);
+    const result = await ctrl.update(
+      { tenant: { tenantId: 't1' }, auth: { userId: 'u1' } } as any,
+      'class-1',
+      {
+        name: '九年级培优班',
+        stageLabel: '初中 · 九年级',
+        teacherLabel: '主讲：赵老师',
+        textbookLabel: '人教版',
+        focusLabel: '课堂复盘',
+      },
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: '九年级培优班',
+          stageLabel: '初中 · 九年级',
+          teacherLabel: '主讲：赵老师',
+          textbookLabel: '人教版',
+          focusLabel: '课堂复盘',
+        }),
+      }),
+    );
+    expect(result.class.name).toBe('九年级培优班');
   });
 
   it('returns class detail by composite id', async () => {

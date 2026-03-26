@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+
+import '../../core/network/http_json_client.dart';
+import '../../core/services/app_services.dart';
+import '../../core/theme/telegram_palette.dart';
+import '../shared/workspace_shell.dart';
+import 'class_workspace_data.dart';
+
+Future<ClassWorkspaceRecord?> showEditClassDialog(
+  BuildContext context, {
+  required ClassWorkspaceRecord classroom,
+}) {
+  return showDialog<ClassWorkspaceRecord>(
+    context: context,
+    builder: (_) => _EditClassDialog(classroom: classroom),
+  );
+}
+
+class _EditClassDialog extends StatefulWidget {
+  const _EditClassDialog({required this.classroom});
+
+  final ClassWorkspaceRecord classroom;
+
+  @override
+  State<_EditClassDialog> createState() => _EditClassDialogState();
+}
+
+class _EditClassDialogState extends State<_EditClassDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.classroom.name);
+  late final TextEditingController _teacherController =
+      TextEditingController(text: widget.classroom.teacherLabel);
+  late String _stageLabel = widget.classroom.stageLabel;
+  late String _textbookLabel = widget.classroom.textbookLabel;
+  late String _focusLabel = widget.classroom.focusLabel;
+  bool _submitting = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _teacherController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final updated = await AppServices.instance.classRepository.updateClass(
+        classId: widget.classroom.id,
+        name: _nameController.text.trim(),
+        stageLabel: _stageLabel,
+        teacherLabel: _teacherController.text.trim(),
+        textbookLabel: _textbookLabel,
+        focusLabel: _focusLabel,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(updated);
+    } on HttpJsonException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+        _errorMessage = '更新班级失败：${error.message}（HTTP ${error.statusCode}）';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+        _errorMessage = '更新班级失败：$error';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: WorkspacePanel(
+          borderRadius: 28,
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '编辑班级档案',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '更新班级的基础档案信息，课堂时间线、资料联动和成员分层会继续沿用现有记录。',
+                  style: TextStyle(
+                    height: 1.5,
+                    color: TelegramPalette.textMuted,
+                  ),
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  WorkspaceMessageBanner.error(
+                    title: '还不能更新班级',
+                    message: _errorMessage!,
+                    padding: const EdgeInsets.all(12),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: '班级名称',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      (value == null || value.trim().isEmpty) ? '请先输入班级名称' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _teacherController,
+                  decoration: const InputDecoration(
+                    labelText: '任课说明',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      (value == null || value.trim().isEmpty) ? '请先输入任课说明' : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _stageLabel,
+                  decoration: const InputDecoration(
+                    labelText: '学段',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '小学 · 五年级', child: Text('小学 · 五年级')),
+                    DropdownMenuItem(value: '初中 · 八年级', child: Text('初中 · 八年级')),
+                    DropdownMenuItem(value: '初中 · 九年级', child: Text('初中 · 九年级')),
+                    DropdownMenuItem(value: '高中 · 高一', child: Text('高中 · 高一')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _stageLabel = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _textbookLabel,
+                  decoration: const InputDecoration(
+                    labelText: '教材版本',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '浙教版', child: Text('浙教版')),
+                    DropdownMenuItem(value: '人教版', child: Text('人教版')),
+                    DropdownMenuItem(value: '通用版', child: Text('通用版')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _textbookLabel = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _focusLabel,
+                  decoration: const InputDecoration(
+                    labelText: '当前工作重点',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '讲义整理', child: Text('讲义整理')),
+                    DropdownMenuItem(value: '试卷跟进', child: Text('试卷跟进')),
+                    DropdownMenuItem(value: '课堂复盘', child: Text('课堂复盘')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _focusLabel = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      TextButton(
+                        onPressed: _submitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        child: const Text('取消'),
+                      ),
+                      FilledButton(
+                        onPressed: _submitting ? null : _submit,
+                        child: Text(_submitting ? '保存中...' : '保存修改'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

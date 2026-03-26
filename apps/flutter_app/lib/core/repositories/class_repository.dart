@@ -18,6 +18,15 @@ abstract class ClassRepository {
     required String textbookLabel,
     String? focusLabel,
   });
+
+  Future<ClassWorkspaceRecord> updateClass({
+    required String classId,
+    required String name,
+    required String stageLabel,
+    required String teacherLabel,
+    required String textbookLabel,
+    required String focusLabel,
+  });
 }
 
 class FakeClassRepository implements ClassRepository {
@@ -98,6 +107,49 @@ class FakeClassRepository implements ClassRepository {
     _records.insert(0, created);
     return created;
   }
+
+  @override
+  Future<ClassWorkspaceRecord> updateClass({
+    required String classId,
+    required String name,
+    required String stageLabel,
+    required String teacherLabel,
+    required String textbookLabel,
+    required String focusLabel,
+  }) async {
+    final index = _records.indexWhere((item) => item.id == classId);
+    if (index < 0) {
+      throw StateError('Class not found');
+    }
+    final current = _records[index];
+    final updated = ClassWorkspaceRecord(
+      id: current.id,
+      name: name,
+      lessonId: current.lessonId,
+      documentId: current.documentId,
+      focusStudentId: current.focusStudentId,
+      focusStudentName: current.focusStudentName,
+      stageLabel: stageLabel,
+      teacherLabel: teacherLabel,
+      textbookLabel: textbookLabel,
+      focusLabel: focusLabel,
+      activityLabel: current.activityLabel,
+      classSizeLabel: current.classSizeLabel,
+      lessonFocusLabel: current.lessonFocusLabel,
+      structureInsight: current.structureInsight,
+      studentCount: current.studentCount,
+      weeklyLessonCount: current.weeklyLessonCount,
+      latestDocLabel: current.latestDocLabel,
+      assetLinks: current.assetLinks,
+      memberTiers: current.memberTiers,
+      lessonTimeline: current.lessonTimeline,
+      summary: current.summary,
+      highlights: current.highlights,
+      nextStep: current.nextStep,
+    );
+    _records[index] = updated;
+    return updated;
+  }
 }
 
 class RemoteClassRepository implements ClassRepository {
@@ -158,6 +210,28 @@ class RemoteClassRepository implements ClassRepository {
         'textbookLabel': textbookLabel,
         if (focusLabel != null && focusLabel.trim().isNotEmpty)
           'focusLabel': focusLabel.trim(),
+      },
+    );
+    return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<ClassWorkspaceRecord> updateClass({
+    required String classId,
+    required String name,
+    required String stageLabel,
+    required String teacherLabel,
+    required String textbookLabel,
+    required String focusLabel,
+  }) async {
+    final response = await _client.patchObject(
+      '/classes/$classId',
+      body: {
+        'name': name,
+        'stageLabel': stageLabel,
+        'teacherLabel': teacherLabel,
+        'textbookLabel': textbookLabel,
+        'focusLabel': focusLabel,
       },
     );
     return ClassWorkspaceRecord.fromJson(response['class'] as Map<String, dynamic>);
