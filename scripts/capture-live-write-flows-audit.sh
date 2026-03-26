@@ -163,13 +163,19 @@ payload = {
         ),
         "flutter.active_tenant": json.dumps(organization, ensure_ascii=False),
     },
-    "routes": {},
+    "pre_delete_routes": {},
+    "post_delete_routes": {},
+    "deletions": {},
+    "auth": {
+        "accessToken": login["accessToken"],
+        "tenantCode": tenant_code,
+    },
 }
 
 def build_hash_route(path, params):
     return f"/#{path}?{urllib.parse.urlencode(params)}"
 
-payload["routes"] = {
+payload["pre_delete_routes"] = {
     "students-created-live": build_hash_route(
         "/students",
         {
@@ -223,6 +229,54 @@ payload["routes"] = {
     ),
 }
 
+payload["deletions"] = {
+    "student": {
+        "id": updated_student["id"],
+        "label": updated_student["name"],
+        "path": f"/students/{updated_student['id']}",
+    },
+    "class": {
+        "id": updated_class["id"],
+        "label": updated_class["name"],
+        "path": f"/classes/{updated_class['id']}",
+    },
+    "lesson": {
+        "id": updated_lesson["id"],
+        "label": updated_lesson["title"],
+        "path": f"/lessons/{updated_lesson['id']}",
+    },
+}
+
+payload["post_delete_routes"] = {
+    "students-deleted-live": build_hash_route(
+        "/students",
+        {
+            "flashMessage": f"已删除 {updated_student['name']} 的学生档案。",
+            "highlightTitle": "最近删除学生",
+            "highlightDetail": f"{updated_student['name']} 已从真实数据中移除，可继续回看其他学生档案。",
+            "feedbackBadgeLabel": "已删除学生",
+        },
+    ),
+    "classes-deleted-live": build_hash_route(
+        "/classes",
+        {
+            "flashMessage": f"已删除 {updated_class['name']} 的班级档案。",
+            "highlightTitle": "最近删除班级",
+            "highlightDetail": f"{updated_class['name']} 已从真实数据中移除，可继续回看其他班级结构。",
+            "feedbackBadgeLabel": "已删除班级",
+        },
+    ),
+    "lessons-deleted-live": build_hash_route(
+        "/lessons",
+        {
+            "flashMessage": f"已删除 {updated_lesson['title']} 的课堂档案。",
+            "highlightTitle": "最近删除课堂",
+            "highlightDetail": f"{updated_lesson['title']} 已从真实数据中移除，可继续回看其他课堂节奏。",
+            "feedbackBadgeLabel": "已删除课堂",
+        },
+    ),
+}
+
 with open(output_path, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, ensure_ascii=False, indent=2)
 PY
@@ -238,27 +292,61 @@ with open(output_path, "w", encoding="utf-8") as target:
     json.dump(payload["storage"], target, ensure_ascii=False, indent=2)
 PY
 
-while IFS=$'\t' read -r name route; do
-  [[ -n "$name" ]] || continue
-  echo "capturing ${name}..."
-  "${proxyless_env[@]}" \
-    CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS="$capture_post_load_delay_ms" \
-    CAPTURE_FULLPAGE_BLANK_RETRIES="$capture_blank_retries" \
-    /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh \
-    "${web_base_url}${route}" \
-    "${output_dir}/${name}.png" \
-    "$storage_state_file" >/dev/null
-done < <(
-  "${proxyless_env[@]}" python3 - "$payload_file" <<'PY'
+capture_routes() {
+  local route_group="$1"
+  while IFS=$'\t' read -r name route; do
+    [[ -n "$name" ]] || continue
+    echo "capturing ${name}..."
+    "${proxyless_env[@]}" \
+      CAPTURE_FULLPAGE_POST_LOAD_DELAY_MS="$capture_post_load_delay_ms" \
+      CAPTURE_FULLPAGE_BLANK_RETRIES="$capture_blank_retries" \
+      /Users/honcy/Project/ShiTi/scripts/capture-edge-fullpage.sh \
+      "${web_base_url}${route}" \
+      "${output_dir}/${name}.png" \
+      "$storage_state_file" >/dev/null
+  done < <(
+    "${proxyless_env[@]}" python3 - "$payload_file" "$route_group" <<'PY'
 import json
 import sys
 
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
+payload_path, route_group = sys.argv[1:]
+with open(payload_path, "r", encoding="utf-8") as handle:
     payload = json.load(handle)
 
-for name, route in payload["routes"].items():
+for name, route in payload[route_group].items():
     print(f"{name}\t{route}")
 PY
-)
+  )
+}
+
+capture_routes pre_delete_routes
+
+"${proxyless_env[@]}" python3 - "$payload_file" "$api_base_url" <<'PY'
+import json
+import sys
+import urllib.request
+
+payload_path, api_base_url = sys.argv[1:]
+
+with open(payload_path, "r", encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+access_token = payload["auth"]["accessToken"]
+tenant_code = payload["auth"]["tenantCode"]
+
+for deletion in payload["deletions"].values():
+    req = urllib.request.Request(
+        f"{api_base_url}{deletion['path']}",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "x-tenant-code": tenant_code,
+        },
+        method="DELETE",
+    )
+    with urllib.request.urlopen(req) as response:
+        json.load(response)
+PY
+
+capture_routes post_delete_routes
 
 echo "$output_dir"
