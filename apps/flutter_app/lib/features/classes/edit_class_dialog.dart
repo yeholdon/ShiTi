@@ -40,9 +40,11 @@ class _EditClassDialogState extends State<_EditClassDialog> {
   late String _focusStudentId = widget.classroom.focusStudentId;
   late String _lessonId = widget.classroom.lessonId;
   late String _documentId = widget.classroom.documentId;
+  List<String> _memberStudentIds = const [];
   List<StudentWorkspaceRecord> _students = const [];
   List<LessonWorkspaceRecord> _lessons = const [];
   List<DocumentSummary> _documents = const [];
+  bool _memberSelectionInitialized = false;
   bool _loadingStudents = true;
   bool _loadingLessons = true;
   bool _loadingDocuments = true;
@@ -66,12 +68,20 @@ class _EditClassDialogState extends State<_EditClassDialog> {
 
   Future<void> _loadStudents() async {
     try {
-      final students = await AppServices.instance.studentRepository.listStudents();
+      final students =
+          await AppServices.instance.studentRepository.listStudents();
       if (!mounted) {
         return;
       }
       setState(() {
         _students = students;
+        if (!_memberSelectionInitialized) {
+          _memberStudentIds = students
+              .where((student) => student.classId == widget.classroom.id)
+              .map((student) => student.id)
+              .toList(growable: false);
+          _memberSelectionInitialized = true;
+        }
         _loadingStudents = false;
       });
     } catch (_) {
@@ -80,6 +90,10 @@ class _EditClassDialogState extends State<_EditClassDialog> {
       }
       setState(() {
         _students = const [];
+        if (!_memberSelectionInitialized) {
+          _memberStudentIds = const [];
+          _memberSelectionInitialized = true;
+        }
         _loadingStudents = false;
       });
     }
@@ -108,7 +122,8 @@ class _EditClassDialogState extends State<_EditClassDialog> {
 
   Future<void> _loadDocuments() async {
     try {
-      final documents = await AppServices.instance.documentRepository.listDocuments();
+      final documents =
+          await AppServices.instance.documentRepository.listDocuments();
       if (!mounted) {
         return;
       }
@@ -138,10 +153,11 @@ class _EditClassDialogState extends State<_EditClassDialog> {
     });
 
     try {
-      final selectedFocusStudent = _students.cast<StudentWorkspaceRecord?>().firstWhere(
-            (student) => student?.id == _focusStudentId,
-            orElse: () => null,
-          );
+      final selectedFocusStudent =
+          _students.cast<StudentWorkspaceRecord?>().firstWhere(
+                (student) => student?.id == _focusStudentId,
+                orElse: () => null,
+              );
       final selectedLesson = _lessons.cast<LessonWorkspaceRecord?>().firstWhere(
             (lesson) => lesson?.id == _lessonId,
             orElse: () => null,
@@ -161,11 +177,14 @@ class _EditClassDialogState extends State<_EditClassDialog> {
         focusStudentName:
             _focusStudentId.isEmpty ? '' : (selectedFocusStudent?.name ?? ''),
         lessonId: _lessonId.isEmpty ? '' : _lessonId,
-        lessonFocusLabel:
-            _lessonId.isEmpty ? '待安排课堂' : (selectedLesson?.title ?? widget.classroom.lessonFocusLabel),
+        lessonFocusLabel: _lessonId.isEmpty
+            ? '待安排课堂'
+            : (selectedLesson?.title ?? widget.classroom.lessonFocusLabel),
         documentId: _documentId.isEmpty ? '' : _documentId,
-        latestDocLabel:
-            _documentId.isEmpty ? '暂无资料' : (selectedDocument?.name ?? widget.classroom.latestDocLabel),
+        latestDocLabel: _documentId.isEmpty
+            ? '暂无资料'
+            : (selectedDocument?.name ?? widget.classroom.latestDocLabel),
+        memberStudentIds: _memberStudentIds,
       );
       if (!mounted) {
         return;
@@ -192,15 +211,23 @@ class _EditClassDialogState extends State<_EditClassDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final focusStudentValue = _students.any((student) => student.id == _focusStudentId)
-        ? _focusStudentId
-        : '';
-    final lessonValue = _lessons.any((lesson) => lesson.id == _lessonId)
-        ? _lessonId
-        : '';
-    final documentValue = _documents.any((document) => document.id == _documentId)
-        ? _documentId
-        : '';
+    final focusCandidates = _memberStudentIds.isEmpty
+        ? _students
+        : _students
+            .where((student) => _memberStudentIds.contains(student.id))
+            .toList(growable: false);
+    final focusStudentValue =
+        _students.any((student) => student.id == _focusStudentId) &&
+                (_memberStudentIds.isEmpty ||
+                    _memberStudentIds.contains(_focusStudentId))
+            ? _focusStudentId
+            : '';
+    final lessonValue =
+        _lessons.any((lesson) => lesson.id == _lessonId) ? _lessonId : '';
+    final documentValue =
+        _documents.any((document) => document.id == _documentId)
+            ? _documentId
+            : '';
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       backgroundColor: Colors.transparent,
@@ -246,8 +273,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                     labelText: '班级名称',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? '请先输入班级名称' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? '请先输入班级名称'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -256,8 +284,9 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                     labelText: '任课说明',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? '请先输入任课说明' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? '请先输入任课说明'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -267,9 +296,12 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                     border: OutlineInputBorder(),
                   ),
                   items: const [
-                    DropdownMenuItem(value: '小学 · 五年级', child: Text('小学 · 五年级')),
-                    DropdownMenuItem(value: '初中 · 八年级', child: Text('初中 · 八年级')),
-                    DropdownMenuItem(value: '初中 · 九年级', child: Text('初中 · 九年级')),
+                    DropdownMenuItem(
+                        value: '小学 · 五年级', child: Text('小学 · 五年级')),
+                    DropdownMenuItem(
+                        value: '初中 · 八年级', child: Text('初中 · 八年级')),
+                    DropdownMenuItem(
+                        value: '初中 · 九年级', child: Text('初中 · 九年级')),
                     DropdownMenuItem(value: '高中 · 高一', child: Text('高中 · 高一')),
                   ],
                   onChanged: (value) {
@@ -323,7 +355,7 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                   ),
                   items: [
                     const DropdownMenuItem(value: '', child: Text('暂不设置')),
-                    ..._students.map(
+                    ...focusCandidates.map(
                       (student) => DropdownMenuItem(
                         value: student.id,
                         child: Text(student.name),
@@ -335,6 +367,70 @@ class _EditClassDialogState extends State<_EditClassDialog> {
                       : (value) {
                           setState(() => _focusStudentId = value ?? '');
                         },
+                ),
+                const SizedBox(height: 16),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: '班级成员',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 180),
+                    child: _loadingStudents
+                        ? const SizedBox(
+                            height: 48,
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        : _students.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  '当前没有可关联的学生，稍后可在学生页先创建档案。',
+                                  style: TextStyle(
+                                    color: TelegramPalette.textMuted,
+                                  ),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: _students.map((student) {
+                                    final selected =
+                                        _memberStudentIds.contains(student.id);
+                                    return CheckboxListTile(
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      controlAffinity:
+                                          ListTileControlAffinity.leading,
+                                      value: selected,
+                                      title: Text(student.name),
+                                      subtitle: Text(
+                                        '${student.gradeLabel} · ${student.textbookLabel}',
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            _memberStudentIds = [
+                                              ..._memberStudentIds,
+                                              student.id,
+                                            ];
+                                          } else {
+                                            _memberStudentIds =
+                                                _memberStudentIds
+                                                    .where((id) =>
+                                                        id != student.id)
+                                                    .toList(growable: false);
+                                            if (_focusStudentId == student.id) {
+                                              _focusStudentId = '';
+                                            }
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(growable: false),
+                                ),
+                              ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(

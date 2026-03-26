@@ -1,47 +1,52 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from "class-validator";
 
 export class UpdateClassDto {
   @IsOptional()
-  @IsString({ message: 'Invalid name' })
+  @IsString({ message: "Invalid name" })
   name?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid stageLabel' })
+  @IsString({ message: "Invalid stageLabel" })
   stageLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid teacherLabel' })
+  @IsString({ message: "Invalid teacherLabel" })
   teacherLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid textbookLabel' })
+  @IsString({ message: "Invalid textbookLabel" })
   textbookLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid focusLabel' })
+  @IsString({ message: "Invalid focusLabel" })
   focusLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid focusStudentId' })
+  @IsString({ message: "Invalid focusStudentId" })
   focusStudentId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid focusStudentName' })
+  @IsString({ message: "Invalid focusStudentName" })
   focusStudentName?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid lessonId' })
+  @IsString({ message: "Invalid lessonId" })
   lessonId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid lessonFocusLabel' })
+  @IsString({ message: "Invalid lessonFocusLabel" })
   lessonFocusLabel?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid documentId' })
+  @IsString({ message: "Invalid documentId" })
   documentId?: string;
 
   @IsOptional()
-  @IsString({ message: 'Invalid latestDocLabel' })
+  @IsString({ message: "Invalid latestDocLabel" })
   latestDocLabel?: string;
+
+  @IsOptional()
+  @IsArray({ message: "Invalid memberStudentIds" })
+  @IsString({ each: true, message: "Invalid memberStudentIds" })
+  memberStudentIds?: string[];
 }
